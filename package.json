@@ -1,0 +1,36 @@
+{
+  "name": "@clumsycomputer/graphics-renderer",
+  "version": "0.0.2",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "license": "MIT",
+  "dependencies": {
+    "@types/command-line-args": "^5.2.0",
+    "@types/node": "^16.11.1",
+    "@types/react": "^17.0.33",
+    "@types/react-dom": "^17.0.10",
+    "esbuild": "^0.13.11",
+    "fp-ts": "^2.11.1",
+    "inkscape": "^3.1.1",
+    "io-ts": "^2.2.16",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "typescript": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.2",
+    "jest": "^27.3.1",
+    "ts-jest": "^27.0.7"
+  },
+  "scripts": {
+    "prepublish": "yarn buildLocal && yarn test",
+    "test": "yarn jest",
+    "buildDist": "tsc --outDir ./dist",
+    "buildLocal": "yarn buildDist && chmod +x ./dist/main.js && yarn link",
+    "renderExampleAnimation": "graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --outputDirectoryPath=./example-project",
+    "convertExampleAnimationToGif": "graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-project/foo.mp4 --animationGifOutputPath=./example-project/foo.gif --gifAspectRatioWidth=512"
+  },
+  "bin": {
+    "graphics-renderer": "./dist/main.js"
+  }
+}

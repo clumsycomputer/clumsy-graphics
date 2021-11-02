@@ -1,0 +1,9 @@
+source
+example-project
+node_modules
+.prettierc
+__tests__
+tsconfig.json
+jest.config.js
+*.tgz
+package*

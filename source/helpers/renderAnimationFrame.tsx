@@ -6,7 +6,9 @@ import { Readable as ReadableStream } from 'stream'
 import Stream from 'stream/promises'
 import { AnimationModule } from '../models/AnimationModule'
 import { FunctionResult } from '../models/common'
+import { decodeData } from './decodeData'
 import { getAnimationModule } from './getAnimationModule'
+import * as IO from 'io-ts'
 
 export interface RenderAnimationFrameApi {
   animationModule: FunctionResult<typeof getAnimationModule>
@@ -32,11 +34,17 @@ interface WriteSvgMarkupToFileApi extends Pick<AnimationModule, 'frameSize'> {
   frameFileOutputPath: string
 }
 
-function writeSvgMarkupToPngFile(api: WriteSvgMarkupToFileApi) {
+async function writeSvgMarkupToPngFile(api: WriteSvgMarkupToFileApi) {
   const { frameSvgMarkup, frameSize, frameFileOutputPath } = api
   const frameSvgStream = ReadableStream.from([frameSvgMarkup])
-  const frameFileOutputType = frameFileOutputPath.split(/\.(svg|png)$/, 2)[1]!
-  // validate frameFileOutputType
+  const frameFileOutputTypeData: unknown = frameFileOutputPath.split(
+    /\.(svg|png)$/,
+    2
+  )[1]
+  const frameFileOutputType = await decodeData<'svg' | 'png'>({
+    targetCodec: IO.union([IO.literal('svg'), IO.literal('png')]),
+    inputData: frameFileOutputTypeData,
+  })
   const svgToPngStream = new Inkscape([
     `--export-type=${frameFileOutputType}`,
     `--export-width=${frameSize}`,

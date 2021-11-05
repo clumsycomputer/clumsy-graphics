@@ -17,6 +17,7 @@ const NumberFromString = new IO.Type<number, string, unknown>(
 
 export type GraphicsRendererCommand =
   | RenderAnimationCommand
+  | RenderAnimationFrameCommand
   | ConvertAnimationToGifCommand
 
 interface RenderAnimationCommand
@@ -38,6 +39,29 @@ const RenderAnimationCommandCodec = IO.exact(
           numberOfFrameRendererWorkers: NumberFromString,
         }),
       ])
+    ),
+  })
+)
+
+interface RenderAnimationFrameCommand
+  extends CliCommandBase<
+    'renderAnimationFrame',
+    {
+      animationModulePath: string
+      frameFileOutputPath: string
+      frameIndex: number
+    }
+  > {}
+
+const RenderAnimationFrameCommandCodec = IO.exact(
+  IO.type({
+    commandName: IO.literal('renderAnimationFrame'),
+    commandApi: IO.exact(
+      IO.type({
+        animationModulePath: IO.string,
+        frameFileOutputPath: IO.string,
+        frameIndex: NumberFromString,
+      })
     ),
   })
 )
@@ -75,5 +99,6 @@ interface CliCommandBase<
 
 export const GraphicsRendererCommandCodec = IO.union([
   RenderAnimationCommandCodec,
+  RenderAnimationFrameCommandCodec,
   ConvertAnimationToGifCommandCodec,
 ])

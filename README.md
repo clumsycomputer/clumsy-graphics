@@ -61,7 +61,7 @@ yarn graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-
 
 #### animation gif
 
-![Foo Animation Gif](/example-project/foo.gif)
+![Foo Animation Gif](/assets/foo.gif)
 
 ## installation
 

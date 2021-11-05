@@ -4,5 +4,5 @@ test-temp
 package*
 temp-*-frames
 .DS_Store
-foo.mp4
 *.tgz
+example-project/foo*

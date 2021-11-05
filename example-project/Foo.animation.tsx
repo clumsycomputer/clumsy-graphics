@@ -1,8 +1,8 @@
 import React from 'react'
-import { AnimationModule } from '../source/renderAnimationModule/models/AnimationModule'
+import { AnimationModule } from '../source/models/AnimationModule'
 
 const FooAnimationModule: AnimationModule = {
-  animationName: 'Foo',
+  animationName: 'foo',
   frameSize: 512,
   frameCount: 10,
   animationSettings: {

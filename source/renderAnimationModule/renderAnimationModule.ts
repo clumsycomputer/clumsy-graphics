@@ -1,12 +1,12 @@
 import ChildProcess from 'child_process'
-import { build as buildModule } from 'esbuild'
 import FileSystem from 'fs'
 import Path from 'path'
 import { Worker } from 'worker_threads'
-import { FunctionResult, FunctionBrand } from '../models/common'
 import { decodeData } from '../helpers/decodeData'
-import { getAnimationModule } from './helpers/getAnimationModule'
-import { AnimationModule } from './models/AnimationModule'
+import { getAnimationModule } from '../helpers/getAnimationModule'
+import { getAnimationModuleBundle } from '../helpers/getAnimationModuleBundle'
+import { AnimationModule } from '../models/AnimationModule'
+import { FunctionBrand, FunctionResult } from '../models/common'
 import {
   FrameRendererWorkerMessage,
   FrameRendererWorkerMessageCodec,
@@ -59,24 +59,6 @@ export async function renderAnimationModule(api: RenderAnimationModuleApi) {
       tempFramesDirectoryPath,
     })
   }
-}
-
-interface GetAnimationModuleBundleApi
-  extends Pick<RenderAnimationModuleApi, 'animationModulePath'> {}
-
-async function getAnimationModuleBundle(api: GetAnimationModuleBundleApi) {
-  const { animationModulePath } = api
-  const animationModuleBuildResult = await buildModule({
-    absWorkingDir: process.cwd(),
-    entryPoints: [animationModulePath],
-    bundle: true,
-    platform: 'node',
-    format: 'iife',
-    globalName: 'animationModule',
-    write: false,
-  })
-  const animationModuleBundle = animationModuleBuildResult.outputFiles[0]!.text!
-  return { animationModuleBundle }
 }
 
 interface GetTempFramesDirectoryPathApi

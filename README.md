@@ -111,6 +111,26 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
   - defaultValue = _numberOfCpuCores - 2_
 
+### renderAnimationFrame
+
+> graphics-renderer renderAnimationFrame --animationModulePath=\<SourceFilePath> --frameFileOutputPath=\<FrameFilePath>
+
+#### api
+
+- **`animationModulePath:`** path to animation module export file
+
+  - required
+
+- **`frameFileOutputPath:`** path to write frame file
+
+  - required
+
+  - file type can be _**svg**_ or _**png**_
+
+- **`frameIndex:`** the index of the frame to render
+
+  - required
+
 ### convertAnimationToGif
 
 > graphics-renderer convertAnimationToGif --animationMp4SourcePath=\<AnimationFilePath> --animationGifOutputPath=\<GifFilePath>
@@ -125,6 +145,8 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
   - required
 
-- **`gifAspectRatioWidth:`** width of _.gif_ file in pixels _(aspect ratio will be preserved)_
+- **`gifAspectRatioWidth:`** width of _.gif_ file in pixels
 
   - defaultValue = _widthOfSourceMp4_
+
+  - aspect ratio will be preserved

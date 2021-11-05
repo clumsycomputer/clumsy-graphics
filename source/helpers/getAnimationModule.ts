@@ -3,7 +3,7 @@ import {
   AnimationModuleContainer,
   AnimationModuleContainerCodec,
 } from '../models/AnimationModule'
-import { decodeData } from '../../helpers/decodeData'
+import { decodeData } from '../helpers/decodeData'
 
 export interface GetAnimationModuleApi {
   animationModuleBundle: string

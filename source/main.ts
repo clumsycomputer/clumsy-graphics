@@ -6,9 +6,10 @@ import {
   GraphicsRendererCommand,
   GraphicsRendererCommandCodec,
 } from './models/GraphicsRendererCommand'
+import { renderAnimationModuleFrame } from './renderAnimationModuleFrame/renderAnimationModuleFrame'
 import { renderAnimationModule } from './renderAnimationModule/renderAnimationModule'
 
-export type { AnimationModule } from './renderAnimationModule/models/AnimationModule'
+export type { AnimationModule } from './models/AnimationModule'
 
 runGraphicsRendererCommand()
 
@@ -31,6 +32,9 @@ async function runGraphicsRendererCommand() {
         numberOfFrameRendererWorkers: OperatingSystem.cpus().length - 1,
         ...graphicsRendererCommand.commandApi,
       })
+      break
+    case 'renderAnimationFrame':
+      await renderAnimationModuleFrame(graphicsRendererCommand.commandApi)
       break
     case 'convertAnimationToGif':
       convertAnimationMp4ToGif(graphicsRendererCommand.commandApi)

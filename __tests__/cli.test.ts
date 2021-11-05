@@ -6,6 +6,7 @@ beforeAll(() => {
     recursive: true,
     force: true,
   })
+  FileSystem.mkdirSync('./test-temp')
 })
 
 describe('graphics-renderer', () => {
@@ -18,6 +19,30 @@ describe('graphics-renderer', () => {
         ChildProcess.spawnSync(
           'ffprobe',
           ['-show_frames', './test-temp/foo.mp4'],
+          { stdio: 'pipe' }
+        ).stdout.toString()
+      ).toMatchSnapshot()
+    })
+  })
+  describe('renderAnimationFrame', () => {
+    test('renderAnimationFrame outputs expected "foo_0.svg"', () => {
+      ChildProcess.execSync(
+        'graphics-renderer renderAnimationFrame --animationModulePath=./example-project/Foo.animation.tsx --frameFileOutputPath=./test-temp/foo_0.svg --frameIndex=0'
+      )
+      expect(
+        FileSystem.readFileSync('./test-temp/foo_0.svg')
+          .toString()
+          .replace(/sodipodi:docname="(.)+\.svg"/m, '')
+      ).toMatchSnapshot()
+    })
+    test('renderAnimationFrame outputs expected "foo_0.png"', () => {
+      ChildProcess.execSync(
+        'graphics-renderer renderAnimationFrame --animationModulePath=./example-project/Foo.animation.tsx --frameFileOutputPath=./test-temp/foo_0.png --frameIndex=0'
+      )
+      expect(
+        ChildProcess.spawnSync(
+          'ffprobe',
+          ['-show_frames', './test-temp/foo_0.png'],
           { stdio: 'pipe' }
         ).stdout.toString()
       ).toMatchSnapshot()
@@ -42,7 +67,7 @@ describe('graphics-renderer', () => {
   })
 })
 
-afterEach(() => {
+afterAll(() => {
   FileSystem.rmSync('./test-temp', {
     recursive: true,
     force: true,

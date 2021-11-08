@@ -2,6 +2,7 @@ import * as IO from 'io-ts'
 import { RenderAnimationModuleApi } from '../renderAnimationModule/renderAnimationModule'
 import { ConvertAnimationMp4ToGifApi } from '../convertAnimationMp4ToGif/convertAnimationMp4ToGif'
 import { Optional } from './common'
+import { StartAnimationDevelopmentApi } from '../startAnimationDevelopment/startAnimationDevelopment'
 
 const NumberFromString = new IO.Type<number, string, unknown>(
   'NumberFromString',
@@ -16,9 +17,39 @@ const NumberFromString = new IO.Type<number, string, unknown>(
 )
 
 export type GraphicsRendererCommand =
+  | StartDevelopmentCommand
   | RenderAnimationCommand
   | RenderAnimationFrameCommand
   | ConvertAnimationToGifCommand
+
+interface StartDevelopmentCommand
+  extends CliCommandBase<
+    'startDevelopment',
+    Optional<
+      StartAnimationDevelopmentApi,
+      | 'clientServerPort'
+      | 'generatedAssetsDirectoryPath'
+      | 'numberOfFrameRendererWorkers'
+    >
+  > {}
+
+const StartDevelopmentCommandCodec = IO.exact(
+  IO.type({
+    commandName: IO.literal('startDevelopment'),
+    commandApi: IO.exact(
+      IO.intersection([
+        IO.type({
+          animationModulePath: IO.string,
+        }),
+        IO.partial({
+          clientServerPort: NumberFromString,
+          generatedAssetsDirectoryPath: IO.string,
+          numberOfFrameRendererWorkers: NumberFromString,
+        }),
+      ])
+    ),
+  })
+)
 
 interface RenderAnimationCommand
   extends CliCommandBase<
@@ -98,6 +129,7 @@ interface CliCommandBase<
 }
 
 export const GraphicsRendererCommandCodec = IO.union([
+  StartDevelopmentCommandCodec,
   RenderAnimationCommandCodec,
   RenderAnimationFrameCommandCodec,
   ConvertAnimationToGifCommandCodec,

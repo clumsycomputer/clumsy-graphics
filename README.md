@@ -59,7 +59,7 @@ yarn graphics-renderer renderAnimation --animationModulePath=./example-project/F
 yarn graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-project/foo.mp4 --animationGifOutputPath=./example-project/foo.gif --gifAspectRatioWidth=512
 ```
 
-#### animation gif
+#### ./example-project/foo.gif
 
 ![Foo Animation Gif](/assets/foo.gif)
 
@@ -93,6 +93,28 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
 ## commands
 
+### startDevelopment
+
+> graphics-renderer startDevelopment --animationModulePath=\<SourceFilePath>
+
+#### api
+
+- **`animationModulePath:`** path to animation module export file
+
+  - required
+
+- **`clientServerPort:`** the port on the host machine to use for handling api, asset, and page requests
+
+  - defaultValue = _3000_
+
+- **`generatedAssetsDirectoryPath:`** path to directory where requested assets will live
+
+  - defaultValue = _Path.resolve(\_\_dirname, './developmentAssets')_
+
+- **`numberOfFrameRendererWorkers:`** the number of workers to allocate for rendering frames
+
+  - defaultValue = _numberOfCpuCores - 2_
+
 ### renderAnimation
 
 > graphics-renderer renderAnimation --animationModulePath=\<SourceFilePath> --outputDirectoryPath=\<DirectoryPath>
@@ -109,7 +131,7 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
 - **`numberOfFrameRendererWorkers:`** the number of workers to allocate for rendering frames
 
-  - defaultValue = _numberOfCpuCores - 2_
+  - defaultValue = _numberOfCpuCores - 1_
 
 ### renderAnimationFrame
 

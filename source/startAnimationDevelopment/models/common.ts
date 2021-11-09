@@ -15,3 +15,7 @@ export interface EventBase<
   eventType: EventType
   eventPayload: EventPayload
 }
+
+export type ChannelEventEmitter<
+  SomeChannelEvent extends EventBase<string, object>
+> = (input: SomeChannelEvent) => void

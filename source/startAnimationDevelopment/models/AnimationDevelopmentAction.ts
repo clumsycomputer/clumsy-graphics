@@ -1,6 +1,6 @@
-export type AnimationDevelopmentAction = ActionBase<'foo', {}>
+import { ActionBase } from './common'
 
-interface ActionBase<ActionType extends string, ActionPayload extends object> {
-  type: ActionType
-  actionPayload: ActionPayload
-}
+export type AnimationDevelopmentAction = AnimationModuleSourceUpdatedAction
+
+export interface AnimationModuleSourceUpdatedAction
+  extends ActionBase<'animationModuleSourceUpdated', {}> {}

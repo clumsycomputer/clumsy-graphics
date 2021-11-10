@@ -1,17 +1,33 @@
+import { select } from '@redux-saga/core/effects'
 import { build as buildModule } from 'esbuild'
 import getNodeExternalsPlugin from 'esbuild-node-externals'
+import getExpressServer, { Router as getExpressRouter } from 'express'
 import Path from 'path'
-import { eventChannel as getEventChannel } from 'redux-saga'
-import { put, spawn, takeEvent } from '../helpers/storeEffects'
+import {
+  eventChannel as getEventChannel,
+  buffers as SagaBuffers,
+} from 'redux-saga'
+import {
+  actionChannel,
+  call,
+  put,
+  spawn,
+  takeActionFromChannel,
+  takeEvent,
+} from '../helpers/storeEffects'
+import {
+  AnimationModuleSourceUpdatedAction,
+  ClientRequestsAnimationRenderTaskAction,
+  ClientRequestsFrameRenderTaskAction,
+} from '../models/AnimationDevelopmentAction'
 import { AnimationModuleSourceEvent } from '../models/AnimationModuleSourceEvent'
 import {
   ClientApiRequestEvent,
   ClientAssetRequestEvent,
   ClientServerEvent,
 } from '../models/ClientServerEvent'
-import { StartAnimationDevelopmentApi } from '../startAnimationDevelopment'
-import getExpressServer, { Router as getExpressRouter } from 'express'
 import { ChannelEventEmitter } from '../models/common'
+import { StartAnimationDevelopmentApi } from '../startAnimationDevelopment'
 
 export interface InitialSagaApi
   extends Pick<
@@ -30,14 +46,19 @@ export function* initialSaga(api: InitialSagaApi) {
         animationModulePath,
       })
     while (true) {
-      const someAnimationModuleSourceEvent = yield* takeEvent(
-        animationModuleSourceEventChannel
-      )
+      const someAnimationModuleSourceEvent =
+        yield* takeEvent<AnimationModuleSourceEvent>(
+          animationModuleSourceEventChannel
+        )
       switch (someAnimationModuleSourceEvent.eventType) {
         case 'animationModuleSourceUpdated':
           yield* put({
             type: 'animationModuleSourceUpdated',
-            actionPayload: {},
+            actionPayload: {
+              animationModuleSessionVersion:
+                someAnimationModuleSourceEvent.eventPayload
+                  .animationModuleSessionVersion,
+            },
           })
           break
       }
@@ -53,8 +74,59 @@ export function* initialSaga(api: InitialSagaApi) {
         case 'clientServerListening':
           break
         case 'clientApiRequest':
+          const { apiRequestType } = someClientServerEvent.eventPayload
+          switch (apiRequestType) {
+            case 'getAnimationRenderTask':
+              yield* put({
+                type: 'clientRequestsAnimationRenderTask',
+                actionPayload: {},
+              })
+              break
+            case 'getFrameRenderTask':
+              yield* put({
+                type: 'clientRequestsFrameRenderTask',
+                actionPayload: {},
+              })
+              break
+          }
           break
         case 'clientAssetRequest':
+          yield* spawn(function* () {})
+          break
+      }
+    }
+  })
+  yield* spawn(function* () {
+    const someAnimationModuleSourceStateActionChannel = yield* actionChannel<
+      | AnimationModuleSourceUpdatedAction
+      | ClientRequestsAnimationRenderTaskAction
+      | ClientRequestsFrameRenderTaskAction
+    >(
+      [
+        'animationModuleSourceUpdated',
+        'clientRequestsAnimationRenderTask',
+        'clientRequestsFrameRenderTask',
+      ],
+      SagaBuffers.expanding(3)
+    )
+    while (true) {
+      const someAnimationModuleSourceStateAction = yield* takeActionFromChannel(
+        someAnimationModuleSourceStateActionChannel
+      )
+      switch (someAnimationModuleSourceStateAction.type) {
+        case 'animationModuleSourceUpdated':
+          yield* call(function* () {
+            yield* put({
+              type: 'activeRenderTasksCleanedUp',
+              actionPayload: {},
+            })
+          })
+          break
+        case 'clientRequestsAnimationRenderTask':
+          yield* spawn(function* () {})
+          break
+        case 'clientRequestsFrameRenderTask':
+          yield* spawn(function* () {})
           break
       }
     }
@@ -71,6 +143,7 @@ function getAnimationModuleSourceEventChannel(
   const animationModuleSourceEventChannel =
     getEventChannel<AnimationModuleSourceEvent>(
       (emitAnimationModuleSourceEvent) => {
+        let animationModuleSessionVersion = 0
         buildModule({
           platform: 'node',
           bundle: true,
@@ -81,20 +154,26 @@ function getAnimationModuleSourceEventChannel(
           plugins: [getNodeExternalsPlugin()],
           watch: {
             onRebuild: () => {
+              animationModuleSessionVersion = animationModuleSessionVersion + 1
               emitAnimationModuleSourceEvent({
                 eventType: 'animationModuleSourceUpdated',
-                eventPayload: {},
+                eventPayload: {
+                  animationModuleSessionVersion,
+                },
               })
             },
           },
         }).then(() => {
           emitAnimationModuleSourceEvent({
             eventType: 'animationModuleSourceUpdated',
-            eventPayload: {},
+            eventPayload: {
+              animationModuleSessionVersion,
+            },
           })
         })
         return () => {}
-      }
+      },
+      SagaBuffers.expanding(2)
     )
   return { animationModuleSourceEventChannel }
 }
@@ -122,7 +201,8 @@ function getClientServerEventChannel(api: GetClientServerEventChannelApi) {
         })
       })
       return () => {}
-    }
+    },
+    SagaBuffers.expanding(5)
   )
   return { clientServerEventChannel }
 }
@@ -134,18 +214,29 @@ interface GetApiRouterApi {
 function getClientApiRouter(api: GetApiRouterApi) {
   const { emitClientServerEvent } = api
   const clientApiRouter = getExpressRouter()
-  clientApiRouter.get('/latestAnimationModule/animationRenderTask', () => {
-    emitClientServerEvent({
-      eventType: 'clientApiRequest',
-      eventPayload: {},
-    })
-  })
   clientApiRouter.get(
-    '/latestAnimationModule/frameRenderTask/:frameIndex',
-    () => {
+    '/latestAnimationModule/animationRenderTask',
+    (someGetAnimationRenderTaskRequest, getAnimationRenderTaskResponse) => {
       emitClientServerEvent({
         eventType: 'clientApiRequest',
-        eventPayload: {},
+        eventPayload: {
+          apiRequestType: 'getAnimationRenderTask',
+          clientRequest: someGetAnimationRenderTaskRequest,
+          serverResponse: getAnimationRenderTaskResponse,
+        },
+      })
+    }
+  )
+  clientApiRouter.get(
+    '/latestAnimationModule/frameRenderTask/:frameIndex',
+    (someGetFrameRenderTaskRequest, getFrameRenderTaskResponse) => {
+      emitClientServerEvent({
+        eventType: 'clientApiRequest',
+        eventPayload: {
+          apiRequestType: 'getFrameRenderTask',
+          clientRequest: someGetFrameRenderTaskRequest,
+          serverResponse: getFrameRenderTaskResponse,
+        },
       })
     }
   )

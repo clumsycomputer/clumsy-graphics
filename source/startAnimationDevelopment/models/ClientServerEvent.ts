@@ -1,3 +1,4 @@
+import { Request as ClientRequest, Response as ServerResponse } from 'express'
 import { EventBase } from './common'
 
 export type ClientServerEvent =
@@ -9,8 +10,8 @@ export interface ClientServerListeningEvent
   extends EventBase<'clientServerListening', {}> {}
 
 export type ClientApiRequestEvent =
-  | ClientApiRequestEventBase<'getAnimationRenderTask'>
-  | ClientApiRequestEventBase<'getFrameRenderTask'>
+  | ClientApiRequestEventBase<'getAnimationRenderProcessState'>
+  | ClientApiRequestEventBase<'getFrameRenderProcessState'>
 
 interface ClientApiRequestEventBase<
   ApiRequestType extends string
@@ -18,8 +19,8 @@ interface ClientApiRequestEventBase<
     'clientApiRequest',
     {
       apiRequestType: ApiRequestType
-      clientRequest: unknown
-      serverResponse: unknown
+      apiRequest: ClientRequest
+      apiResponse: ServerResponse
     }
   > {}
 

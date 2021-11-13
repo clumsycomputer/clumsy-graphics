@@ -1,25 +1,26 @@
-import { select } from '@redux-saga/core/effects'
+import ChildProcess from 'child_process'
 import { build as buildModule } from 'esbuild'
 import getNodeExternalsPlugin from 'esbuild-node-externals'
 import getExpressServer, { Router as getExpressRouter } from 'express'
+import * as IO from 'io-ts'
 import Path from 'path'
 import {
-  eventChannel as getEventChannel,
   buffers as SagaBuffers,
+  eventChannel as getEventChannel,
 } from 'redux-saga'
+import { NumberFromString } from '../../helpers/codecTypes'
+import { decodeData } from '../../helpers/decodeData'
 import {
   actionChannel,
   call,
   put,
+  select,
   spawn,
   takeActionFromChannel,
   takeEvent,
 } from '../helpers/storeEffects'
-import {
-  AnimationModuleSourceUpdatedAction,
-  ClientRequestsAnimationRenderTaskAction,
-  ClientRequestsFrameRenderTaskAction,
-} from '../models/AnimationDevelopmentAction'
+import { RenderProcessStateAction } from '../models/AnimationDevelopmentAction'
+import { AnimationModuleSourceReadyState } from '../models/AnimationDevelopmentState'
 import { AnimationModuleSourceEvent } from '../models/AnimationModuleSourceEvent'
 import {
   ClientApiRequestEvent,
@@ -39,7 +40,13 @@ export interface InitialSagaApi
   > {}
 
 export function* initialSaga(api: InitialSagaApi) {
-  const { animationModulePath, clientServerPort } = api
+  const {
+    animationModulePath,
+    clientServerPort,
+    generatedAssetsDirectoryPath,
+    numberOfFrameRendererWorkers,
+  } = api
+
   yield* spawn(function* () {
     const { animationModuleSourceEventChannel } =
       getAnimationModuleSourceEventChannel({
@@ -51,9 +58,9 @@ export function* initialSaga(api: InitialSagaApi) {
           animationModuleSourceEventChannel
         )
       switch (someAnimationModuleSourceEvent.eventType) {
-        case 'animationModuleSourceUpdated':
+        case 'animationModuleSourceChanged':
           yield* put({
-            type: 'animationModuleSourceUpdated',
+            type: 'animationModuleSourceChanged',
             actionPayload: {
               animationModuleSessionVersion:
                 someAnimationModuleSourceEvent.eventPayload
@@ -69,23 +76,116 @@ export function* initialSaga(api: InitialSagaApi) {
       clientServerPort,
     })
     while (true) {
-      const someClientServerEvent = yield* takeEvent(clientServerEventChannel)
+      const someClientServerEvent = yield* takeEvent<ClientServerEvent>(
+        clientServerEventChannel
+      )
       switch (someClientServerEvent.eventType) {
         case 'clientServerListening':
           break
         case 'clientApiRequest':
-          const { apiRequestType } = someClientServerEvent.eventPayload
+          const { apiRequestType, apiRequest, apiResponse } =
+            someClientServerEvent.eventPayload
           switch (apiRequestType) {
-            case 'getAnimationRenderTask':
-              yield* put({
-                type: 'clientRequestsAnimationRenderTask',
-                actionPayload: {},
+            case 'getAnimationRenderProcessState':
+              yield* spawn(function* () {
+                const currentAnimationModuleSourceState = yield* select(
+                  (currentAnimationDevelopmentState) =>
+                    currentAnimationDevelopmentState.animationModuleSourceState
+                )
+                switch (currentAnimationModuleSourceState.sourceStatus) {
+                  case 'sourceInitializing':
+                    apiResponse.sendStatus(204)
+                    break
+                  case 'sourceReady':
+                    if (
+                      currentAnimationModuleSourceState.animationRenderProcessState
+                    ) {
+                      apiResponse.statusCode = 200
+                      apiResponse.send(
+                        JSON.stringify({
+                          processStatus:
+                            currentAnimationModuleSourceState
+                              .animationRenderProcessState.processStatus,
+                          animationModuleSessionVersion:
+                            currentAnimationModuleSourceState.animationModuleSessionVersion,
+                        })
+                      )
+                    } else {
+                      yield* put({
+                        type: 'spawnAnimationRenderProcess',
+                        actionPayload: {
+                          animationModuleSessionVersion:
+                            currentAnimationModuleSourceState.animationModuleSessionVersion,
+                        },
+                      })
+                      apiResponse.statusCode = 200
+                      apiResponse.send(
+                        JSON.stringify({
+                          animationModuleSessionVersion:
+                            currentAnimationModuleSourceState.animationModuleSessionVersion,
+                          processStatus: 'processActive',
+                        })
+                      )
+                    }
+                }
               })
               break
-            case 'getFrameRenderTask':
-              yield* put({
-                type: 'clientRequestsFrameRenderTask',
-                actionPayload: {},
+            case 'getFrameRenderProcessState':
+              yield* spawn(function* () {
+                const currentAnimationModuleSourceState = yield* select(
+                  (currentAnimationDevelopmentState) =>
+                    currentAnimationDevelopmentState.animationModuleSourceState
+                )
+                switch (currentAnimationModuleSourceState.sourceStatus) {
+                  case 'sourceInitializing':
+                    apiResponse.sendStatus(204)
+                    break
+                  case 'sourceReady':
+                    const currentRequestParams = yield* call(() =>
+                      decodeData<{ frameIndex: number }>({
+                        targetCodec: IO.exact(
+                          IO.type({
+                            frameIndex: NumberFromString,
+                          })
+                        ),
+                        inputData: apiRequest.params,
+                      })
+                    )
+                    const targetFrameRenderProcessState =
+                      currentAnimationModuleSourceState
+                        .frameRenderProcessStates[
+                        currentRequestParams.frameIndex
+                      ]
+                    if (targetFrameRenderProcessState) {
+                      apiResponse.statusCode = 200
+                      apiResponse.send(
+                        JSON.stringify({
+                          animationModuleSessionVersion:
+                            currentAnimationModuleSourceState.animationModuleSessionVersion,
+                          processStatus:
+                            targetFrameRenderProcessState.processStatus,
+                        })
+                      )
+                    } else {
+                      yield* put({
+                        type: 'spawnFrameRenderProcess',
+                        actionPayload: {
+                          frameIndex: currentRequestParams.frameIndex,
+                          animationModuleSessionVersion:
+                            currentAnimationModuleSourceState.animationModuleSessionVersion,
+                        },
+                      })
+                      apiResponse.statusCode = 200
+                      apiResponse.send(
+                        JSON.stringify({
+                          taskStatus: 'renderTaskInProgress',
+                          animationModuleSessionVersion:
+                            currentAnimationModuleSourceState.animationModuleSessionVersion,
+                        })
+                      )
+                    }
+                    break
+                }
               })
               break
           }
@@ -97,40 +197,160 @@ export function* initialSaga(api: InitialSagaApi) {
     }
   })
   yield* spawn(function* () {
-    const someAnimationModuleSourceStateActionChannel = yield* actionChannel<
-      | AnimationModuleSourceUpdatedAction
-      | ClientRequestsAnimationRenderTaskAction
-      | ClientRequestsFrameRenderTaskAction
-    >(
-      [
-        'animationModuleSourceUpdated',
-        'clientRequestsAnimationRenderTask',
-        'clientRequestsFrameRenderTask',
-      ],
-      SagaBuffers.expanding(3)
-    )
-    while (true) {
-      const someAnimationModuleSourceStateAction = yield* takeActionFromChannel(
-        someAnimationModuleSourceStateActionChannel
+    const someRenderProcessStateActionChannel =
+      yield* actionChannel<RenderProcessStateAction>(
+        [
+          'animationModuleSourceChanged',
+          'spawnAnimationRenderProcess',
+          'spawnFrameRenderProcess',
+        ],
+        SagaBuffers.expanding(3)
       )
-      switch (someAnimationModuleSourceStateAction.type) {
-        case 'animationModuleSourceUpdated':
-          yield* call(function* () {
-            yield* put({
-              type: 'activeRenderTasksCleanedUp',
-              actionPayload: {},
+    while (true) {
+      const someRenderProcessStateAction =
+        yield* takeActionFromChannel<RenderProcessStateAction>(
+          someRenderProcessStateActionChannel
+        )
+      const currentAnimationModuleSourceState = yield* select(
+        (currentAnimationDevelopmentState) =>
+          currentAnimationDevelopmentState.animationModuleSourceState
+      )
+      if (currentAnimationModuleSourceState.sourceStatus === 'sourceReady') {
+        switch (someRenderProcessStateAction.type) {
+          case 'animationModuleSourceChanged':
+            yield* call(function* () {
+              terminateActiveRenderProcesses({
+                currentAnimationModuleSourceState,
+              })
+              yield* put({
+                type: 'animationModuleSourceUpdated',
+                actionPayload: {
+                  animationModuleSessionVersion:
+                    someRenderProcessStateAction.actionPayload
+                      .animationModuleSessionVersion,
+                },
+              })
             })
-          })
-          break
-        case 'clientRequestsAnimationRenderTask':
-          yield* spawn(function* () {})
-          break
-        case 'clientRequestsFrameRenderTask':
-          yield* spawn(function* () {})
-          break
+            break
+          case 'spawnAnimationRenderProcess':
+            if (
+              currentAnimationModuleSourceState.animationModuleSessionVersion ===
+                someRenderProcessStateAction.actionPayload
+                  .animationModuleSessionVersion &&
+              currentAnimationModuleSourceState.animationRenderProcessState ===
+                null
+            ) {
+              yield* call(function* () {
+                const { spawnedAnimationRenderProcess } =
+                  spawnAnimationRenderProcess({
+                    animationModulePath,
+                    numberOfFrameRendererWorkers,
+                    generatedAssetsDirectoryPath,
+                  })
+                yield* put({
+                  type: 'animationRenderProcessActive',
+                  actionPayload: {
+                    spawnedAnimationRenderProcess,
+                  },
+                })
+                yield* spawn(function* () {
+                  const { renderTaskExitCode } = yield* call(
+                    () =>
+                      new Promise<{ renderTaskExitCode: number | null }>(
+                        (resolve) => {
+                          spawnedAnimationRenderProcess.once(
+                            'exit',
+                            (renderTaskExitCode) => {
+                              resolve({
+                                renderTaskExitCode,
+                              })
+                            }
+                          )
+                        }
+                      )
+                  )
+                  switch (renderTaskExitCode) {
+                    case 0:
+                      yield* put({
+                        type: 'animationRenderProcessSuccessful',
+                        actionPayload: {
+                          targetAnimationModuleSessionVersion:
+                            someRenderProcessStateAction.actionPayload
+                              .animationModuleSessionVersion,
+                        },
+                      })
+                      break
+                    case 1:
+                      yield* put({
+                        type: 'animationRenderProcessFailed',
+                        actionPayload: {
+                          targetAnimationModuleSessionVersion:
+                            someRenderProcessStateAction.actionPayload
+                              .animationModuleSessionVersion,
+                        },
+                      })
+                      break
+                    case null:
+                      // animationRenderProcess was terminated
+                      break
+                  }
+                })
+              })
+            }
+            break
+          case 'spawnFrameRenderProcess':
+            yield* call(function* () {})
+            break
+        }
       }
     }
   })
+}
+
+interface TerminateActiveRenderProcessesApi {
+  currentAnimationModuleSourceState: AnimationModuleSourceReadyState
+}
+
+function terminateActiveRenderProcesses(
+  api: TerminateActiveRenderProcessesApi
+) {
+  const { currentAnimationModuleSourceState } = api
+  currentAnimationModuleSourceState.animationRenderProcessState?.spawnedProcess.kill(
+    'SIGINT'
+  )
+  Object.values(
+    currentAnimationModuleSourceState.frameRenderProcessStates
+  ).forEach((someFrameRenderProcess) => {
+    someFrameRenderProcess.spawnedProcess.kill('SIGINT')
+  })
+}
+
+export interface SpawnAnimationRenderProcessApi
+  extends Pick<
+    InitialSagaApi,
+    | 'animationModulePath'
+    | 'numberOfFrameRendererWorkers'
+    | 'generatedAssetsDirectoryPath'
+  > {}
+
+export function spawnAnimationRenderProcess(
+  api: SpawnAnimationRenderProcessApi
+) {
+  const {
+    animationModulePath,
+    numberOfFrameRendererWorkers,
+    generatedAssetsDirectoryPath,
+  } = api
+  const spawnedAnimationRenderProcess = ChildProcess.spawn(
+    'graphics-renderer',
+    [
+      'renderAnimation',
+      `--animationModulePath=${Path.resolve(animationModulePath)}`,
+      `--numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
+      `--outputDirectoryPath=${generatedAssetsDirectoryPath}`,
+    ]
+  )
+  return { spawnedAnimationRenderProcess }
 }
 
 interface GetAnimationModuleSourceEventChannelApi
@@ -156,7 +376,7 @@ function getAnimationModuleSourceEventChannel(
             onRebuild: () => {
               animationModuleSessionVersion = animationModuleSessionVersion + 1
               emitAnimationModuleSourceEvent({
-                eventType: 'animationModuleSourceUpdated',
+                eventType: 'animationModuleSourceChanged',
                 eventPayload: {
                   animationModuleSessionVersion,
                 },
@@ -165,7 +385,7 @@ function getAnimationModuleSourceEventChannel(
           },
         }).then(() => {
           emitAnimationModuleSourceEvent({
-            eventType: 'animationModuleSourceUpdated',
+            eventType: 'animationModuleSourceChanged',
             eventPayload: {
               animationModuleSessionVersion,
             },
@@ -173,7 +393,7 @@ function getAnimationModuleSourceEventChannel(
         })
         return () => {}
       },
-      SagaBuffers.expanding(2)
+      SagaBuffers.sliding(1)
     )
   return { animationModuleSourceEventChannel }
 }
@@ -215,27 +435,27 @@ function getClientApiRouter(api: GetApiRouterApi) {
   const { emitClientServerEvent } = api
   const clientApiRouter = getExpressRouter()
   clientApiRouter.get(
-    '/latestAnimationModule/animationRenderTask',
+    '/latestAnimationModule/animationRenderProcessState',
     (someGetAnimationRenderTaskRequest, getAnimationRenderTaskResponse) => {
       emitClientServerEvent({
         eventType: 'clientApiRequest',
         eventPayload: {
-          apiRequestType: 'getAnimationRenderTask',
-          clientRequest: someGetAnimationRenderTaskRequest,
-          serverResponse: getAnimationRenderTaskResponse,
+          apiRequestType: 'getAnimationRenderProcessState',
+          apiRequest: someGetAnimationRenderTaskRequest,
+          apiResponse: getAnimationRenderTaskResponse,
         },
       })
     }
   )
   clientApiRouter.get(
-    '/latestAnimationModule/frameRenderTask/:frameIndex',
+    '/latestAnimationModule/frameRenderProcessState/:frameIndex',
     (someGetFrameRenderTaskRequest, getFrameRenderTaskResponse) => {
       emitClientServerEvent({
         eventType: 'clientApiRequest',
         eventPayload: {
-          apiRequestType: 'getFrameRenderTask',
-          clientRequest: someGetFrameRenderTaskRequest,
-          serverResponse: getFrameRenderTaskResponse,
+          apiRequestType: 'getFrameRenderProcessState',
+          apiRequest: someGetFrameRenderTaskRequest,
+          apiResponse: getFrameRenderTaskResponse,
         },
       })
     }

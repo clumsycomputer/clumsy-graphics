@@ -1,10 +1,10 @@
 import { EventBase } from './common'
 
-export type AnimationModuleSourceEvent = AnimationModuleSourceUpdatedEvent
+export type AnimationModuleSourceEvent = AnimationModuleSourceChangedEvent
 
-export interface AnimationModuleSourceUpdatedEvent
+export interface AnimationModuleSourceChangedEvent
   extends EventBase<
-    'animationModuleSourceUpdated',
+    'animationModuleSourceChanged',
     {
       animationModuleSessionVersion: number
     }

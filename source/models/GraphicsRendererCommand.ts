@@ -1,20 +1,9 @@
 import * as IO from 'io-ts'
-import { RenderAnimationModuleApi } from '../renderAnimationModule/renderAnimationModule'
 import { ConvertAnimationMp4ToGifApi } from '../convertAnimationMp4ToGif/convertAnimationMp4ToGif'
-import { Optional } from './common'
+import { NumberFromString } from '../helpers/codecTypes'
+import { RenderAnimationModuleApi } from '../renderAnimationModule/renderAnimationModule'
 import { StartAnimationDevelopmentApi } from '../startAnimationDevelopment/startAnimationDevelopment'
-
-const NumberFromString = new IO.Type<number, string, unknown>(
-  'NumberFromString',
-  (unknownInput): unknownInput is number => typeof unknownInput === 'number',
-  (unknownInput, ioContext) => {
-    const numberOutput = Number(unknownInput)
-    return isNaN(numberOutput)
-      ? IO.failure(unknownInput, ioContext)
-      : IO.success(numberOutput)
-  },
-  (numberInput) => `${numberInput}`
-)
+import { Optional } from './common'
 
 export type GraphicsRendererCommand =
   | StartDevelopmentCommand

@@ -32,10 +32,10 @@ function handleAnimationModuleSourceUpdated(
   return {
     ...currentAnimationDevelopmentState,
     animationModuleSourceState: {
-      sourceStatus: 'sourceActive',
-      sessionVersion: animationModuleSessionVersion,
-      animationRenderTask: null,
-      frameRenderTasks: {},
+      animationModuleSessionVersion,
+      sourceStatus: 'sourceReady',
+      animationRenderProcessState: null,
+      frameRenderProcessStates: {},
     },
   }
 }

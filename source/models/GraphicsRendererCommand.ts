@@ -53,7 +53,7 @@ const RenderAnimationCommandCodec = IO.exact(
       IO.intersection([
         IO.type({
           animationModulePath: IO.string,
-          outputDirectoryPath: IO.string,
+          animationMp4OutputPath: IO.string,
         }),
         IO.partial({
           numberOfFrameRendererWorkers: NumberFromString,

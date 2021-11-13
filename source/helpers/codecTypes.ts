@@ -1,6 +1,6 @@
 import * as IO from 'io-ts'
 
-export const NumberFromString = new IO.Type<number, number, unknown>(
+export const NumberFromString = new IO.Type<number, string, unknown>(
   'NumberFromString',
   (unknownInput): unknownInput is number => typeof unknownInput === 'number',
   (unknownInput, ioContext) => {
@@ -9,5 +9,5 @@ export const NumberFromString = new IO.Type<number, number, unknown>(
       ? IO.failure(unknownInput, ioContext)
       : IO.success(numberOutput)
   },
-  (numberInput) => numberInput
+  (numberInput) => `${numberInput}`
 )

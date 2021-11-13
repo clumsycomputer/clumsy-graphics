@@ -125,7 +125,7 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
   - required
 
-- **`outputDirectoryPath:`** path to directory where _.mp4_ file will be created
+- **`animationMp4OutputPath:`** path to write _.mp4_ file
 
   - required
 
@@ -163,7 +163,7 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
   - required
 
-- **`animationGifOutputPath:`** path of _.gif_ file output
+- **`animationGifOutputPath:`** path to write _.gif_ file
 
   - required
 

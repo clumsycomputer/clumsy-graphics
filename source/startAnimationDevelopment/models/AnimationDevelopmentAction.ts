@@ -1,5 +1,8 @@
 import { FunctionBrand } from '../../models/common'
-import { spawnAnimationRenderProcess } from '../sagas/initialSaga'
+import {
+  spawnAnimationRenderProcess,
+  SpawnAnimationRenderProcessApi,
+} from '../sagas/initialSaga'
 import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
 import { AnimationModuleSourceChangedEvent } from './AnimationModuleSourceEvent'
 import { ActionBase } from './common'
@@ -48,6 +51,7 @@ export interface AnimationRenderProcessSuccessfulAction
     'animationRenderProcessSuccessful',
     {
       targetAnimationModuleSessionVersion: SpawnAnimationRenderProcessAction['actionPayload']['animationModuleSessionVersion']
+      animationAssetPath: SpawnAnimationRenderProcessApi['animationMp4OutputPath']
     }
   > {}
 

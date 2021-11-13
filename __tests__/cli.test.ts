@@ -13,7 +13,7 @@ describe('graphics-renderer', () => {
   describe('renderAnimation', () => {
     test('renderAnimation outputs expected "foo.mp4"', () => {
       ChildProcess.execSync(
-        'graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --outputDirectoryPath=./test-temp --numberOfFrameRendererWorkers=7'
+        'graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./test-temp/foo.mp4 --numberOfFrameRendererWorkers=7'
       )
       expect(
         ChildProcess.spawnSync(
@@ -51,7 +51,7 @@ describe('graphics-renderer', () => {
   describe('convertAnimationToGif', () => {
     test('convertAnimationToGif outputs expected "foo.gif"', () => {
       ChildProcess.execSync(
-        'graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --outputDirectoryPath=./test-temp'
+        'graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./test-temp/foo.mp4'
       )
       ChildProcess.execSync(
         'graphics-renderer convertAnimationToGif --animationMp4SourcePath=./test-temp/foo.mp4 --animationGifOutputPath=./test-temp/foo.gif --gifAspectRatioWidth=512'

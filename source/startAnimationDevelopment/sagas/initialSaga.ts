@@ -142,7 +142,10 @@ export function* initialSaga(api: InitialSagaApi) {
                     break
                   case 'sourceReady':
                     const currentRequestParams = yield* call(() =>
-                      decodeData<{ frameIndex: number }>({
+                      decodeData<
+                        { frameIndex: number },
+                        { frameIndex: string }
+                      >({
                         targetCodec: IO.exact(
                           IO.type({
                             frameIndex: NumberFromString,
@@ -241,11 +244,15 @@ export function* initialSaga(api: InitialSagaApi) {
                 null
             ) {
               yield* call(function* () {
+                const targetAnimationMp4OutputPath = Path.resolve(
+                  generatedAssetsDirectoryPath,
+                  `${someRenderProcessStateAction.actionPayload.animationModuleSessionVersion}.mp4`
+                )
                 const { spawnedAnimationRenderProcess } =
                   spawnAnimationRenderProcess({
                     animationModulePath,
                     numberOfFrameRendererWorkers,
-                    generatedAssetsDirectoryPath,
+                    animationMp4OutputPath: targetAnimationMp4OutputPath,
                   })
                 yield* put({
                   type: 'animationRenderProcessActive',
@@ -277,6 +284,7 @@ export function* initialSaga(api: InitialSagaApi) {
                           targetAnimationModuleSessionVersion:
                             someRenderProcessStateAction.actionPayload
                               .animationModuleSessionVersion,
+                          animationAssetPath: targetAnimationMp4OutputPath,
                         },
                       })
                       break
@@ -328,26 +336,26 @@ function terminateActiveRenderProcesses(
 export interface SpawnAnimationRenderProcessApi
   extends Pick<
     InitialSagaApi,
-    | 'animationModulePath'
-    | 'numberOfFrameRendererWorkers'
-    | 'generatedAssetsDirectoryPath'
-  > {}
+    'animationModulePath' | 'numberOfFrameRendererWorkers'
+  > {
+  animationMp4OutputPath: string
+}
 
 export function spawnAnimationRenderProcess(
   api: SpawnAnimationRenderProcessApi
 ) {
   const {
     animationModulePath,
+    animationMp4OutputPath,
     numberOfFrameRendererWorkers,
-    generatedAssetsDirectoryPath,
   } = api
   const spawnedAnimationRenderProcess = ChildProcess.spawn(
     'graphics-renderer',
     [
       'renderAnimation',
       `--animationModulePath=${Path.resolve(animationModulePath)}`,
+      `--animationMp4OutputPath=${animationMp4OutputPath}`,
       `--numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
-      `--outputDirectoryPath=${generatedAssetsDirectoryPath}`,
     ]
   )
   return { spawnedAnimationRenderProcess }

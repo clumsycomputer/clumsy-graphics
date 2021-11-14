@@ -2,6 +2,9 @@ import { ChildProcess as SpawnedNodeProcess } from 'child_process'
 
 export interface AnimationDevelopmentState {
   animationModuleSourceState: AnimationModuleSourceState
+  availableAssetsFilePathMap: {
+    [assetKey: `${number}` | `${number}_${number}`]: string
+  }
 }
 
 type AnimationModuleSourceState =
@@ -21,16 +24,18 @@ export interface AnimationModuleSourceReadyState
 }
 
 type AnimationRenderProcessState =
-  | AnimationRenderProcessStateActive
-  | AnimationRenderProcessStateSuccessful
-  | AnimationRenderProcessStateFailed
+  | AnimationRenderProcessActiveState
+  | AnimationRenderProcessSuccessfulState
+  | AnimationRenderProcessFailedState
 
-interface AnimationRenderProcessStateActive extends ProcessStateActive {}
+export interface AnimationRenderProcessActiveState extends ProcessStateActive {}
 
-interface AnimationRenderProcessStateSuccessful
-  extends ProcessStateSuccessful {}
+export interface AnimationRenderProcessSuccessfulState
+  extends ProcessStateSuccessful {
+  animationAssetUrl: string
+}
 
-interface AnimationRenderProcessStateFailed extends ProcessStateFailed {}
+export interface AnimationRenderProcessFailedState extends ProcessStateFailed {}
 
 type FrameRenderProcessState =
   | FrameRenderProcessStateActive

@@ -56,7 +56,12 @@ export interface AnimationRenderProcessSuccessfulAction
   > {}
 
 export interface AnimationRenderProcessFailedAction
-  extends ActionBase<'animationRenderProcessFailed', {}> {}
+  extends ActionBase<
+    'animationRenderProcessFailed',
+    {
+      targetAnimationModuleSessionVersion: SpawnAnimationRenderProcessAction['actionPayload']['animationModuleSessionVersion']
+    }
+  > {}
 
 export interface SpawnFrameRenderProcessAction
   extends ActionBase<

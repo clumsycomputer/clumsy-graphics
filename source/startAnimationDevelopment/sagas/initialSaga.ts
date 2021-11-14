@@ -261,22 +261,22 @@ export function* initialSaga(api: InitialSagaApi) {
                   },
                 })
                 yield* spawn(function* () {
-                  const { renderTaskExitCode } = yield* call(
+                  const { renderProcessExitCode } = yield* call(
                     () =>
-                      new Promise<{ renderTaskExitCode: number | null }>(
+                      new Promise<{ renderProcessExitCode: number | null }>(
                         (resolve) => {
                           spawnedAnimationRenderProcess.once(
                             'exit',
-                            (renderTaskExitCode) => {
+                            (renderProcessExitCode) => {
                               resolve({
-                                renderTaskExitCode,
+                                renderProcessExitCode,
                               })
                             }
                           )
                         }
                       )
                   )
-                  switch (renderTaskExitCode) {
+                  switch (renderProcessExitCode) {
                     case 0:
                       yield* put({
                         type: 'animationRenderProcessSuccessful',

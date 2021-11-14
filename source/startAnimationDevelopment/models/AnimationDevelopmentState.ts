@@ -3,7 +3,7 @@ import { ChildProcess as SpawnedNodeProcess } from 'child_process'
 export interface AnimationDevelopmentState {
   animationModuleSourceState: AnimationModuleSourceState
   availableAssetsFilePathMap: {
-    [assetKey: `${number}` | `${number}_${number}`]: string
+    [assetKey: string]: string
   }
 }
 

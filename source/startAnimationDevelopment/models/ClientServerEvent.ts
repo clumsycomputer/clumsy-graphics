@@ -1,4 +1,5 @@
 import { Request as ClientRequest, Response as ServerResponse } from 'express'
+import { Server } from 'http'
 import { EventBase } from './common'
 
 export type ClientServerEvent =
@@ -25,4 +26,10 @@ interface ClientApiRequestEventBase<
   > {}
 
 export interface ClientAssetRequestEvent
-  extends EventBase<'clientAssetRequest', {}> {}
+  extends EventBase<
+    'clientAssetRequest',
+    {
+      assetRequest: ClientRequest
+      assetResponse: ServerResponse
+    }
+  > {}

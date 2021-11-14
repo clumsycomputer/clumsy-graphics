@@ -7,7 +7,6 @@ import {
 } from './models/AnimationDevelopmentAction'
 import {
   AnimationDevelopmentState,
-  AnimationModuleSourceReadyState,
   AnimationRenderProcessActiveState,
   AnimationRenderProcessFailedState,
   AnimationRenderProcessSuccessfulState,
@@ -22,6 +21,7 @@ export function animationDevelopmentStateReducer(
   },
   someAnimationDevelopmentAction: AnimationDevelopmentAction
 ): AnimationDevelopmentState {
+  console.log(someAnimationDevelopmentAction)
   switch (someAnimationDevelopmentAction.type) {
     case 'animationModuleSourceUpdated':
       return handleAnimationModuleSourceUpdated(
@@ -105,7 +105,7 @@ function handleAnimationRenderProcessSuccessful(
   ) {
     const nextAvailableAssetsFilePathMap = {
       ...currentAnimationDevelopmentState.availableAssetsFilePathMap,
-      [`${targetAnimationModuleSessionVersion}`]: animationAssetPath,
+      [`${targetAnimationModuleSessionVersion}.mp4`]: animationAssetPath,
     }
     if (
       currentAnimationDevelopmentState.animationModuleSourceState

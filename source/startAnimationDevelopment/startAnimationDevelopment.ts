@@ -21,12 +21,13 @@ export function startAnimationDevelopment(api: StartAnimationDevelopmentApi) {
     numberOfFrameRendererWorkers,
   } = api
   const sagaMiddleware = createSagaMiddleware()
-  createStore<
+  const store = createStore<
     AnimationDevelopmentState,
     AnimationDevelopmentAction,
     { dispatch: unknown },
     {}
   >(animationDevelopmentStateReducer, applyMiddleware(sagaMiddleware))
+  store.subscribe(() => console.log(JSON.stringify(store.getState(), null, 2)))
   sagaMiddleware.run(
     initialSaga as (
       api: InitialSagaApi

@@ -2,6 +2,7 @@ import ChildProcess from 'child_process'
 import { build as buildModule } from 'esbuild'
 import getNodeExternalsPlugin from 'esbuild-node-externals'
 import getExpressServer, { Router as getExpressRouter } from 'express'
+import FileSystem from 'fs'
 import * as IO from 'io-ts'
 import Path from 'path'
 import {
@@ -46,7 +47,9 @@ export function* initialSaga(api: InitialSagaApi) {
     generatedAssetsDirectoryPath,
     numberOfFrameRendererWorkers,
   } = api
-
+  yield* call(() => {
+    FileSystem.mkdirSync(Path.resolve(generatedAssetsDirectoryPath))
+  })
   yield* spawn(function* () {
     const { animationModuleSourceEventChannel } =
       getAnimationModuleSourceEventChannel({
@@ -100,15 +103,14 @@ export function* initialSaga(api: InitialSagaApi) {
                     if (
                       currentAnimationModuleSourceState.animationRenderProcessState
                     ) {
+                      const {
+                        spawnedProcess,
+                        ...clientAnimationRenderProcessState
+                      } =
+                        currentAnimationModuleSourceState.animationRenderProcessState
                       apiResponse.statusCode = 200
                       apiResponse.send(
-                        JSON.stringify({
-                          processStatus:
-                            currentAnimationModuleSourceState
-                              .animationRenderProcessState.processStatus,
-                          animationModuleSessionVersion:
-                            currentAnimationModuleSourceState.animationModuleSessionVersion,
-                        })
+                        JSON.stringify(clientAnimationRenderProcessState)
                       )
                     } else {
                       yield* put({
@@ -121,8 +123,8 @@ export function* initialSaga(api: InitialSagaApi) {
                       apiResponse.statusCode = 200
                       apiResponse.send(
                         JSON.stringify({
-                          animationModuleSessionVersion:
-                            currentAnimationModuleSourceState.animationModuleSessionVersion,
+                          // animationModuleSessionVersion:
+                          //   currentAnimationModuleSourceState.animationModuleSessionVersion,
                           processStatus: 'processActive',
                         })
                       )
@@ -194,7 +196,24 @@ export function* initialSaga(api: InitialSagaApi) {
           }
           break
         case 'clientAssetRequest':
-          yield* spawn(function* () {})
+          yield* spawn(function* () {
+            const currentAvailableAssetsFilePathMap = yield* select(
+              (currentAnimationDevelopmentState) =>
+                currentAnimationDevelopmentState.availableAssetsFilePathMap
+            )
+            const targetAssetFilepath =
+              currentAvailableAssetsFilePathMap[
+                someClientServerEvent.eventPayload.assetRequest.params
+                  .assetFilename!
+              ]
+            if (targetAssetFilepath) {
+              someClientServerEvent.eventPayload.assetResponse.sendFile(
+                targetAssetFilepath
+              )
+            } else {
+              someClientServerEvent.eventPayload.assetResponse.sendStatus(404)
+            }
+          })
           break
       }
     }
@@ -218,7 +237,22 @@ export function* initialSaga(api: InitialSagaApi) {
         (currentAnimationDevelopmentState) =>
           currentAnimationDevelopmentState.animationModuleSourceState
       )
-      if (currentAnimationModuleSourceState.sourceStatus === 'sourceReady') {
+      if (
+        currentAnimationModuleSourceState.sourceStatus ===
+          'sourceInitializing' &&
+        someRenderProcessStateAction.type === 'animationModuleSourceChanged'
+      ) {
+        yield* put({
+          type: 'animationModuleSourceUpdated',
+          actionPayload: {
+            animationModuleSessionVersion:
+              someRenderProcessStateAction.actionPayload
+                .animationModuleSessionVersion,
+          },
+        })
+      } else if (
+        currentAnimationModuleSourceState.sourceStatus === 'sourceReady'
+      ) {
         switch (someRenderProcessStateAction.type) {
           case 'animationModuleSourceChanged':
             yield* call(function* () {
@@ -356,7 +390,10 @@ export function spawnAnimationRenderProcess(
       `--animationModulePath=${Path.resolve(animationModulePath)}`,
       `--animationMp4OutputPath=${animationMp4OutputPath}`,
       `--numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
-    ]
+    ],
+    {
+      stdio: 'inherit',
+    }
   )
   return { spawnedAnimationRenderProcess }
 }
@@ -444,13 +481,16 @@ function getClientApiRouter(api: GetApiRouterApi) {
   const clientApiRouter = getExpressRouter()
   clientApiRouter.get(
     '/latestAnimationModule/animationRenderProcessState',
-    (someGetAnimationRenderTaskRequest, getAnimationRenderTaskResponse) => {
+    (
+      someGetAnimationRenderProcessStateRequest,
+      getAnimationRenderProcessStateResponse
+    ) => {
       emitClientServerEvent({
         eventType: 'clientApiRequest',
         eventPayload: {
           apiRequestType: 'getAnimationRenderProcessState',
-          apiRequest: someGetAnimationRenderTaskRequest,
-          apiResponse: getAnimationRenderTaskResponse,
+          apiRequest: someGetAnimationRenderProcessStateRequest,
+          apiResponse: getAnimationRenderProcessStateResponse,
         },
       })
     }
@@ -478,11 +518,17 @@ interface GetClientAssetRouterApi {
 function getClientAssetRouter(api: GetClientAssetRouterApi) {
   const { emitClientServerEvent } = api
   const clientAssetRouter = getExpressRouter()
-  clientAssetRouter.get('/:assetFilename', () => {
-    emitClientServerEvent({
-      eventType: 'clientAssetRequest',
-      eventPayload: {},
-    })
-  })
+  clientAssetRouter.get(
+    '/:assetFilename',
+    (someGetAssetRequest, getAssetResponse) => {
+      emitClientServerEvent({
+        eventType: 'clientAssetRequest',
+        eventPayload: {
+          assetRequest: someGetAssetRequest,
+          assetResponse: getAssetResponse,
+        },
+      })
+    }
+  )
   return { clientAssetRouter }
 }

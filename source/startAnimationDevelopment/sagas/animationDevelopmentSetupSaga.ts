@@ -1,8 +1,8 @@
 import FileSystem from 'fs'
 import Path from 'path'
 import { buffers as SagaBuffers } from 'redux-saga'
-import { getAnimationModuleSourceEventChannel } from '../eventChannels/getAnimationModuleSourceEventChannel'
-import { getClientServerEventChannel } from '../eventChannels/getClientServerEventChannel'
+import { getAnimationModuleSourceEventChannel } from '../services/getAnimationModuleSourceEventChannel'
+import { getClientServerEventChannel } from '../services/getClientServerEventChannel'
 import { actionChannel, call } from '../helpers/storeEffects'
 import { RenderProcessManagerAction } from '../models/AnimationDevelopmentAction'
 import { InitialSagaApi } from './initialSaga'
@@ -69,8 +69,8 @@ function setupGeneratedAssetsDirectory(api: SetupGeneratedAssetsDirectoryApi) {
 async function getClientPageBundle() {
   const clientPageBundleBuildResult = await buildScript({
     absWorkingDir: process.cwd(),
-    entryPoints: ['./source/startAnimationDevelopment/client/index.tsx'],
-    tsconfig: './source/startAnimationDevelopment/client/tsconfig.json',
+    entryPoints: [Path.resolve(__dirname, '../browser/index.tsx')],
+    tsconfig: Path.resolve(__dirname, '../browser/tsconfig.json'),
     platform: 'browser',
     bundle: true,
     write: false,

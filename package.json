@@ -17,6 +17,7 @@
     "io-ts": "^2.2.16",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-router-dom": "^6.0.2",
     "redux": "^4.1.2",
     "redux-saga": "^1.1.3",
     "typescript": "4.4.3"
@@ -29,7 +30,7 @@
   "scripts": {
     "prepublish": "yarn buildLocal && yarn test",
     "test": "yarn jest",
-    "buildDist": "tsc --outDir ./dist",
+    "buildDist": "rm -rf ./dist && tsc --outDir ./dist && cp -r ./source/startAnimationDevelopment/browser ./dist/startAnimationDevelopment/browser",
     "buildLocal": "yarn buildDist && chmod +x ./dist/main.js && yarn link",
     "startExampleDevelopment": "graphics-renderer startDevelopment --animationModulePath=./example-project/Foo.animation.tsx",
     "renderExampleAnimation": "graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --outputDirectoryPath=./example-project",

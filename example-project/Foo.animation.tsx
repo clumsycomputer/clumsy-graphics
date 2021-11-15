@@ -21,7 +21,7 @@ interface FooFrameProps {
 
 function FooFrame(props: FooFrameProps) {
   const { frameCount, frameIndex } = props
-  const centerAngle = ((2 * Math.PI) / frameCount) * frameIndex
+  const centerAngle = ((2 * Math.PI) / (frameCount + 1)) * frameIndex
   return (
     <svg viewBox={`0 0 100 100`}>
       <rect x={0} y={0} width={100} height={100} fill={'black'} />

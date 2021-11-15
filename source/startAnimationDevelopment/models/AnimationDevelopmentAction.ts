@@ -4,7 +4,7 @@ import {
   SpawnAnimationRenderProcessApi,
   spawnFrameRenderProcess,
   SpawnFrameRenderProcessApi,
-} from '../sagas/initialSaga'
+} from '../sagas/renderProcessManagerSaga'
 import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
 import { AnimationModuleSourceChangedEvent } from './AnimationModuleSourceEvent'
 import { ActionBase } from './common'
@@ -102,7 +102,7 @@ export interface FrameRenderProcessFailedAction
     }
   > {}
 
-export type RenderProcessStateAction =
+export type RenderProcessManagerAction =
   | AnimationModuleSourceChangedAction
   | SpawnAnimationRenderProcessAction
   | SpawnFrameRenderProcessAction

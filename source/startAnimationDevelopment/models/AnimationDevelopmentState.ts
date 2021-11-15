@@ -7,11 +7,11 @@ export interface AnimationDevelopmentState {
   }
 }
 
-type AnimationModuleSourceState =
+export type AnimationModuleSourceState =
   | AnimationModuleSourceInitializingState
   | AnimationModuleSourceReadyState
 
-interface AnimationModuleSourceInitializingState
+export interface AnimationModuleSourceInitializingState
   extends AnimationModuleSourceStateBase<'sourceInitializing'> {}
 
 export interface AnimationModuleSourceReadyState
@@ -23,7 +23,7 @@ export interface AnimationModuleSourceReadyState
   }
 }
 
-type AnimationRenderProcessState =
+export type AnimationRenderProcessState =
   | AnimationRenderProcessActiveState
   | AnimationRenderProcessSuccessfulState
   | AnimationRenderProcessFailedState
@@ -37,7 +37,7 @@ export interface AnimationRenderProcessSuccessfulState
 
 export interface AnimationRenderProcessFailedState extends ProcessStateFailed {}
 
-type FrameRenderProcessState =
+export type FrameRenderProcessState =
   | FrameRenderProcessActiveState
   | FrameRenderProcessSuccessfulState
   | FrameRenderProcessFailedState

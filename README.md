@@ -135,7 +135,7 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
 ### renderAnimationFrame
 
-> graphics-renderer renderAnimationFrame --animationModulePath=\<SourceFilePath> --frameFileOutputPath=\<FrameFilePath>
+> graphics-renderer renderAnimationFrame --animationModulePath=\<SourceFilePath> --frameFileOutputPath=\<FrameFilePath> --frameIndex=\<NaturalNumber>
 
 #### api
 

@@ -38,15 +38,18 @@ export interface AnimationRenderProcessSuccessfulState
 export interface AnimationRenderProcessFailedState extends ProcessStateFailed {}
 
 type FrameRenderProcessState =
-  | FrameRenderProcessStateActive
-  | FrameRenderProcessStateSuccessful
-  | FrameRenderProcessStateFailed
+  | FrameRenderProcessActiveState
+  | FrameRenderProcessSuccessfulState
+  | FrameRenderProcessFailedState
 
-interface FrameRenderProcessStateActive extends ProcessStateActive {}
+export interface FrameRenderProcessActiveState extends ProcessStateActive {}
 
-interface FrameRenderProcessStateSuccessful extends ProcessStateSuccessful {}
+export interface FrameRenderProcessSuccessfulState
+  extends ProcessStateSuccessful {
+  frameAssetUrl: string
+}
 
-interface FrameRenderProcessStateFailed extends ProcessStateFailed {}
+export interface FrameRenderProcessFailedState extends ProcessStateFailed {}
 
 interface ProcessStateActive extends ProcessStateBase<'processActive'> {}
 

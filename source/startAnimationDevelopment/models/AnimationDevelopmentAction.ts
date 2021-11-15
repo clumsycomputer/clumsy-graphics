@@ -2,6 +2,8 @@ import { FunctionBrand } from '../../models/common'
 import {
   spawnAnimationRenderProcess,
   SpawnAnimationRenderProcessApi,
+  spawnFrameRenderProcess,
+  SpawnFrameRenderProcessApi,
 } from '../sagas/initialSaga'
 import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
 import { AnimationModuleSourceChangedEvent } from './AnimationModuleSourceEvent'
@@ -15,6 +17,9 @@ export type AnimationDevelopmentAction =
   | AnimationRenderProcessSuccessfulAction
   | AnimationRenderProcessFailedAction
   | SpawnFrameRenderProcessAction
+  | FrameRenderProcessActiveAction
+  | FrameRenderProcessSuccessfulAction
+  | FrameRenderProcessFailedAction
 
 export interface AnimationModuleSourceChangedAction
   extends ActionBase<
@@ -68,6 +73,32 @@ export interface SpawnFrameRenderProcessAction
     'spawnFrameRenderProcess',
     Pick<AnimationModuleSourceReadyState, 'animationModuleSessionVersion'> & {
       frameIndex: number
+    }
+  > {}
+
+export interface FrameRenderProcessActiveAction
+  extends ActionBase<
+    'frameRenderProcessActive',
+    Pick<SpawnFrameRenderProcessAction['actionPayload'], 'frameIndex'> &
+      FunctionBrand<typeof spawnFrameRenderProcess>
+  > {}
+
+export interface FrameRenderProcessSuccessfulAction
+  extends ActionBase<
+    'frameRenderProcessSuccessful',
+    {
+      targetAnimationModuleSessionVersion: SpawnFrameRenderProcessAction['actionPayload']['animationModuleSessionVersion']
+      targetFrameIndex: SpawnFrameRenderProcessAction['actionPayload']['frameIndex']
+      frameAssetPath: SpawnFrameRenderProcessApi['frameFileOutputPath']
+    }
+  > {}
+
+export interface FrameRenderProcessFailedAction
+  extends ActionBase<
+    'frameRenderProcessFailed',
+    {
+      targetAnimationModuleSessionVersion: SpawnFrameRenderProcessAction['actionPayload']['animationModuleSessionVersion']
+      targetFrameIndex: SpawnFrameRenderProcessAction['actionPayload']['frameIndex']
     }
   > {}
 

@@ -4,12 +4,18 @@ import {
   AnimationRenderProcessActiveAction,
   AnimationRenderProcessFailedAction,
   AnimationRenderProcessSuccessfulAction,
+  FrameRenderProcessActiveAction,
+  FrameRenderProcessFailedAction,
+  FrameRenderProcessSuccessfulAction,
 } from './models/AnimationDevelopmentAction'
 import {
   AnimationDevelopmentState,
   AnimationRenderProcessActiveState,
   AnimationRenderProcessFailedState,
   AnimationRenderProcessSuccessfulState,
+  FrameRenderProcessActiveState,
+  FrameRenderProcessFailedState,
+  FrameRenderProcessSuccessfulState,
 } from './models/AnimationDevelopmentState'
 
 export function animationDevelopmentStateReducer(
@@ -21,7 +27,6 @@ export function animationDevelopmentStateReducer(
   },
   someAnimationDevelopmentAction: AnimationDevelopmentAction
 ): AnimationDevelopmentState {
-  console.log(someAnimationDevelopmentAction)
   switch (someAnimationDevelopmentAction.type) {
     case 'animationModuleSourceUpdated':
       return handleAnimationModuleSourceUpdated(
@@ -40,6 +45,21 @@ export function animationDevelopmentStateReducer(
       )
     case 'animationRenderProcessFailed':
       return handleAnimationRenderProcessFailed(
+        currentAnimationDevelopmentState,
+        someAnimationDevelopmentAction.actionPayload
+      )
+    case 'frameRenderProcessActive':
+      return handleFrameRenderProcessActive(
+        currentAnimationDevelopmentState,
+        someAnimationDevelopmentAction.actionPayload
+      )
+    case 'frameRenderProcessSuccessful':
+      return handleFrameRenderProcessSuccessful(
+        currentAnimationDevelopmentState,
+        someAnimationDevelopmentAction.actionPayload
+      )
+    case 'frameRenderProcessFailed':
+      return handleFrameRenderProcessFailed(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
@@ -173,5 +193,130 @@ function handleAnimationRenderProcessFailed(
     }
   } else {
     throw new Error('wtf? handleAnimationRenderProcessFailed')
+  }
+}
+
+function handleFrameRenderProcessActive(
+  currentAnimationDevelopmentState: AnimationDevelopmentState,
+  frameRenderProcessActiveActionPayload: FrameRenderProcessActiveAction['actionPayload']
+): AnimationDevelopmentState {
+  const { frameIndex, spawnedFrameRenderProcess } =
+    frameRenderProcessActiveActionPayload
+  if (
+    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
+    'sourceReady'
+  ) {
+    const nextFrameRenderProcessState: FrameRenderProcessActiveState = {
+      spawnedProcess: spawnedFrameRenderProcess,
+      processStatus: 'processActive',
+    }
+    return {
+      ...currentAnimationDevelopmentState,
+      animationModuleSourceState: {
+        ...currentAnimationDevelopmentState.animationModuleSourceState,
+        frameRenderProcessStates: {
+          ...currentAnimationDevelopmentState.animationModuleSourceState
+            .frameRenderProcessStates,
+          [frameIndex]: nextFrameRenderProcessState,
+        },
+      },
+    }
+  } else {
+    throw new Error('wtf? handleFrameRenderProcessActive')
+  }
+}
+
+function handleFrameRenderProcessSuccessful(
+  currentAnimationDevelopmentState: AnimationDevelopmentState,
+  frameRenderProcessSuccessfulActionPayload: FrameRenderProcessSuccessfulAction['actionPayload']
+): AnimationDevelopmentState {
+  const {
+    targetAnimationModuleSessionVersion,
+    frameAssetPath,
+    targetFrameIndex,
+  } = frameRenderProcessSuccessfulActionPayload
+  if (
+    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
+      'sourceReady' &&
+    currentAnimationDevelopmentState.animationModuleSourceState
+      .frameRenderProcessStates[targetFrameIndex] !== undefined
+  ) {
+    const nextAvailableAssetsFilePathMap = {
+      ...currentAnimationDevelopmentState.availableAssetsFilePathMap,
+      [`${targetAnimationModuleSessionVersion}_${targetFrameIndex}.png`]:
+        frameAssetPath,
+    }
+    if (
+      currentAnimationDevelopmentState.animationModuleSourceState
+        .animationModuleSessionVersion === targetAnimationModuleSessionVersion
+    ) {
+      const nextFrameRenderProcessState: FrameRenderProcessSuccessfulState = {
+        spawnedProcess:
+          currentAnimationDevelopmentState.animationModuleSourceState
+            .frameRenderProcessStates[targetFrameIndex]!.spawnedProcess,
+        processStatus: 'processSuccessful',
+        frameAssetUrl: `/asset/${targetAnimationModuleSessionVersion}_${targetFrameIndex}.png`,
+      }
+      return {
+        ...currentAnimationDevelopmentState,
+        animationModuleSourceState: {
+          ...currentAnimationDevelopmentState.animationModuleSourceState,
+          frameRenderProcessStates: {
+            ...currentAnimationDevelopmentState.animationModuleSourceState
+              .frameRenderProcessStates,
+            [targetFrameIndex]: nextFrameRenderProcessState,
+          },
+        },
+        availableAssetsFilePathMap: nextAvailableAssetsFilePathMap,
+      }
+    } else {
+      return {
+        ...currentAnimationDevelopmentState,
+        availableAssetsFilePathMap: nextAvailableAssetsFilePathMap,
+      }
+    }
+  } else {
+    throw new Error('wtf? handleFrameRenderProcessSuccessful')
+  }
+}
+
+function handleFrameRenderProcessFailed(
+  currentAnimationDevelopmentState: AnimationDevelopmentState,
+  frameRenderProcessFailedActionPayload: FrameRenderProcessFailedAction['actionPayload']
+): AnimationDevelopmentState {
+  const { targetAnimationModuleSessionVersion, targetFrameIndex } =
+    frameRenderProcessFailedActionPayload
+  if (
+    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
+      'sourceReady' &&
+    currentAnimationDevelopmentState.animationModuleSourceState
+      .frameRenderProcessStates[targetFrameIndex] !== undefined
+  ) {
+    if (
+      currentAnimationDevelopmentState.animationModuleSourceState
+        .animationModuleSessionVersion === targetAnimationModuleSessionVersion
+    ) {
+      const nextFrameRenderProcessState: FrameRenderProcessFailedState = {
+        spawnedProcess:
+          currentAnimationDevelopmentState.animationModuleSourceState
+            .frameRenderProcessStates[targetFrameIndex]!.spawnedProcess,
+        processStatus: 'processFailed',
+      }
+      return {
+        ...currentAnimationDevelopmentState,
+        animationModuleSourceState: {
+          ...currentAnimationDevelopmentState.animationModuleSourceState,
+          frameRenderProcessStates: {
+            ...currentAnimationDevelopmentState.animationModuleSourceState
+              .frameRenderProcessStates,
+            [targetFrameIndex]: nextFrameRenderProcessState,
+          },
+        },
+      }
+    } else {
+      return currentAnimationDevelopmentState
+    }
+  } else {
+    throw new Error('wtf? handleFrameRenderProcessFailed')
   }
 }

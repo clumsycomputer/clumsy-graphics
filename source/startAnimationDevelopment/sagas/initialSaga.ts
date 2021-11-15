@@ -20,7 +20,10 @@ import {
   takeActionFromChannel,
   takeEvent,
 } from '../helpers/storeEffects'
-import { RenderProcessStateAction } from '../models/AnimationDevelopmentAction'
+import {
+  RenderProcessStateAction,
+  SpawnFrameRenderProcessAction,
+} from '../models/AnimationDevelopmentAction'
 import { AnimationModuleSourceReadyState } from '../models/AnimationDevelopmentState'
 import { AnimationModuleSourceEvent } from '../models/AnimationModuleSourceEvent'
 import {
@@ -48,6 +51,10 @@ export function* initialSaga(api: InitialSagaApi) {
     numberOfFrameRendererWorkers,
   } = api
   yield* call(() => {
+    FileSystem.rmSync(Path.resolve(generatedAssetsDirectoryPath), {
+      recursive: true,
+      force: true,
+    })
     FileSystem.mkdirSync(Path.resolve(generatedAssetsDirectoryPath))
   })
   yield* spawn(function* () {
@@ -143,39 +150,40 @@ export function* initialSaga(api: InitialSagaApi) {
                     apiResponse.sendStatus(204)
                     break
                   case 'sourceReady':
-                    const currentRequestParams = yield* call(() =>
-                      decodeData<
-                        { frameIndex: number },
-                        { frameIndex: string }
-                      >({
-                        targetCodec: IO.exact(
-                          IO.type({
-                            frameIndex: NumberFromString,
-                          })
-                        ),
-                        inputData: apiRequest.params,
-                      })
+                    const getFrameRenderProcessStateRequestParams = yield* call(
+                      () =>
+                        decodeData<
+                          { frameIndex: number },
+                          { frameIndex: string }
+                        >({
+                          targetCodec: IO.exact(
+                            IO.type({
+                              frameIndex: NumberFromString,
+                            })
+                          ),
+                          inputData: apiRequest.params,
+                        })
                     )
                     const targetFrameRenderProcessState =
                       currentAnimationModuleSourceState
                         .frameRenderProcessStates[
-                        currentRequestParams.frameIndex
+                        getFrameRenderProcessStateRequestParams.frameIndex
                       ]
                     if (targetFrameRenderProcessState) {
+                      const {
+                        spawnedProcess,
+                        ...clientFrameRenderProcessState
+                      } = targetFrameRenderProcessState
                       apiResponse.statusCode = 200
                       apiResponse.send(
-                        JSON.stringify({
-                          animationModuleSessionVersion:
-                            currentAnimationModuleSourceState.animationModuleSessionVersion,
-                          processStatus:
-                            targetFrameRenderProcessState.processStatus,
-                        })
+                        JSON.stringify(clientFrameRenderProcessState)
                       )
                     } else {
                       yield* put({
                         type: 'spawnFrameRenderProcess',
                         actionPayload: {
-                          frameIndex: currentRequestParams.frameIndex,
+                          frameIndex:
+                            getFrameRenderProcessStateRequestParams.frameIndex,
                           animationModuleSessionVersion:
                             currentAnimationModuleSourceState.animationModuleSessionVersion,
                         },
@@ -183,9 +191,9 @@ export function* initialSaga(api: InitialSagaApi) {
                       apiResponse.statusCode = 200
                       apiResponse.send(
                         JSON.stringify({
-                          taskStatus: 'renderTaskInProgress',
-                          animationModuleSessionVersion:
-                            currentAnimationModuleSourceState.animationModuleSessionVersion,
+                          processStatus: 'processActive',
+                          // animationModuleSessionVersion:
+                          //   currentAnimationModuleSourceState.animationModuleSessionVersion,
                         })
                       )
                     }
@@ -197,14 +205,24 @@ export function* initialSaga(api: InitialSagaApi) {
           break
         case 'clientAssetRequest':
           yield* spawn(function* () {
+            const getClientAssetRequestParams = yield* call(() =>
+              decodeData<{ assetFilename: string }>({
+                targetCodec: IO.exact(
+                  IO.type({
+                    assetFilename: IO.string,
+                  })
+                ),
+                inputData:
+                  someClientServerEvent.eventPayload.assetRequest.params,
+              })
+            )
             const currentAvailableAssetsFilePathMap = yield* select(
               (currentAnimationDevelopmentState) =>
                 currentAnimationDevelopmentState.availableAssetsFilePathMap
             )
             const targetAssetFilepath =
               currentAvailableAssetsFilePathMap[
-                someClientServerEvent.eventPayload.assetRequest.params
-                  .assetFilename!
+                getClientAssetRequestParams.assetFilename
               ]
             if (targetAssetFilepath) {
               someClientServerEvent.eventPayload.assetResponse.sendFile(
@@ -341,7 +359,84 @@ export function* initialSaga(api: InitialSagaApi) {
             }
             break
           case 'spawnFrameRenderProcess':
-            yield* call(function* () {})
+            if (
+              currentAnimationModuleSourceState.animationModuleSessionVersion ===
+                someRenderProcessStateAction.actionPayload
+                  .animationModuleSessionVersion &&
+              currentAnimationModuleSourceState.frameRenderProcessStates[
+                someRenderProcessStateAction.actionPayload.frameIndex
+              ] === undefined
+            ) {
+              yield* call(function* () {
+                const targetFramePngOutputPath = Path.resolve(
+                  generatedAssetsDirectoryPath,
+                  `${someRenderProcessStateAction.actionPayload.animationModuleSessionVersion}_${someRenderProcessStateAction.actionPayload.frameIndex}.png`
+                )
+                const { spawnedFrameRenderProcess } = spawnFrameRenderProcess({
+                  animationModulePath,
+                  frameIndex:
+                    someRenderProcessStateAction.actionPayload.frameIndex,
+                  frameFileOutputPath: targetFramePngOutputPath,
+                })
+                yield* put({
+                  type: 'frameRenderProcessActive',
+                  actionPayload: {
+                    spawnedFrameRenderProcess,
+                    frameIndex:
+                      someRenderProcessStateAction.actionPayload.frameIndex,
+                  },
+                })
+                yield* spawn(function* () {
+                  const { renderProcessExitCode } = yield* call(
+                    () =>
+                      new Promise<{ renderProcessExitCode: number | null }>(
+                        (resolve) => {
+                          spawnedFrameRenderProcess.once(
+                            'exit',
+                            (renderProcessExitCode) => {
+                              resolve({
+                                renderProcessExitCode,
+                              })
+                            }
+                          )
+                        }
+                      )
+                  )
+                  switch (renderProcessExitCode) {
+                    case 0:
+                      yield* put({
+                        type: 'frameRenderProcessSuccessful',
+                        actionPayload: {
+                          targetAnimationModuleSessionVersion:
+                            someRenderProcessStateAction.actionPayload
+                              .animationModuleSessionVersion,
+                          targetFrameIndex:
+                            someRenderProcessStateAction.actionPayload
+                              .frameIndex,
+                          frameAssetPath: targetFramePngOutputPath,
+                        },
+                      })
+                      break
+                    case 1:
+                      yield* put({
+                        type: 'frameRenderProcessFailed',
+                        actionPayload: {
+                          targetAnimationModuleSessionVersion:
+                            someRenderProcessStateAction.actionPayload
+                              .animationModuleSessionVersion,
+                          targetFrameIndex:
+                            someRenderProcessStateAction.actionPayload
+                              .frameIndex,
+                        },
+                      })
+                      break
+                    case null:
+                      // frameRenderProcess was terminated
+                      break
+                  }
+                })
+              })
+            }
             break
         }
       }
@@ -390,12 +485,26 @@ export function spawnAnimationRenderProcess(
       `--animationModulePath=${Path.resolve(animationModulePath)}`,
       `--animationMp4OutputPath=${animationMp4OutputPath}`,
       `--numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
-    ],
-    {
-      stdio: 'inherit',
-    }
+    ]
   )
   return { spawnedAnimationRenderProcess }
+}
+
+export interface SpawnFrameRenderProcessApi
+  extends Pick<InitialSagaApi, 'animationModulePath'>,
+    Pick<SpawnFrameRenderProcessAction['actionPayload'], 'frameIndex'> {
+  frameFileOutputPath: string
+}
+
+export function spawnFrameRenderProcess(api: SpawnFrameRenderProcessApi) {
+  const { animationModulePath, frameIndex, frameFileOutputPath } = api
+  const spawnedFrameRenderProcess = ChildProcess.spawn('graphics-renderer', [
+    'renderAnimationFrame',
+    `--animationModulePath=${Path.resolve(animationModulePath)}`,
+    `--frameIndex=${frameIndex}`,
+    `--frameFileOutputPath=${frameFileOutputPath}`,
+  ])
+  return { spawnedFrameRenderProcess }
 }
 
 interface GetAnimationModuleSourceEventChannelApi
@@ -496,7 +605,7 @@ function getClientApiRouter(api: GetApiRouterApi) {
     }
   )
   clientApiRouter.get(
-    '/latestAnimationModule/frameRenderProcessState/:frameIndex',
+    '/latestAnimationModule/frameRenderProcessState/:frameIndex(\\d+)',
     (someGetFrameRenderTaskRequest, getFrameRenderTaskResponse) => {
       emitClientServerEvent({
         eventType: 'clientApiRequest',

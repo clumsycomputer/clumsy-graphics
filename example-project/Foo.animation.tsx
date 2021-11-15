@@ -24,7 +24,7 @@ function FooFrame(props: FooFrameProps) {
   const centerAngle = ((2 * Math.PI) / frameCount) * frameIndex
   return (
     <svg viewBox={`0 0 100 100`}>
-      <rect x={0} y={0} width={100} height={100} fill={'black'} />
+      <rect x={0} y={0} width={100} height={100} fill={'white'} />
       <circle
         cx={15 * Math.cos(centerAngle) + 50}
         cy={15 * Math.sin(centerAngle) + 50}

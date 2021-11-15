@@ -6,6 +6,7 @@ import {
 import {
   ClientApiRequestEvent,
   ClientAssetRequestEvent,
+  ClientPageRequestEvent,
   ClientServerEvent,
 } from '../models/ClientServerEvent'
 import getExpressServer, { Router as getExpressRouter } from 'express'
@@ -27,8 +28,12 @@ export function getClientServerEventChannel(
       const { clientAssetRouter } = getClientAssetRouter({
         emitClientServerEvent,
       })
+      const { clientPageRouter } = getClientPageRouter({
+        emitClientServerEvent,
+      })
       clientServer.use('/api', clientApiRouter)
       clientServer.use('/asset', clientAssetRouter)
+      clientServer.use('/', clientPageRouter)
       clientServer.listen(clientServerPort, () => {
         emitClientServerEvent({
           eventType: 'clientServerListening',
@@ -101,4 +106,38 @@ function getClientAssetRouter(api: GetClientAssetRouterApi) {
     }
   )
   return { clientAssetRouter }
+}
+
+interface GetClientPageRouterApi {
+  emitClientServerEvent: ChannelEventEmitter<ClientPageRequestEvent>
+}
+
+function getClientPageRouter(api: GetClientPageRouterApi) {
+  const { emitClientServerEvent } = api
+  const clientPageRouter = getExpressRouter()
+  clientPageRouter.get(
+    '/latestAnimationModule/animation',
+    (someGetPageRequest, getPageResponse) => {
+      emitClientServerEvent({
+        eventType: 'clientPageRequest',
+        eventPayload: {
+          pageRequest: someGetPageRequest,
+          pageResponse: getPageResponse,
+        },
+      })
+    }
+  )
+  clientPageRouter.get(
+    '/latestAnimationModule/frame/:frameIndex(\\d+)',
+    (someGetPageRequest, getPageResponse) => {
+      emitClientServerEvent({
+        eventType: 'clientPageRequest',
+        eventPayload: {
+          pageRequest: someGetPageRequest,
+          pageResponse: getPageResponse,
+        },
+      })
+    }
+  )
+  return { clientPageRouter }
 }

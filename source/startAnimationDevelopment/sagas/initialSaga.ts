@@ -22,8 +22,9 @@ export function* initialSaga(api: InitialSagaApi) {
     numberOfFrameRendererWorkers,
   } = api
   const {
-    clientServerEventChannel,
     animationModuleSourceEventChannel,
+    clientServerEventChannel,
+    clientPageBundle,
     renderProcessManagerActionChannel,
   } = yield* call(animationDevelopmentSetupSaga, {
     animationModulePath,
@@ -35,6 +36,7 @@ export function* initialSaga(api: InitialSagaApi) {
   })
   yield* spawn(clientServerEventHandlerSaga, {
     clientServerEventChannel,
+    clientPageBundle,
   })
   yield* spawn(renderProcessManagerSaga, {
     animationModulePath,

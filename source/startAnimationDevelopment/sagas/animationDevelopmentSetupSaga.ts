@@ -3,9 +3,10 @@ import Path from 'path'
 import { buffers as SagaBuffers } from 'redux-saga'
 import { getAnimationModuleSourceEventChannel } from '../eventChannels/getAnimationModuleSourceEventChannel'
 import { getClientServerEventChannel } from '../eventChannels/getClientServerEventChannel'
-import { actionChannel } from '../helpers/storeEffects'
+import { actionChannel, call } from '../helpers/storeEffects'
 import { RenderProcessManagerAction } from '../models/AnimationDevelopmentAction'
 import { InitialSagaApi } from './initialSaga'
+import { build as buildScript } from 'esbuild'
 
 export interface AnimationDevelopmentSetupSagaApi
   extends Pick<
@@ -21,11 +22,12 @@ export function* animationDevelopmentSetupSaga(
     animationModulePath,
     clientServerPort,
   } = api
-  FileSystem.rmSync(Path.resolve(generatedAssetsDirectoryPath), {
-    recursive: true,
-    force: true,
+  const generatedAssetsDirectoryAbsolutePath = Path.resolve(
+    generatedAssetsDirectoryPath
+  )
+  setupGeneratedAssetsDirectory({
+    generatedAssetsDirectoryAbsolutePath,
   })
-  FileSystem.mkdirSync(Path.resolve(generatedAssetsDirectoryPath))
   const { animationModuleSourceEventChannel } =
     getAnimationModuleSourceEventChannel({
       animationModulePath,
@@ -42,9 +44,39 @@ export function* animationDevelopmentSetupSaga(
       ],
       SagaBuffers.expanding(3)
     )
+  const { clientPageBundle } = yield* call(getClientPageBundle)
   return {
     animationModuleSourceEventChannel,
     clientServerEventChannel,
     renderProcessManagerActionChannel,
+    clientPageBundle,
+  }
+}
+
+interface SetupGeneratedAssetsDirectoryApi {
+  generatedAssetsDirectoryAbsolutePath: string
+}
+
+function setupGeneratedAssetsDirectory(api: SetupGeneratedAssetsDirectoryApi) {
+  const { generatedAssetsDirectoryAbsolutePath } = api
+  FileSystem.rmSync(generatedAssetsDirectoryAbsolutePath, {
+    recursive: true,
+    force: true,
+  })
+  FileSystem.mkdirSync(generatedAssetsDirectoryAbsolutePath)
+}
+
+async function getClientPageBundle() {
+  const clientPageBundleBuildResult = await buildScript({
+    absWorkingDir: process.cwd(),
+    entryPoints: ['./source/startAnimationDevelopment/client/index.tsx'],
+    tsconfig: './source/startAnimationDevelopment/client/tsconfig.json',
+    platform: 'browser',
+    bundle: true,
+    write: false,
+  })
+  const clientPageBundle = clientPageBundleBuildResult.outputFiles[0]!.text!
+  return {
+    clientPageBundle,
   }
 }

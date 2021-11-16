@@ -10,8 +10,6 @@
     "forceConsistentCasingInFileNames": true,
     "noUncheckedIndexedAccess": true,
     "jsx": "react-jsx",
-    "declaration": true
   },
-  "files": ["./source/main.ts", "./source/renderAnimationModule/frameRendererWorker.tsx"],
   "exclude": ["node_modules", "dist"]
 }

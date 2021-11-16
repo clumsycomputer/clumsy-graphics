@@ -11,6 +11,8 @@ import {
 } from '../models/ClientServerEvent'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
 import ReactDomServer from 'react-dom/server'
+import { getClientAnimationRenderProcessState } from '../helpers/getClientAnimationRenderProcessState'
+import { getClientFrameRenderProcessState } from '../helpers/getClientFrameRenderProcessState'
 
 export interface ClientServerEventHandlerSagaApi
   extends Pick<
@@ -76,12 +78,9 @@ function* getAnimationRenderProcessStateRequestHandler(
       apiResponse.sendStatus(204)
       break
     case 'sourceReady':
-      if (currentAnimationModuleSourceState.animationRenderProcessState) {
-        const { spawnedProcess, ...clientAnimationRenderProcessState } =
-          currentAnimationModuleSourceState.animationRenderProcessState
-        apiResponse.statusCode = 200
-        apiResponse.send(JSON.stringify(clientAnimationRenderProcessState))
-      } else {
+      if (
+        currentAnimationModuleSourceState.animationRenderProcessState === null
+      ) {
         yield* put({
           type: 'spawnAnimationRenderProcess',
           actionPayload: {
@@ -89,13 +88,17 @@ function* getAnimationRenderProcessStateRequestHandler(
               currentAnimationModuleSourceState.animationModuleSessionVersion,
           },
         })
-        apiResponse.statusCode = 200
-        apiResponse.send(
-          JSON.stringify({
-            processStatus: 'processActive',
-          })
-        )
       }
+      const currentClientAnimationRenderProcessState =
+        getClientAnimationRenderProcessState({
+          animationModuleSessionVersion:
+            currentAnimationModuleSourceState.animationModuleSessionVersion,
+          animationRenderProcessState:
+            currentAnimationModuleSourceState.animationRenderProcessState,
+        })
+      apiResponse.statusCode = 200
+      apiResponse.send(JSON.stringify(currentClientAnimationRenderProcessState))
+      break
   }
 }
 
@@ -132,12 +135,7 @@ function* getFrameRenderProcessStateRequestHandler(
         currentAnimationModuleSourceState.frameRenderProcessStates[
           getFrameRenderProcessStateRequestParams.frameIndex
         ]
-      if (targetFrameRenderProcessState) {
-        const { spawnedProcess, ...clientFrameRenderProcessState } =
-          targetFrameRenderProcessState
-        apiResponse.statusCode = 200
-        apiResponse.send(JSON.stringify(clientFrameRenderProcessState))
-      } else {
+      if (targetFrameRenderProcessState === undefined) {
         yield* put({
           type: 'spawnFrameRenderProcess',
           actionPayload: {
@@ -146,13 +144,15 @@ function* getFrameRenderProcessStateRequestHandler(
               currentAnimationModuleSourceState.animationModuleSessionVersion,
           },
         })
-        apiResponse.statusCode = 200
-        apiResponse.send(
-          JSON.stringify({
-            processStatus: 'processActive',
-          })
-        )
       }
+      const currentClientFrameRenderProcessState =
+        getClientFrameRenderProcessState({
+          animationModuleSessionVersion:
+            currentAnimationModuleSourceState.animationModuleSessionVersion,
+          frameRenderProcessState: targetFrameRenderProcessState,
+        })
+      apiResponse.statusCode = 200
+      apiResponse.send(JSON.stringify(currentClientFrameRenderProcessState))
       break
   }
 }

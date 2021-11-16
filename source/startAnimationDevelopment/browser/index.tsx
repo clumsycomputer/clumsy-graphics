@@ -6,6 +6,10 @@ import {
   Routes,
   useParams as useRouteParams,
 } from 'react-router-dom'
+import {
+  ClientAnimationRenderProcessState,
+  ClientFrameRenderProcessState,
+} from '../models/RenderProcessState'
 
 const appContainer = document.createElement('div')
 document.body.append(appContainer)
@@ -33,7 +37,7 @@ function ClientApp() {
 
 function AnimationPage() {
   const [animationRenderProcessState, setAnimationRenderProcessState] =
-    useState<any>(null)
+    useState<ClientAnimationRenderProcessState | null>(null)
   useEffect(() => {
     setInterval(() => {
       fetch('/api/latestAnimationModule/animationRenderProcessState')
@@ -41,17 +45,15 @@ function AnimationPage() {
         .then((nextAnimationRenderProcessState) => {
           setAnimationRenderProcessState(nextAnimationRenderProcessState)
         })
+        .catch((fetchAnimationRenderProcessStateError) => {
+          console.error(fetchAnimationRenderProcessStateError)
+        })
     }, 500)
   }, [])
   if (animationRenderProcessState?.processStatus === 'processSuccessful') {
     return (
       <PageContainer>
-        <div
-          style={{
-            maxWidth: '100%',
-            maxHeight: '100%',
-          }}
-        >
+        <AssetContainer>
           <video
             style={{
               maxWidth: '100%',
@@ -59,7 +61,6 @@ function AnimationPage() {
               objectFit: 'contain',
             }}
             controls={true}
-            autoPlay={true}
             loop={true}
           >
             <source
@@ -67,9 +68,13 @@ function AnimationPage() {
               src={animationRenderProcessState.animationAssetUrl}
             />
           </video>
-        </div>
+        </AssetContainer>
       </PageContainer>
     )
+  } else if (animationRenderProcessState?.processStatus === 'processActive') {
+    return <div>rendering animation...</div>
+  } else if (animationRenderProcessState?.processStatus === 'processFailed') {
+    return <div>animation rendering failed!</div>
   } else {
     return null
   }
@@ -78,7 +83,7 @@ function AnimationPage() {
 function FramePage() {
   const framePageParams = useRouteParams()
   const [frameRenderProcessState, setFrameRenderProcessState] =
-    useState<any>(null)
+    useState<ClientFrameRenderProcessState | null>(null)
   useEffect(() => {
     setInterval(() => {
       fetch(
@@ -88,18 +93,15 @@ function FramePage() {
         .then((nextFrameRenderProcessState) => {
           setFrameRenderProcessState(nextFrameRenderProcessState)
         })
+        .catch((fetchFrameRenderProcessStateError) => {
+          console.error(fetchFrameRenderProcessStateError)
+        })
     }, 500)
   }, [])
-
   if (frameRenderProcessState?.processStatus === 'processSuccessful') {
     return (
       <PageContainer>
-        <div
-          style={{
-            maxWidth: '100%',
-            maxHeight: '100%',
-          }}
-        >
+        <AssetContainer>
           <img
             style={{
               maxWidth: '100%',
@@ -108,9 +110,13 @@ function FramePage() {
             }}
             src={frameRenderProcessState.frameAssetUrl}
           />
-        </div>
+        </AssetContainer>
       </PageContainer>
     )
+  } else if (frameRenderProcessState?.processStatus === 'processActive') {
+    return <div>rendering frame... {framePageParams.frameIndex}</div>
+  } else if (frameRenderProcessState?.processStatus === 'processFailed') {
+    return <div>frame rendering failed! {framePageParams.frameIndex}</div>
   } else {
     return null
   }
@@ -132,6 +138,24 @@ function PageContainer(props: PageContainerProps) {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+interface AssetContainerProps {
+  children: ReactNode
+}
+
+function AssetContainer(props: AssetContainerProps) {
+  const { children } = props
+  return (
+    <div
+      style={{
+        maxWidth: '100%',
+        maxHeight: '100%',
       }}
     >
       {children}

@@ -8,15 +8,15 @@ import {
   FrameRenderProcessFailedAction,
   FrameRenderProcessSuccessfulAction,
 } from './models/AnimationDevelopmentAction'
+import { AnimationDevelopmentState } from './models/AnimationDevelopmentState'
 import {
-  AnimationDevelopmentState,
   AnimationRenderProcessActiveState,
   AnimationRenderProcessFailedState,
   AnimationRenderProcessSuccessfulState,
   FrameRenderProcessActiveState,
   FrameRenderProcessFailedState,
   FrameRenderProcessSuccessfulState,
-} from './models/AnimationDevelopmentState'
+} from './models/RenderProcessState'
 
 export function animationDevelopmentStateReducer(
   currentAnimationDevelopmentState: AnimationDevelopmentState = {

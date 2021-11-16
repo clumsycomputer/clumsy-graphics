@@ -30,7 +30,7 @@
   "scripts": {
     "prepublish": "yarn buildLocal && yarn test",
     "test": "yarn jest",
-    "buildDist": "rm -rf ./dist && tsc --outDir ./dist && cp -r ./source/startAnimationDevelopment/browser ./dist/startAnimationDevelopment/browser",
+    "buildDist": "rm -rf ./dist && tsc --project ./dist.tsconfig.json --outDir ./dist && cp -r ./source/startAnimationDevelopment/browser ./dist/startAnimationDevelopment/browser",
     "buildLocal": "yarn buildDist && chmod +x ./dist/main.js && yarn link",
     "startExampleDevelopment": "graphics-renderer startDevelopment --animationModulePath=./example-project/Foo.animation.tsx",
     "renderExampleAnimation": "graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --outputDirectoryPath=./example-project",

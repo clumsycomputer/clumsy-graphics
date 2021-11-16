@@ -1,6 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { ReactNode, useEffect, useState } from 'react'
 import ReactDom from 'react-dom'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useParams as useRouteParams,
+} from 'react-router-dom'
 
 const appContainer = document.createElement('div')
 document.body.append(appContainer)
@@ -40,17 +45,7 @@ function AnimationPage() {
   }, [])
   if (animationRenderProcessState?.processStatus === 'processSuccessful') {
     return (
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          width: '100vw',
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+      <PageContainer>
         <div
           style={{
             maxWidth: '100%',
@@ -73,7 +68,7 @@ function AnimationPage() {
             />
           </video>
         </div>
-      </div>
+      </PageContainer>
     )
   } else {
     return null
@@ -81,5 +76,65 @@ function AnimationPage() {
 }
 
 function FramePage() {
-  return <div>frame</div>
+  const framePageParams = useRouteParams()
+  const [frameRenderProcessState, setFrameRenderProcessState] =
+    useState<any>(null)
+  useEffect(() => {
+    setInterval(() => {
+      fetch(
+        `/api/latestAnimationModule/frameRenderProcessState/${framePageParams.frameIndex}`
+      )
+        .then((fetchResult) => fetchResult.json())
+        .then((nextFrameRenderProcessState) => {
+          setFrameRenderProcessState(nextFrameRenderProcessState)
+        })
+    }, 500)
+  }, [])
+
+  if (frameRenderProcessState?.processStatus === 'processSuccessful') {
+    return (
+      <PageContainer>
+        <div
+          style={{
+            maxWidth: '100%',
+            maxHeight: '100%',
+          }}
+        >
+          <img
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+            }}
+            src={frameRenderProcessState.frameAssetUrl}
+          />
+        </div>
+      </PageContainer>
+    )
+  } else {
+    return null
+  }
+}
+
+interface PageContainerProps {
+  children: ReactNode
+}
+
+function PageContainer(props: PageContainerProps) {
+  const { children } = props
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {children}
+    </div>
+  )
 }

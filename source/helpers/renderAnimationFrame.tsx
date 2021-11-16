@@ -19,22 +19,25 @@ export interface RenderAnimationFrameApi {
 export async function renderAnimationFrame(api: RenderAnimationFrameApi) {
   const { animationModule, frameIndex, frameFileOutputPath } = api
   const { FrameDescriptor, frameCount } = animationModule
+  process.stdout.write(`rendering frame: ${frameIndex}\n`)
   const frameSvgMarkup = ReactDomServer.renderToStaticMarkup(
     <FrameDescriptor frameCount={frameCount} frameIndex={frameIndex} />
   )
-  await writeSvgMarkupToPngFile({
+  process.stdout.write('encoding svg markup to image file...\n')
+  await writeSvgMarkupToImageFile({
     frameFileOutputPath,
     frameSvgMarkup,
     frameSize: animationModule.frameSize,
   })
 }
 
-interface WriteSvgMarkupToFileApi extends Pick<AnimationModule, 'frameSize'> {
+interface WriteSvgMarkupToImageFileApi
+  extends Pick<AnimationModule, 'frameSize'> {
   frameSvgMarkup: FunctionResult<typeof ReactDomServer.renderToStaticMarkup>
   frameFileOutputPath: string
 }
 
-async function writeSvgMarkupToPngFile(api: WriteSvgMarkupToFileApi) {
+async function writeSvgMarkupToImageFile(api: WriteSvgMarkupToImageFileApi) {
   const { frameSvgMarkup, frameSize, frameFileOutputPath } = api
   const frameSvgStream = ReadableStream.from([frameSvgMarkup])
   const frameFileOutputTypeData: unknown = frameFileOutputPath.split(

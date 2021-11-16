@@ -4,9 +4,11 @@ import {
   AnimationRenderProcessActiveAction,
   AnimationRenderProcessFailedAction,
   AnimationRenderProcessSuccessfulAction,
+  AnimationRenderProcessUpdateAction,
   FrameRenderProcessActiveAction,
   FrameRenderProcessFailedAction,
   FrameRenderProcessSuccessfulAction,
+  FrameRenderProcessUpdateAction,
 } from './models/AnimationDevelopmentAction'
 import { AnimationDevelopmentState } from './models/AnimationDevelopmentState'
 import {
@@ -38,6 +40,11 @@ export function animationDevelopmentStateReducer(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
+    case 'animationRenderProcessUpdate':
+      return handleAnimationRenderProcessUpdate(
+        currentAnimationDevelopmentState,
+        someAnimationDevelopmentAction.actionPayload
+      )
     case 'animationRenderProcessSuccessful':
       return handleAnimationRenderProcessSuccessful(
         currentAnimationDevelopmentState,
@@ -50,6 +57,11 @@ export function animationDevelopmentStateReducer(
       )
     case 'frameRenderProcessActive':
       return handleFrameRenderProcessActive(
+        currentAnimationDevelopmentState,
+        someAnimationDevelopmentAction.actionPayload
+      )
+    case 'frameRenderProcessUpdate':
+      return handleFrameRenderProcessUpdate(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
@@ -97,6 +109,7 @@ function handleAnimationRenderProcessActive(
   ) {
     const nextAnimationRenderProcessState: AnimationRenderProcessActiveState = {
       spawnedProcess: spawnedAnimationRenderProcess,
+      lastProcessMessage: null,
       processStatus: 'processActive',
     }
     return {
@@ -108,6 +121,44 @@ function handleAnimationRenderProcessActive(
     }
   } else {
     throw new Error('wtf? handleAnimationRenderProcessActive')
+  }
+}
+
+function handleAnimationRenderProcessUpdate(
+  currentAnimationDevelopmentState: AnimationDevelopmentState,
+  animationRenderProcessUpdateActionPayload: AnimationRenderProcessUpdateAction['actionPayload']
+): AnimationDevelopmentState {
+  const { targetAnimationModuleSessionVersion, animationRenderProcessMessage } =
+    animationRenderProcessUpdateActionPayload
+  if (
+    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
+    'sourceReady'
+  ) {
+    if (
+      currentAnimationDevelopmentState.animationModuleSourceState
+        .animationModuleSessionVersion ===
+        targetAnimationModuleSessionVersion &&
+      currentAnimationDevelopmentState.animationModuleSourceState
+        .animationRenderProcessState?.processStatus === 'processActive'
+    ) {
+      const nextAnimationRenderProcessState: AnimationRenderProcessActiveState =
+        {
+          ...currentAnimationDevelopmentState.animationModuleSourceState
+            .animationRenderProcessState,
+          lastProcessMessage: animationRenderProcessMessage,
+        }
+      return {
+        ...currentAnimationDevelopmentState,
+        animationModuleSourceState: {
+          ...currentAnimationDevelopmentState.animationModuleSourceState,
+          animationRenderProcessState: nextAnimationRenderProcessState,
+        },
+      }
+    } else {
+      return currentAnimationDevelopmentState
+    }
+  } else {
+    throw new Error('wtf? handleAnimationRenderProcessUpdate')
   }
 }
 
@@ -211,6 +262,7 @@ function handleFrameRenderProcessActive(
   ) {
     const nextFrameRenderProcessState: FrameRenderProcessActiveState = {
       spawnedProcess: spawnedFrameRenderProcess,
+      lastProcessMessage: null,
       processStatus: 'processActive',
     }
     return {
@@ -226,6 +278,52 @@ function handleFrameRenderProcessActive(
     }
   } else {
     throw new Error('wtf? handleFrameRenderProcessActive')
+  }
+}
+
+function handleFrameRenderProcessUpdate(
+  currentAnimationDevelopmentState: AnimationDevelopmentState,
+  frameRenderProcessUpdateActionPayload: FrameRenderProcessUpdateAction['actionPayload']
+): AnimationDevelopmentState {
+  const {
+    targetAnimationModuleSessionVersion,
+    frameRenderProcessMessage,
+    targetFrameIndex,
+  } = frameRenderProcessUpdateActionPayload
+  if (
+    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
+    'sourceReady'
+  ) {
+    const targetFrameRenderProcessState =
+      currentAnimationDevelopmentState.animationModuleSourceState
+        .frameRenderProcessStates[targetFrameIndex]
+
+    if (
+      currentAnimationDevelopmentState.animationModuleSourceState
+        .animationModuleSessionVersion ===
+        targetAnimationModuleSessionVersion &&
+      targetFrameRenderProcessState?.processStatus === 'processActive'
+    ) {
+      const nextTargetFrameRenderProcessState: FrameRenderProcessActiveState = {
+        ...targetFrameRenderProcessState,
+        lastProcessMessage: frameRenderProcessMessage,
+      }
+      return {
+        ...currentAnimationDevelopmentState,
+        animationModuleSourceState: {
+          ...currentAnimationDevelopmentState.animationModuleSourceState,
+          frameRenderProcessStates: {
+            ...currentAnimationDevelopmentState.animationModuleSourceState
+              .frameRenderProcessStates,
+            [targetFrameIndex]: nextTargetFrameRenderProcessState,
+          },
+        },
+      }
+    } else {
+      return currentAnimationDevelopmentState
+    }
+  } else {
+    throw new Error('wtf? handleFrameRenderProcessUpdate')
   }
 }
 

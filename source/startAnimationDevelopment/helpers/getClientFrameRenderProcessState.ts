@@ -1,5 +1,6 @@
 import { AnimationModuleSourceReadyState } from '../models/AnimationDevelopmentState'
 import {
+  FrameRenderProcessActiveState,
   // ClientFrameRenderProcessState,
   FrameRenderProcessState,
 } from '../models/RenderProcessState'
@@ -26,7 +27,10 @@ export function getClientFrameRenderProcessState(
   } else if (frameRenderProcessState === undefined) {
     return {
       animationModuleSessionVersion,
-      processStatus: 'processActive' as 'processActive',
+      lastProcessMessage:
+        null as FrameRenderProcessActiveState['lastProcessMessage'],
+      processStatus:
+        'processActive' as FrameRenderProcessActiveState['processStatus'],
     }
   } else {
     throw new Error('wtf? getClientFrameRenderProcessState')

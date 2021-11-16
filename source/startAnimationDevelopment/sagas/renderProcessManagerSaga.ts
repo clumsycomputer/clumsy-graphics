@@ -3,6 +3,11 @@ import {
   spawn as spawnChildProcess,
 } from 'child_process'
 import Path from 'path'
+import {
+  EventChannel,
+  eventChannel as getEventChannel,
+  buffers as SagaBuffers,
+} from 'redux-saga'
 import { SagaReturnType } from 'redux-saga/effects'
 import {
   call,
@@ -10,12 +15,14 @@ import {
   select,
   spawn,
   takeActionFromChannel,
+  takeEvent,
 } from '../helpers/storeEffects'
 import {
   RenderProcessManagerAction,
   SpawnFrameRenderProcessAction,
 } from '../models/AnimationDevelopmentAction'
 import { AnimationModuleSourceReadyState } from '../models/AnimationDevelopmentState'
+import { SpawnedGraphicsRendererProcessEvent } from '../models/SpawnedGraphicsRendererProcessEvent'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
 import { InitialSagaApi } from './initialSaga'
 
@@ -93,8 +100,7 @@ export function* renderProcessManagerSaga(api: RenderProcessManagerSagaApi) {
               )
               const {
                 spawnedAnimationRenderProcess,
-                spawnedAnimationRenderProcessExitCodePromise,
-                spawnedAnimationRenderProcessErrorMessagePromise,
+                spawnedAnimationRenderProcessEventChannel,
               } = spawnAnimationRenderProcess({
                 animationModulePath,
                 numberOfFrameRendererWorkers,
@@ -107,38 +113,63 @@ export function* renderProcessManagerSaga(api: RenderProcessManagerSagaApi) {
                 },
               })
               yield* spawn(function* () {
-                const animationRenderProcessExitCode = yield* call(
-                  () => spawnedAnimationRenderProcessExitCodePromise
-                )
-                switch (animationRenderProcessExitCode) {
-                  case 0:
-                    yield* put({
-                      type: 'animationRenderProcessSuccessful',
-                      actionPayload: {
-                        targetAnimationModuleSessionVersion:
-                          someRenderProcessManagerAction.actionPayload
-                            .animationModuleSessionVersion,
-                        animationAssetPath: targetAnimationMp4OutputPath,
-                      },
-                    })
-                    break
-                  case 1:
-                    const animationRenderProcessErrorMessage = yield* call(
-                      () => spawnedAnimationRenderProcessErrorMessagePromise
+                let animationRenderProcessRunning = true
+                while (animationRenderProcessRunning) {
+                  const someSpawnedAnimationRenderProcessEvent =
+                    yield* takeEvent<SpawnedGraphicsRendererProcessEvent>(
+                      spawnedAnimationRenderProcessEventChannel
                     )
-                    yield* put({
-                      type: 'animationRenderProcessFailed',
-                      actionPayload: {
-                        animationRenderProcessErrorMessage,
-                        targetAnimationModuleSessionVersion:
-                          someRenderProcessManagerAction.actionPayload
-                            .animationModuleSessionVersion,
-                      },
-                    })
-                    break
-                  case null:
-                    // animationRenderProcess was terminated
-                    break
+                  switch (someSpawnedAnimationRenderProcessEvent.eventType) {
+                    case 'graphicsRendererProcessMessage':
+                      yield* put({
+                        type: 'animationRenderProcessUpdate',
+                        actionPayload: {
+                          targetAnimationModuleSessionVersion:
+                            someRenderProcessManagerAction.actionPayload
+                              .animationModuleSessionVersion,
+                          animationRenderProcessMessage:
+                            someSpawnedAnimationRenderProcessEvent.eventPayload
+                              .graphicsRendererProcessMessage,
+                        },
+                      })
+                      break
+                    case 'graphicsRendererProcessSuccessful':
+                      yield* put({
+                        type: 'animationRenderProcessSuccessful',
+                        actionPayload: {
+                          targetAnimationModuleSessionVersion:
+                            someRenderProcessManagerAction.actionPayload
+                              .animationModuleSessionVersion,
+                          animationAssetPath: targetAnimationMp4OutputPath,
+                        },
+                      })
+                      break
+                    case 'graphicsRendererProcessFailed':
+                      yield* put({
+                        type: 'animationRenderProcessFailed',
+                        actionPayload: {
+                          animationRenderProcessErrorMessage:
+                            someSpawnedAnimationRenderProcessEvent.eventPayload
+                              .graphicsRendererProcessErrorMessage,
+                          targetAnimationModuleSessionVersion:
+                            someRenderProcessManagerAction.actionPayload
+                              .animationModuleSessionVersion,
+                        },
+                      })
+                      break
+                    case 'graphicsRendererProcessTerminated':
+                      break
+                  }
+                  if (
+                    someSpawnedAnimationRenderProcessEvent.eventType ===
+                      'graphicsRendererProcessSuccessful' ||
+                    someSpawnedAnimationRenderProcessEvent.eventType ===
+                      'graphicsRendererProcessFailed' ||
+                    someSpawnedAnimationRenderProcessEvent.eventType ===
+                      'graphicsRendererProcessTerminated'
+                  ) {
+                    animationRenderProcessRunning = false
+                  }
                 }
               })
             })
@@ -160,8 +191,7 @@ export function* renderProcessManagerSaga(api: RenderProcessManagerSagaApi) {
               )
               const {
                 spawnedFrameRenderProcess,
-                spawnedFrameRenderProcessExitCodePromise,
-                spawnedFrameRenderProcessErrorMessagePromise,
+                spawnedFrameRenderProcessEventChannel,
               } = spawnFrameRenderProcess({
                 animationModulePath,
                 frameIndex:
@@ -177,44 +207,72 @@ export function* renderProcessManagerSaga(api: RenderProcessManagerSagaApi) {
                 },
               })
               yield* spawn(function* () {
-                const frameRenderProcessExitCode = yield* call(
-                  () => spawnedFrameRenderProcessExitCodePromise
-                )
-                switch (frameRenderProcessExitCode) {
-                  case 0:
-                    yield* put({
-                      type: 'frameRenderProcessSuccessful',
-                      actionPayload: {
-                        targetAnimationModuleSessionVersion:
-                          someRenderProcessManagerAction.actionPayload
-                            .animationModuleSessionVersion,
-                        targetFrameIndex:
-                          someRenderProcessManagerAction.actionPayload
-                            .frameIndex,
-                        frameAssetPath: targetFramePngOutputPath,
-                      },
-                    })
-                    break
-                  case 1:
-                    const frameRenderProcessErrorMessage = yield* call(
-                      () => spawnedFrameRenderProcessErrorMessagePromise
+                let frameRenderProcessRunning = true
+                while (frameRenderProcessRunning) {
+                  const someSpawnedFrameRenderProcessEvent =
+                    yield* takeEvent<SpawnedGraphicsRendererProcessEvent>(
+                      spawnedFrameRenderProcessEventChannel
                     )
-                    yield* put({
-                      type: 'frameRenderProcessFailed',
-                      actionPayload: {
-                        frameRenderProcessErrorMessage,
-                        targetAnimationModuleSessionVersion:
-                          someRenderProcessManagerAction.actionPayload
-                            .animationModuleSessionVersion,
-                        targetFrameIndex:
-                          someRenderProcessManagerAction.actionPayload
-                            .frameIndex,
-                      },
-                    })
-                    break
-                  case null:
-                    // frameRenderProcess was terminated
-                    break
+                  switch (someSpawnedFrameRenderProcessEvent.eventType) {
+                    case 'graphicsRendererProcessMessage':
+                      yield* put({
+                        type: 'frameRenderProcessUpdate',
+                        actionPayload: {
+                          targetAnimationModuleSessionVersion:
+                            someRenderProcessManagerAction.actionPayload
+                              .animationModuleSessionVersion,
+                          targetFrameIndex:
+                            someRenderProcessManagerAction.actionPayload
+                              .frameIndex,
+                          frameRenderProcessMessage:
+                            someSpawnedFrameRenderProcessEvent.eventPayload
+                              .graphicsRendererProcessMessage,
+                        },
+                      })
+                      break
+                    case 'graphicsRendererProcessSuccessful':
+                      yield* put({
+                        type: 'frameRenderProcessSuccessful',
+                        actionPayload: {
+                          targetAnimationModuleSessionVersion:
+                            someRenderProcessManagerAction.actionPayload
+                              .animationModuleSessionVersion,
+                          targetFrameIndex:
+                            someRenderProcessManagerAction.actionPayload
+                              .frameIndex,
+                          frameAssetPath: targetFramePngOutputPath,
+                        },
+                      })
+                      break
+                    case 'graphicsRendererProcessFailed':
+                      yield* put({
+                        type: 'frameRenderProcessFailed',
+                        actionPayload: {
+                          frameRenderProcessErrorMessage:
+                            someSpawnedFrameRenderProcessEvent.eventPayload
+                              .graphicsRendererProcessErrorMessage,
+                          targetAnimationModuleSessionVersion:
+                            someRenderProcessManagerAction.actionPayload
+                              .animationModuleSessionVersion,
+                          targetFrameIndex:
+                            someRenderProcessManagerAction.actionPayload
+                              .frameIndex,
+                        },
+                      })
+                      break
+                    case 'graphicsRendererProcessTerminated':
+                      break
+                  }
+                  if (
+                    someSpawnedFrameRenderProcessEvent.eventType ===
+                      'graphicsRendererProcessSuccessful' ||
+                    someSpawnedFrameRenderProcessEvent.eventType ===
+                      'graphicsRendererProcessFailed' ||
+                    someSpawnedFrameRenderProcessEvent.eventType ===
+                      'graphicsRendererProcessTerminated'
+                  ) {
+                    frameRenderProcessRunning = false
+                  }
                 }
               })
             })
@@ -261,8 +319,7 @@ export function spawnAnimationRenderProcess(
   } = api
   const [
     spawnedAnimationRenderProcess,
-    spawnedAnimationRenderProcessErrorMessagePromise,
-    spawnedAnimationRenderProcessExitCodePromise,
+    spawnedAnimationRenderProcessEventChannel,
   ] = spawnGraphicsRendererProcess({
     graphicsRendererCommand: `graphics-renderer renderAnimation --animationModulePath=${Path.resolve(
       animationModulePath
@@ -270,8 +327,7 @@ export function spawnAnimationRenderProcess(
   })
   return {
     spawnedAnimationRenderProcess,
-    spawnedAnimationRenderProcessErrorMessagePromise,
-    spawnedAnimationRenderProcessExitCodePromise,
+    spawnedAnimationRenderProcessEventChannel,
   }
 }
 
@@ -283,19 +339,15 @@ export interface SpawnFrameRenderProcessApi
 
 export function spawnFrameRenderProcess(api: SpawnFrameRenderProcessApi) {
   const { animationModulePath, frameIndex, frameFileOutputPath } = api
-  const [
-    spawnedFrameRenderProcess,
-    spawnedFrameRenderProcessErrorMessagePromise,
-    spawnedFrameRenderProcessExitCodePromise,
-  ] = spawnGraphicsRendererProcess({
-    graphicsRendererCommand: `graphics-renderer renderAnimationFrame --animationModulePath=${Path.resolve(
-      animationModulePath
-    )} --frameIndex=${frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
-  })
+  const [spawnedFrameRenderProcess, spawnedFrameRenderProcessEventChannel] =
+    spawnGraphicsRendererProcess({
+      graphicsRendererCommand: `graphics-renderer renderAnimationFrame --animationModulePath=${Path.resolve(
+        animationModulePath
+      )} --frameIndex=${frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
+    })
   return {
     spawnedFrameRenderProcess,
-    spawnedFrameRenderProcessErrorMessagePromise,
-    spawnedFrameRenderProcessExitCodePromise,
+    spawnedFrameRenderProcessEventChannel,
   }
 }
 
@@ -305,7 +357,10 @@ interface SpawnGraphicsRendererProcessApi {
 
 function spawnGraphicsRendererProcess(
   api: SpawnGraphicsRendererProcessApi
-): [ChildProcessWithoutNullStreams, Promise<string>, Promise<number | null>] {
+): [
+  ChildProcessWithoutNullStreams,
+  EventChannel<SpawnedGraphicsRendererProcessEvent>
+] {
   const { graphicsRendererCommand } = api
   const graphicsRendererCommandTokens = graphicsRendererCommand.split(' ')
   const [
@@ -314,38 +369,110 @@ function spawnGraphicsRendererProcess(
   ] = graphicsRendererCommandTokens
   const spawnedGraphicsRendererProcess = spawnChildProcess(
     mainGraphicsRendererCommandToken!,
-    graphicsRendererCommandArgumentTokens
-  )
-  const spawnedGraphicsRendererProcessErrorMessagePromise = new Promise<string>(
-    (resolve) => {
-      let graphicsRendererProcessErrorMessage = ''
-      spawnedGraphicsRendererProcess.stderr.on('data', (someStdErrData) => {
-        if (someStdErrData instanceof Buffer) {
-          graphicsRendererProcessErrorMessage = `${graphicsRendererProcessErrorMessage}${someStdErrData.toString()}`
-        } else {
-          throw new Error(
-            'wtf? spawnedGraphicsRendererProcessErrorMessagePromise'
-          )
-        }
-      })
-      spawnedGraphicsRendererProcess.stderr.on('end', () => {
-        resolve(graphicsRendererProcessErrorMessage)
-      })
+    graphicsRendererCommandArgumentTokens,
+    {
+      stdio: 'pipe',
     }
   )
-  const spawnedGraphicsRendererProcessExitCodePromise = new Promise<
-    number | null
-  >((resolve) => {
-    spawnedGraphicsRendererProcess.once(
-      'exit',
-      (graphicsRendererProcessExitCode) => {
-        resolve(graphicsRendererProcessExitCode)
-      }
-    )
-  })
+  const { spawnedGraphicsRendererProcessEventChannel } =
+    getSpawnedGraphicsRendererProcessEventChannel({
+      spawnedGraphicsRendererProcess,
+    })
   return [
     spawnedGraphicsRendererProcess,
-    spawnedGraphicsRendererProcessErrorMessagePromise,
-    spawnedGraphicsRendererProcessExitCodePromise,
+    spawnedGraphicsRendererProcessEventChannel,
   ]
+}
+
+interface GetSpawnedGraphicsRendererProcessEventChannelApi {
+  spawnedGraphicsRendererProcess: ChildProcessWithoutNullStreams
+}
+
+function getSpawnedGraphicsRendererProcessEventChannel(
+  api: GetSpawnedGraphicsRendererProcessEventChannelApi
+) {
+  const { spawnedGraphicsRendererProcess } = api
+  const spawnedGraphicsRendererProcessEventChannel =
+    getEventChannel<SpawnedGraphicsRendererProcessEvent>(
+      (emitGraphicsRendererProcessEvent) => {
+        spawnedGraphicsRendererProcess.stdout.setEncoding('utf-8')
+        spawnedGraphicsRendererProcess.stdout.on('data', (someStdoutData) => {
+          if (typeof someStdoutData === 'string') {
+            const graphicsRendererProcessMessageTokens =
+              someStdoutData.split(/\r?\n/)
+            const graphicsRendererProcessMessage =
+              graphicsRendererProcessMessageTokens[
+                graphicsRendererProcessMessageTokens.length - 2
+              ]
+            if (graphicsRendererProcessMessage) {
+              emitGraphicsRendererProcessEvent({
+                eventType: 'graphicsRendererProcessMessage',
+                eventPayload: {
+                  graphicsRendererProcessMessage,
+                },
+              })
+            } else {
+              throw new Error('wtf? graphicsRendererProcessMessageTokens')
+            }
+          } else {
+            throw new Error('wtf? someStdoutData')
+          }
+        })
+        const spawnedGraphicsRendererProcessErrorMessagePromise = new Promise<{
+          graphicsRendererProcessErrorMessage: string
+        }>((resolve) => {
+          let graphicsRendererProcessErrorMessage: string | null = null
+          spawnedGraphicsRendererProcess.stderr.setEncoding('utf-8')
+          spawnedGraphicsRendererProcess.stderr.on('data', (someStderrData) => {
+            if (typeof someStderrData === 'string') {
+              graphicsRendererProcessErrorMessage =
+                graphicsRendererProcessErrorMessage
+                  ? `${spawnedGraphicsRendererProcess}${someStderrData}`
+                  : someStderrData
+            } else {
+              throw new Error('wtf? spawnedGraphicsRendererProcess.stderr')
+            }
+          })
+          spawnedGraphicsRendererProcess.stderr.once('end', () => {
+            resolve({
+              graphicsRendererProcessErrorMessage:
+                graphicsRendererProcessErrorMessage ||
+                'wtf? graphicsRendererProcessErrorMessage',
+            })
+          })
+        })
+        spawnedGraphicsRendererProcess.once(
+          'exit',
+          async (graphicsRendererProcessExitCode) => {
+            switch (graphicsRendererProcessExitCode) {
+              case 0:
+                emitGraphicsRendererProcessEvent({
+                  eventType: 'graphicsRendererProcessSuccessful',
+                  eventPayload: {},
+                })
+                break
+              case 1:
+                const { graphicsRendererProcessErrorMessage } =
+                  await spawnedGraphicsRendererProcessErrorMessagePromise
+                emitGraphicsRendererProcessEvent({
+                  eventType: 'graphicsRendererProcessFailed',
+                  eventPayload: {
+                    graphicsRendererProcessErrorMessage,
+                  },
+                })
+                break
+              case null:
+                emitGraphicsRendererProcessEvent({
+                  eventType: 'graphicsRendererProcessTerminated',
+                  eventPayload: {},
+                })
+                break
+            }
+          }
+        )
+        return () => {}
+      },
+      SagaBuffers.expanding(10)
+    )
+  return { spawnedGraphicsRendererProcessEventChannel }
 }

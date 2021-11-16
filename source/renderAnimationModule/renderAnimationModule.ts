@@ -107,6 +107,8 @@ async function renderAnimationFrames(api: RenderAnimationFramesApi) {
             workerData: {
               animationModuleBundle,
             },
+            // surpress worker stdout
+            stdout: true,
           })
       )
       .forEach((someFrameRendererWorker) => {
@@ -119,8 +121,12 @@ async function renderAnimationFrames(api: RenderAnimationFramesApi) {
                 inputData: someFrameRendererWorkerMessageData,
               })
             switch (someFrameRendererWorkerMessage.messageType) {
+              // @ts-expect-error
               case 'workerRenderedFrame':
                 framesRenderedCount = framesRenderedCount + 1
+                process.stdout.write(
+                  `rendering frames: ${framesRenderedCount} / ${animationModule.frameCount}\n`
+                )
               case 'workerInitialized':
                 if (nextFrameIndex < animationModule.frameCount) {
                   const renderAnimationFrameMessage: RenderAnimationFrameMessage =
@@ -173,6 +179,7 @@ function composeAnimationMp4(api: ComposeAnimationMp4Api) {
     constantRateFactor,
     animationMp4OutputPath,
   } = api
+  process.stdout.write('encoding animation...\n')
   ChildProcess.execSync(`
     ffmpeg \
       -y \

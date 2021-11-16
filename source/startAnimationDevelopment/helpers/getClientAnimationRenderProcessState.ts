@@ -1,4 +1,5 @@
 import { AnimationModuleSourceReadyState } from '../models/AnimationDevelopmentState'
+import { AnimationRenderProcessActiveState } from '../models/RenderProcessState'
 // import { ClientAnimationRenderProcessState } from '../models/RenderProcessState'
 
 export interface GetClientAnimationRenderProcessStateApi
@@ -21,7 +22,10 @@ export function getClientAnimationRenderProcessState(
   } else if (animationRenderProcessState === null) {
     return {
       animationModuleSessionVersion,
-      processStatus: 'processActive' as 'processActive',
+      lastProcessMessage:
+        null as AnimationRenderProcessActiveState['lastProcessMessage'],
+      processStatus:
+        'processActive' as AnimationRenderProcessActiveState['processStatus'],
     }
   } else {
     throw new Error('wtf? getClientAnimationRenderProcessState')

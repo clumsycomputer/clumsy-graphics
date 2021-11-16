@@ -30,7 +30,9 @@ export interface FrameRenderProcessSuccessfulState
 
 export interface FrameRenderProcessFailedState extends ProcessStateFailed {}
 
-interface ProcessStateActive extends ProcessStateBase<'processActive'> {}
+interface ProcessStateActive extends ProcessStateBase<'processActive'> {
+  lastProcessMessage: string | null
+}
 
 interface ProcessStateSuccessful
   extends ProcessStateBase<'processSuccessful'> {}

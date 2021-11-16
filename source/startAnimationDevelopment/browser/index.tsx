@@ -73,7 +73,12 @@ function AnimationPage() {
       </PageContainer>
     )
   } else if (animationRenderProcessState?.processStatus === 'processActive') {
-    return <div>rendering animation...</div>
+    return (
+      <div>
+        {animationRenderProcessState.lastProcessMessage ||
+          'starting animation render...'}
+      </div>
+    )
   } else if (animationRenderProcessState?.processStatus === 'processFailed') {
     return (
       <div
@@ -125,7 +130,12 @@ function FramePage() {
       </PageContainer>
     )
   } else if (frameRenderProcessState?.processStatus === 'processActive') {
-    return <div>rendering frame: {framePageParams.frameIndex}</div>
+    return (
+      <div>
+        {frameRenderProcessState.lastProcessMessage ||
+          `rendering frame: ${framePageParams.frameIndex}`}
+      </div>
+    )
   } else if (frameRenderProcessState?.processStatus === 'processFailed') {
     return (
       <div

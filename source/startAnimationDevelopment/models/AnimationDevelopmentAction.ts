@@ -1,4 +1,4 @@
-import { FunctionBrand, PromiseResult } from '../../models/common'
+import { FunctionBrand } from '../../models/common'
 import {
   spawnAnimationRenderProcess,
   SpawnAnimationRenderProcessApi,
@@ -8,16 +8,19 @@ import {
 import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
 import { AnimationModuleSourceChangedEvent } from './AnimationModuleSourceEvent'
 import { ActionBase } from './common'
+import { SpawnedGraphicsRendererProcessFailedEvent } from './SpawnedGraphicsRendererProcessEvent'
 
 export type AnimationDevelopmentAction =
   | AnimationModuleSourceChangedAction
   | AnimationModuleSourceUpdatedAction
   | SpawnAnimationRenderProcessAction
   | AnimationRenderProcessActiveAction
+  | AnimationRenderProcessUpdateAction
   | AnimationRenderProcessSuccessfulAction
   | AnimationRenderProcessFailedAction
   | SpawnFrameRenderProcessAction
   | FrameRenderProcessActiveAction
+  | FrameRenderProcessUpdateAction
   | FrameRenderProcessSuccessfulAction
   | FrameRenderProcessFailedAction
 
@@ -54,6 +57,15 @@ export interface AnimationRenderProcessActiveAction
     >
   > {}
 
+export interface AnimationRenderProcessUpdateAction
+  extends ActionBase<
+    'animationRenderProcessUpdate',
+    {
+      targetAnimationModuleSessionVersion: SpawnAnimationRenderProcessAction['actionPayload']['animationModuleSessionVersion']
+      animationRenderProcessMessage: string
+    }
+  > {}
+
 export interface AnimationRenderProcessSuccessfulAction
   extends ActionBase<
     'animationRenderProcessSuccessful',
@@ -68,11 +80,7 @@ export interface AnimationRenderProcessFailedAction
     'animationRenderProcessFailed',
     {
       targetAnimationModuleSessionVersion: SpawnAnimationRenderProcessAction['actionPayload']['animationModuleSessionVersion']
-      animationRenderProcessErrorMessage: PromiseResult<
-        FunctionBrand<
-          typeof spawnAnimationRenderProcess
-        >['spawnedAnimationRenderProcessErrorMessagePromise']
-      >
+      animationRenderProcessErrorMessage: SpawnedGraphicsRendererProcessFailedEvent['eventPayload']['graphicsRendererProcessErrorMessage']
     }
   > {}
 
@@ -94,6 +102,16 @@ export interface FrameRenderProcessActiveAction
       >
   > {}
 
+export interface FrameRenderProcessUpdateAction
+  extends ActionBase<
+    'frameRenderProcessUpdate',
+    {
+      targetAnimationModuleSessionVersion: SpawnFrameRenderProcessAction['actionPayload']['animationModuleSessionVersion']
+      targetFrameIndex: SpawnFrameRenderProcessAction['actionPayload']['frameIndex']
+      frameRenderProcessMessage: string
+    }
+  > {}
+
 export interface FrameRenderProcessSuccessfulAction
   extends ActionBase<
     'frameRenderProcessSuccessful',
@@ -110,11 +128,7 @@ export interface FrameRenderProcessFailedAction
     {
       targetAnimationModuleSessionVersion: SpawnFrameRenderProcessAction['actionPayload']['animationModuleSessionVersion']
       targetFrameIndex: SpawnFrameRenderProcessAction['actionPayload']['frameIndex']
-      frameRenderProcessErrorMessage: PromiseResult<
-        FunctionBrand<
-          typeof spawnFrameRenderProcess
-        >['spawnedFrameRenderProcessErrorMessagePromise']
-      >
+      frameRenderProcessErrorMessage: SpawnedGraphicsRendererProcessFailedEvent['eventPayload']['graphicsRendererProcessErrorMessage']
     }
   > {}
 

@@ -3,7 +3,7 @@ import { AnimationModule } from '../source/models/AnimationModule'
 
 const FooAnimationModule: AnimationModule = {
   animationName: 'foo',
-  frameSize: 2048,
+  frameSize: 512,
   frameCount: 10,
   animationSettings: {
     frameRate: 5,

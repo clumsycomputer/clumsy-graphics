@@ -30,3 +30,6 @@ export type Optional<
 > = {
   [Key in SomeKey]?: SomeObject[Key]
 } & Pick<SomeObject, Exclude<keyof SomeObject, SomeKey>>
+
+export type PromiseResult<SomePromise extends Promise<any>> =
+  SomePromise extends Promise<infer Result> ? Result : never

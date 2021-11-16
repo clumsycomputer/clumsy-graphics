@@ -1,4 +1,4 @@
-import { FunctionBrand } from '../../models/common'
+import { FunctionBrand, PromiseResult } from '../../models/common'
 import {
   spawnAnimationRenderProcess,
   SpawnAnimationRenderProcessApi,
@@ -48,7 +48,10 @@ export interface SpawnAnimationRenderProcessAction
 export interface AnimationRenderProcessActiveAction
   extends ActionBase<
     'animationRenderProcessActive',
-    FunctionBrand<typeof spawnAnimationRenderProcess>
+    Pick<
+      FunctionBrand<typeof spawnAnimationRenderProcess>,
+      'spawnedAnimationRenderProcess'
+    >
   > {}
 
 export interface AnimationRenderProcessSuccessfulAction
@@ -65,6 +68,11 @@ export interface AnimationRenderProcessFailedAction
     'animationRenderProcessFailed',
     {
       targetAnimationModuleSessionVersion: SpawnAnimationRenderProcessAction['actionPayload']['animationModuleSessionVersion']
+      animationRenderProcessErrorMessage: PromiseResult<
+        FunctionBrand<
+          typeof spawnAnimationRenderProcess
+        >['spawnedAnimationRenderProcessErrorMessagePromise']
+      >
     }
   > {}
 
@@ -80,7 +88,10 @@ export interface FrameRenderProcessActiveAction
   extends ActionBase<
     'frameRenderProcessActive',
     Pick<SpawnFrameRenderProcessAction['actionPayload'], 'frameIndex'> &
-      FunctionBrand<typeof spawnFrameRenderProcess>
+      Pick<
+        FunctionBrand<typeof spawnFrameRenderProcess>,
+        'spawnedFrameRenderProcess'
+      >
   > {}
 
 export interface FrameRenderProcessSuccessfulAction
@@ -99,6 +110,11 @@ export interface FrameRenderProcessFailedAction
     {
       targetAnimationModuleSessionVersion: SpawnFrameRenderProcessAction['actionPayload']['animationModuleSessionVersion']
       targetFrameIndex: SpawnFrameRenderProcessAction['actionPayload']['frameIndex']
+      frameRenderProcessErrorMessage: PromiseResult<
+        FunctionBrand<
+          typeof spawnFrameRenderProcess
+        >['spawnedFrameRenderProcessErrorMessagePromise']
+      >
     }
   > {}
 

@@ -62,6 +62,7 @@ function AnimationPage() {
             }}
             controls={true}
             loop={true}
+            autoPlay={true}
           >
             <source
               type={'video/mp4'}
@@ -74,7 +75,17 @@ function AnimationPage() {
   } else if (animationRenderProcessState?.processStatus === 'processActive') {
     return <div>rendering animation...</div>
   } else if (animationRenderProcessState?.processStatus === 'processFailed') {
-    return <div>animation rendering failed!</div>
+    return (
+      <div
+        style={{
+          whiteSpace: 'pre-wrap',
+          backgroundColor: 'red',
+          color: 'white',
+        }}
+      >
+        {animationRenderProcessState.processErrorMessage}
+      </div>
+    )
   } else {
     return null
   }
@@ -114,9 +125,19 @@ function FramePage() {
       </PageContainer>
     )
   } else if (frameRenderProcessState?.processStatus === 'processActive') {
-    return <div>rendering frame... {framePageParams.frameIndex}</div>
+    return <div>rendering frame: {framePageParams.frameIndex}</div>
   } else if (frameRenderProcessState?.processStatus === 'processFailed') {
-    return <div>frame rendering failed! {framePageParams.frameIndex}</div>
+    return (
+      <div
+        style={{
+          whiteSpace: 'pre-wrap',
+          backgroundColor: 'red',
+          color: 'white',
+        }}
+      >
+        {frameRenderProcessState.processErrorMessage}
+      </div>
+    )
   } else {
     return null
   }

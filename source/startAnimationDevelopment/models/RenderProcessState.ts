@@ -35,7 +35,9 @@ interface ProcessStateActive extends ProcessStateBase<'processActive'> {}
 interface ProcessStateSuccessful
   extends ProcessStateBase<'processSuccessful'> {}
 
-interface ProcessStateFailed extends ProcessStateBase<'processFailed'> {}
+interface ProcessStateFailed extends ProcessStateBase<'processFailed'> {
+  processErrorMessage: string
+}
 
 interface ProcessStateBase<ProcessStatus extends string> {
   processStatus: ProcessStatus

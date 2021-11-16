@@ -136,8 +136,8 @@ function handleAnimationRenderProcessSuccessful(
           spawnedProcess:
             currentAnimationDevelopmentState.animationModuleSourceState
               .animationRenderProcessState.spawnedProcess,
-          processStatus: 'processSuccessful',
           animationAssetUrl: `/asset/${targetAnimationModuleSessionVersion}.mp4`,
+          processStatus: 'processSuccessful',
         }
       return {
         ...currentAnimationDevelopmentState,
@@ -162,8 +162,10 @@ function handleAnimationRenderProcessFailed(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   animationRenderProcessFailedActionPayload: AnimationRenderProcessFailedAction['actionPayload']
 ): AnimationDevelopmentState {
-  const { targetAnimationModuleSessionVersion } =
-    animationRenderProcessFailedActionPayload
+  const {
+    targetAnimationModuleSessionVersion,
+    animationRenderProcessErrorMessage,
+  } = animationRenderProcessFailedActionPayload
   if (
     currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
       'sourceReady' &&
@@ -179,6 +181,7 @@ function handleAnimationRenderProcessFailed(
           spawnedProcess:
             currentAnimationDevelopmentState.animationModuleSourceState
               .animationRenderProcessState.spawnedProcess,
+          processErrorMessage: animationRenderProcessErrorMessage,
           processStatus: 'processFailed',
         }
       return {
@@ -254,8 +257,8 @@ function handleFrameRenderProcessSuccessful(
         spawnedProcess:
           currentAnimationDevelopmentState.animationModuleSourceState
             .frameRenderProcessStates[targetFrameIndex]!.spawnedProcess,
-        processStatus: 'processSuccessful',
         frameAssetUrl: `/asset/${targetAnimationModuleSessionVersion}_${targetFrameIndex}.png`,
+        processStatus: 'processSuccessful',
       }
       return {
         ...currentAnimationDevelopmentState,
@@ -284,8 +287,11 @@ function handleFrameRenderProcessFailed(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   frameRenderProcessFailedActionPayload: FrameRenderProcessFailedAction['actionPayload']
 ): AnimationDevelopmentState {
-  const { targetAnimationModuleSessionVersion, targetFrameIndex } =
-    frameRenderProcessFailedActionPayload
+  const {
+    targetAnimationModuleSessionVersion,
+    targetFrameIndex,
+    frameRenderProcessErrorMessage,
+  } = frameRenderProcessFailedActionPayload
   if (
     currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
       'sourceReady' &&
@@ -300,6 +306,7 @@ function handleFrameRenderProcessFailed(
         spawnedProcess:
           currentAnimationDevelopmentState.animationModuleSourceState
             .frameRenderProcessStates[targetFrameIndex]!.spawnedProcess,
+        processErrorMessage: frameRenderProcessErrorMessage,
         processStatus: 'processFailed',
       }
       return {

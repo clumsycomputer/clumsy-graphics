@@ -1,4 +1,7 @@
-import { spawn as spawnChildProcess } from 'child_process'
+import {
+  ChildProcessWithoutNullStreams,
+  spawn as spawnChildProcess,
+} from 'child_process'
 import Path from 'path'
 import { SagaReturnType } from 'redux-saga/effects'
 import {
@@ -88,12 +91,15 @@ export function* renderProcessManagerSaga(api: RenderProcessManagerSagaApi) {
                 generatedAssetsDirectoryPath,
                 `${someRenderProcessManagerAction.actionPayload.animationModuleSessionVersion}.mp4`
               )
-              const { spawnedAnimationRenderProcess } =
-                spawnAnimationRenderProcess({
-                  animationModulePath,
-                  numberOfFrameRendererWorkers,
-                  animationMp4OutputPath: targetAnimationMp4OutputPath,
-                })
+              const {
+                spawnedAnimationRenderProcess,
+                spawnedAnimationRenderProcessExitCodePromise,
+                spawnedAnimationRenderProcessErrorMessagePromise,
+              } = spawnAnimationRenderProcess({
+                animationModulePath,
+                numberOfFrameRendererWorkers,
+                animationMp4OutputPath: targetAnimationMp4OutputPath,
+              })
               yield* put({
                 type: 'animationRenderProcessActive',
                 actionPayload: {
@@ -101,22 +107,10 @@ export function* renderProcessManagerSaga(api: RenderProcessManagerSagaApi) {
                 },
               })
               yield* spawn(function* () {
-                const { renderProcessExitCode } = yield* call(
-                  () =>
-                    new Promise<{ renderProcessExitCode: number | null }>(
-                      (resolve) => {
-                        spawnedAnimationRenderProcess.once(
-                          'exit',
-                          (renderProcessExitCode) => {
-                            resolve({
-                              renderProcessExitCode,
-                            })
-                          }
-                        )
-                      }
-                    )
+                const animationRenderProcessExitCode = yield* call(
+                  () => spawnedAnimationRenderProcessExitCodePromise
                 )
-                switch (renderProcessExitCode) {
+                switch (animationRenderProcessExitCode) {
                   case 0:
                     yield* put({
                       type: 'animationRenderProcessSuccessful',
@@ -129,9 +123,13 @@ export function* renderProcessManagerSaga(api: RenderProcessManagerSagaApi) {
                     })
                     break
                   case 1:
+                    const animationRenderProcessErrorMessage = yield* call(
+                      () => spawnedAnimationRenderProcessErrorMessagePromise
+                    )
                     yield* put({
                       type: 'animationRenderProcessFailed',
                       actionPayload: {
+                        animationRenderProcessErrorMessage,
                         targetAnimationModuleSessionVersion:
                           someRenderProcessManagerAction.actionPayload
                             .animationModuleSessionVersion,
@@ -160,7 +158,11 @@ export function* renderProcessManagerSaga(api: RenderProcessManagerSagaApi) {
                 generatedAssetsDirectoryPath,
                 `${someRenderProcessManagerAction.actionPayload.animationModuleSessionVersion}_${someRenderProcessManagerAction.actionPayload.frameIndex}.png`
               )
-              const { spawnedFrameRenderProcess } = spawnFrameRenderProcess({
+              const {
+                spawnedFrameRenderProcess,
+                spawnedFrameRenderProcessExitCodePromise,
+                spawnedFrameRenderProcessErrorMessagePromise,
+              } = spawnFrameRenderProcess({
                 animationModulePath,
                 frameIndex:
                   someRenderProcessManagerAction.actionPayload.frameIndex,
@@ -175,22 +177,10 @@ export function* renderProcessManagerSaga(api: RenderProcessManagerSagaApi) {
                 },
               })
               yield* spawn(function* () {
-                const { renderProcessExitCode } = yield* call(
-                  () =>
-                    new Promise<{ renderProcessExitCode: number | null }>(
-                      (resolve) => {
-                        spawnedFrameRenderProcess.once(
-                          'exit',
-                          (renderProcessExitCode) => {
-                            resolve({
-                              renderProcessExitCode,
-                            })
-                          }
-                        )
-                      }
-                    )
+                const frameRenderProcessExitCode = yield* call(
+                  () => spawnedFrameRenderProcessExitCodePromise
                 )
-                switch (renderProcessExitCode) {
+                switch (frameRenderProcessExitCode) {
                   case 0:
                     yield* put({
                       type: 'frameRenderProcessSuccessful',
@@ -206,9 +196,13 @@ export function* renderProcessManagerSaga(api: RenderProcessManagerSagaApi) {
                     })
                     break
                   case 1:
+                    const frameRenderProcessErrorMessage = yield* call(
+                      () => spawnedFrameRenderProcessErrorMessagePromise
+                    )
                     yield* put({
                       type: 'frameRenderProcessFailed',
                       actionPayload: {
+                        frameRenderProcessErrorMessage,
                         targetAnimationModuleSessionVersion:
                           someRenderProcessManagerAction.actionPayload
                             .animationModuleSessionVersion,
@@ -265,13 +259,20 @@ export function spawnAnimationRenderProcess(
     animationMp4OutputPath,
     numberOfFrameRendererWorkers,
   } = api
-  const spawnedAnimationRenderProcess = spawnChildProcess('graphics-renderer', [
-    'renderAnimation',
-    `--animationModulePath=${Path.resolve(animationModulePath)}`,
-    `--animationMp4OutputPath=${animationMp4OutputPath}`,
-    `--numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
-  ])
-  return { spawnedAnimationRenderProcess }
+  const [
+    spawnedAnimationRenderProcess,
+    spawnedAnimationRenderProcessErrorMessagePromise,
+    spawnedAnimationRenderProcessExitCodePromise,
+  ] = spawnGraphicsRendererProcess({
+    graphicsRendererCommand: `graphics-renderer renderAnimation --animationModulePath=${Path.resolve(
+      animationModulePath
+    )} --animationMp4OutputPath=${animationMp4OutputPath} --numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
+  })
+  return {
+    spawnedAnimationRenderProcess,
+    spawnedAnimationRenderProcessErrorMessagePromise,
+    spawnedAnimationRenderProcessExitCodePromise,
+  }
 }
 
 export interface SpawnFrameRenderProcessApi
@@ -282,11 +283,69 @@ export interface SpawnFrameRenderProcessApi
 
 export function spawnFrameRenderProcess(api: SpawnFrameRenderProcessApi) {
   const { animationModulePath, frameIndex, frameFileOutputPath } = api
-  const spawnedFrameRenderProcess = spawnChildProcess('graphics-renderer', [
-    'renderAnimationFrame',
-    `--animationModulePath=${Path.resolve(animationModulePath)}`,
-    `--frameIndex=${frameIndex}`,
-    `--frameFileOutputPath=${frameFileOutputPath}`,
-  ])
-  return { spawnedFrameRenderProcess }
+  const [
+    spawnedFrameRenderProcess,
+    spawnedFrameRenderProcessErrorMessagePromise,
+    spawnedFrameRenderProcessExitCodePromise,
+  ] = spawnGraphicsRendererProcess({
+    graphicsRendererCommand: `graphics-renderer renderAnimationFrame --animationModulePath=${Path.resolve(
+      animationModulePath
+    )} --frameIndex=${frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
+  })
+  return {
+    spawnedFrameRenderProcess,
+    spawnedFrameRenderProcessErrorMessagePromise,
+    spawnedFrameRenderProcessExitCodePromise,
+  }
+}
+
+interface SpawnGraphicsRendererProcessApi {
+  graphicsRendererCommand: string
+}
+
+function spawnGraphicsRendererProcess(
+  api: SpawnGraphicsRendererProcessApi
+): [ChildProcessWithoutNullStreams, Promise<string>, Promise<number | null>] {
+  const { graphicsRendererCommand } = api
+  const graphicsRendererCommandTokens = graphicsRendererCommand.split(' ')
+  const [
+    mainGraphicsRendererCommandToken,
+    ...graphicsRendererCommandArgumentTokens
+  ] = graphicsRendererCommandTokens
+  const spawnedGraphicsRendererProcess = spawnChildProcess(
+    mainGraphicsRendererCommandToken!,
+    graphicsRendererCommandArgumentTokens
+  )
+  const spawnedGraphicsRendererProcessErrorMessagePromise = new Promise<string>(
+    (resolve) => {
+      let graphicsRendererProcessErrorMessage = ''
+      spawnedGraphicsRendererProcess.stderr.on('data', (someStdErrData) => {
+        if (someStdErrData instanceof Buffer) {
+          graphicsRendererProcessErrorMessage = `${graphicsRendererProcessErrorMessage}${someStdErrData.toString()}`
+        } else {
+          throw new Error(
+            'wtf? spawnedGraphicsRendererProcessErrorMessagePromise'
+          )
+        }
+      })
+      spawnedGraphicsRendererProcess.stderr.on('end', () => {
+        resolve(graphicsRendererProcessErrorMessage)
+      })
+    }
+  )
+  const spawnedGraphicsRendererProcessExitCodePromise = new Promise<
+    number | null
+  >((resolve) => {
+    spawnedGraphicsRendererProcess.once(
+      'exit',
+      (graphicsRendererProcessExitCode) => {
+        resolve(graphicsRendererProcessExitCode)
+      }
+    )
+  })
+  return [
+    spawnedGraphicsRendererProcess,
+    spawnedGraphicsRendererProcessErrorMessagePromise,
+    spawnedGraphicsRendererProcessExitCodePromise,
+  ]
 }

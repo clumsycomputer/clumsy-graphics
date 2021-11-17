@@ -6,6 +6,7 @@ import {
   Routes,
   useParams as useRouteParams,
 } from 'react-router-dom'
+import { ClientGraphicsRendererProcessState } from '../sagas/clientServerEventHandlerSaga'
 
 const appContainer = document.createElement('div')
 document.body.append(appContainer)
@@ -33,10 +34,12 @@ function ClientApp() {
 
 function AnimationPage() {
   const [animationRenderProcessState, setAnimationRenderProcessState] =
-    useState<any>(null)
+    useState<ClientGraphicsRendererProcessState | null>(null)
   useEffect(() => {
     setInterval(() => {
-      fetch('/api/latestAnimationModule/animationRenderProcessState')
+      fetch(
+        '/api/latestAnimationModule/graphicsRendererProcessState?assetType=mp4'
+      )
         .then((fetchResult) => fetchResult.json())
         .then((nextAnimationRenderProcessState) => {
           setAnimationRenderProcessState(nextAnimationRenderProcessState)
@@ -62,7 +65,7 @@ function AnimationPage() {
           >
             <source
               type={'video/mp4'}
-              src={animationRenderProcessState.animationAssetUrl}
+              src={animationRenderProcessState.graphicAssetUrl}
             />
           </video>
         </AssetContainer>
@@ -71,7 +74,7 @@ function AnimationPage() {
   } else if (animationRenderProcessState?.processStatus === 'processActive') {
     return (
       <div>
-        {animationRenderProcessState.lastProcessMessage ||
+        {animationRenderProcessState.processProgressInfo ||
           'starting animation render...'}
       </div>
     )
@@ -95,11 +98,11 @@ function AnimationPage() {
 function FramePage() {
   const framePageParams = useRouteParams()
   const [frameRenderProcessState, setFrameRenderProcessState] =
-    useState<any>(null)
+    useState<ClientGraphicsRendererProcessState | null>(null)
   useEffect(() => {
     setInterval(() => {
       fetch(
-        `/api/latestAnimationModule/frameRenderProcessState/${framePageParams.frameIndex}`
+        `/api/latestAnimationModule/graphicsRendererProcessState?assetType=png&frameIndex=${framePageParams.frameIndex}`
       )
         .then((fetchResult) => fetchResult.json())
         .then((nextFrameRenderProcessState) => {
@@ -120,7 +123,7 @@ function FramePage() {
               maxHeight: '100%',
               objectFit: 'contain',
             }}
-            src={frameRenderProcessState.frameAssetUrl}
+            src={frameRenderProcessState.graphicAssetUrl}
           />
         </AssetContainer>
       </PageContainer>
@@ -128,7 +131,7 @@ function FramePage() {
   } else if (frameRenderProcessState?.processStatus === 'processActive') {
     return (
       <div>
-        {frameRenderProcessState.lastProcessMessage ||
+        {frameRenderProcessState.processProgressInfo ||
           `rendering frame: ${framePageParams.frameIndex}`}
       </div>
     )

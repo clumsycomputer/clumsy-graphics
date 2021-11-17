@@ -18,7 +18,7 @@ export function getAnimationModuleSourceEventChannel(
   const animationModuleSourceEventChannel =
     getEventChannel<AnimationModuleSourceEvent>(
       (emitAnimationModuleSourceEvent) => {
-        let animationModuleSessionVersion = 0
+        let nextAnimationModuleSessionVersion = 0
         buildModule({
           platform: 'node',
           bundle: true,
@@ -29,11 +29,12 @@ export function getAnimationModuleSourceEventChannel(
           plugins: [getNodeExternalsPlugin()],
           watch: {
             onRebuild: () => {
-              animationModuleSessionVersion = animationModuleSessionVersion + 1
+              nextAnimationModuleSessionVersion =
+                nextAnimationModuleSessionVersion + 1
               emitAnimationModuleSourceEvent({
                 eventType: 'animationModuleSourceChanged',
                 eventPayload: {
-                  animationModuleSessionVersion,
+                  nextAnimationModuleSessionVersion,
                 },
               })
             },
@@ -42,7 +43,7 @@ export function getAnimationModuleSourceEventChannel(
           emitAnimationModuleSourceEvent({
             eventType: 'animationModuleSourceChanged',
             eventPayload: {
-              animationModuleSessionVersion,
+              nextAnimationModuleSessionVersion,
             },
           })
         })

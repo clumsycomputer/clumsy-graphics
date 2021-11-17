@@ -4,9 +4,9 @@ import {
   eventChannel as getEventChannel,
 } from 'redux-saga'
 import {
-  ClientApiRequestEvent,
-  ClientAssetRequestEvent,
-  ClientPageRequestEvent,
+  ClientRequestsGraphicAssetEvent,
+  ClientRequestsGraphicsRendererProcessStateEvent,
+  ClientRequestsPageEvent,
   ClientServerEvent,
 } from '../models/ClientServerEvent'
 import getExpressServer, { Router as getExpressRouter } from 'express'
@@ -48,37 +48,20 @@ export function getClientServerEventChannel(
 }
 
 interface GetApiRouterApi {
-  emitClientServerEvent: ChannelEventEmitter<ClientApiRequestEvent>
+  emitClientServerEvent: ChannelEventEmitter<ClientRequestsGraphicsRendererProcessStateEvent>
 }
 
 function getClientApiRouter(api: GetApiRouterApi) {
   const { emitClientServerEvent } = api
   const clientApiRouter = getExpressRouter()
   clientApiRouter.get(
-    '/latestAnimationModule/animationRenderProcessState',
-    (
-      someGetAnimationRenderProcessStateRequest,
-      getAnimationRenderProcessStateResponse
-    ) => {
+    '/latestAnimationModule/graphicsRendererProcessState',
+    (someClientRequest, someServerResponse) => {
       emitClientServerEvent({
-        eventType: 'clientApiRequest',
+        eventType: 'clientRequestsGraphicsRendererProcessState',
         eventPayload: {
-          apiRequestType: 'getAnimationRenderProcessState',
-          apiRequest: someGetAnimationRenderProcessStateRequest,
-          apiResponse: getAnimationRenderProcessStateResponse,
-        },
-      })
-    }
-  )
-  clientApiRouter.get(
-    '/latestAnimationModule/frameRenderProcessState/:frameIndex(\\d+)',
-    (someGetFrameRenderTaskRequest, getFrameRenderTaskResponse) => {
-      emitClientServerEvent({
-        eventType: 'clientApiRequest',
-        eventPayload: {
-          apiRequestType: 'getFrameRenderProcessState',
-          apiRequest: someGetFrameRenderTaskRequest,
-          apiResponse: getFrameRenderTaskResponse,
+          clientRequest: someClientRequest,
+          serverResponse: someServerResponse,
         },
       })
     }
@@ -87,7 +70,7 @@ function getClientApiRouter(api: GetApiRouterApi) {
 }
 
 interface GetClientAssetRouterApi {
-  emitClientServerEvent: ChannelEventEmitter<ClientAssetRequestEvent>
+  emitClientServerEvent: ChannelEventEmitter<ClientRequestsGraphicAssetEvent>
 }
 
 function getClientAssetRouter(api: GetClientAssetRouterApi) {
@@ -95,12 +78,12 @@ function getClientAssetRouter(api: GetClientAssetRouterApi) {
   const clientAssetRouter = getExpressRouter()
   clientAssetRouter.get(
     '/:assetFilename',
-    (someGetAssetRequest, getAssetResponse) => {
+    (someClientRequest, someServerResponse) => {
       emitClientServerEvent({
-        eventType: 'clientAssetRequest',
+        eventType: 'clientRequestsGraphicAsset',
         eventPayload: {
-          assetRequest: someGetAssetRequest,
-          assetResponse: getAssetResponse,
+          clientRequest: someClientRequest,
+          serverResponse: someServerResponse,
         },
       })
     }
@@ -109,7 +92,7 @@ function getClientAssetRouter(api: GetClientAssetRouterApi) {
 }
 
 interface GetClientPageRouterApi {
-  emitClientServerEvent: ChannelEventEmitter<ClientPageRequestEvent>
+  emitClientServerEvent: ChannelEventEmitter<ClientRequestsPageEvent>
 }
 
 function getClientPageRouter(api: GetClientPageRouterApi) {
@@ -117,24 +100,24 @@ function getClientPageRouter(api: GetClientPageRouterApi) {
   const clientPageRouter = getExpressRouter()
   clientPageRouter.get(
     '/latestAnimationModule/animation',
-    (someGetPageRequest, getPageResponse) => {
+    (someClientRequest, someServerResponse) => {
       emitClientServerEvent({
-        eventType: 'clientPageRequest',
+        eventType: 'clientRequestsPage',
         eventPayload: {
-          pageRequest: someGetPageRequest,
-          pageResponse: getPageResponse,
+          clientRequest: someClientRequest,
+          serverResponse: someServerResponse,
         },
       })
     }
   )
   clientPageRouter.get(
     '/latestAnimationModule/frame/:frameIndex(\\d+)',
-    (someGetPageRequest, getPageResponse) => {
+    (someClientRequest, someServerResponse) => {
       emitClientServerEvent({
-        eventType: 'clientPageRequest',
+        eventType: 'clientRequestsPage',
         eventPayload: {
-          pageRequest: someGetPageRequest,
-          pageResponse: getPageResponse,
+          clientRequest: someClientRequest,
+          serverResponse: someServerResponse,
         },
       })
     }

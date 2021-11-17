@@ -17,7 +17,11 @@ import {
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
 import { InitialSagaApi } from './initialSaga'
 import Path from 'path'
-import { GraphicsRendererProcessState } from '../models/GraphicsRendererProcessState'
+import {
+  GraphicsRendererProcessActiveState,
+  GraphicsRendererProcessState,
+} from '../models/GraphicsRendererProcessState'
+import { ChildProcess, ChildProcessWithoutNullStreams } from 'child_process'
 
 export interface ClientServerEventHandlerSagaApi
   extends Pick<
@@ -119,16 +123,16 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
           currentAnimationModuleSourceState.graphicsRendererProcessStates[
             specifiedGraphicsRendererProcessKey
           ]
+        const { partialSpawnGraphicsRendererProcessActionPayload } =
+          getPartialSpawnGraphicsRendererProcessActionPayload({
+            generatedAssetsDirectoryPath,
+            animationModulePath,
+            numberOfFrameRendererWorkers,
+            graphicsRendererProcessStateRequestQueryParams,
+            currentAnimationModuleSessionVersion:
+              currentAnimationModuleSourceState.animationModuleSessionVersion,
+          })
         if (specifiedGraphicsRendererProcessState === undefined) {
-          const { partialSpawnGraphicsRendererProcessActionPayload } =
-            getPartialSpawnGraphicsRendererProcessActionPayload({
-              generatedAssetsDirectoryPath,
-              animationModulePath,
-              numberOfFrameRendererWorkers,
-              graphicsRendererProcessStateRequestQueryParams,
-              currentAnimationModuleSessionVersion:
-                currentAnimationModuleSourceState.animationModuleSessionVersion,
-            })
           yield* put({
             type: 'spawnGraphicsRendererProcess',
             actionPayload: {
@@ -141,7 +145,13 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
         }
         const { specifiedClientGraphicsRendererProcessState } =
           getSpecifiedClientGraphicsRendererProcessState({
-            specifiedGraphicsRendererProcessState,
+            currentGraphicsRendererProcessState:
+              specifiedGraphicsRendererProcessState || {
+                processProgressInfo:
+                  partialSpawnGraphicsRendererProcessActionPayload.initialProcessProgressInfo,
+                processStatus: 'processActive',
+                spawnedProcess: {} as ChildProcess,
+              },
             currentAnimationModuleSessionVersion:
               currentAnimationModuleSourceState.animationModuleSessionVersion,
           })
@@ -256,26 +266,38 @@ function getPartialSpawnGraphicsRendererProcessActionPayload(
           initialProcessProgressInfo: 'starting frame rendering...',
         },
       }
+    default:
+      throw new Error(
+        'wtf? getPartialSpawnGraphicsRendererProcessActionPayload'
+      )
   }
 }
 
 interface GetSpecifiedClientGraphicsRendererProcessStateApi {
-  specifiedGraphicsRendererProcessState:
-    | AnimationModuleSourceReadyState['graphicsRendererProcessStates'][string]
-    | undefined
+  currentGraphicsRendererProcessState: GraphicsRendererProcessState
   currentAnimationModuleSessionVersion: AnimationModuleSourceReadyState['animationModuleSessionVersion']
 }
 
 function getSpecifiedClientGraphicsRendererProcessState(
   api: GetSpecifiedClientGraphicsRendererProcessStateApi
 ) {
-  const { currentAnimationModuleSessionVersion } = api
+  const {
+    currentAnimationModuleSessionVersion,
+    currentGraphicsRendererProcessState,
+  } = api
+  const { spawnedProcess, ...partialGraphicsRendererProcessState } =
+    currentGraphicsRendererProcessState
   return {
     specifiedClientGraphicsRendererProcessState: {
-      animationModuleSessionVerions: currentAnimationModuleSessionVersion,
+      ...partialGraphicsRendererProcessState,
+      animationModuleSessionVersion: currentAnimationModuleSessionVersion,
     },
   }
 }
+
+export type ClientGraphicsRendererProcessState = ReturnType<
+  typeof getSpecifiedClientGraphicsRendererProcessState
+>['specifiedClientGraphicsRendererProcessState']
 
 interface ClientRequestsGraphicAssetHandlerApi
   extends Pick<

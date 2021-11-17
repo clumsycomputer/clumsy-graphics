@@ -6,6 +6,6 @@ export interface AnimationModuleSourceChangedEvent
   extends EventBase<
     'animationModuleSourceChanged',
     {
-      animationModuleSessionVersion: number
+      nextAnimationModuleSessionVersion: number
     }
   > {}

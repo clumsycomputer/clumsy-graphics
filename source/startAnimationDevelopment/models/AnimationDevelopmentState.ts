@@ -1,12 +1,9 @@
-import {
-  AnimationRenderProcessState,
-  FrameRenderProcessState,
-} from './RenderProcessState'
+import { GraphicsRendererProcessState } from './GraphicsRendererProcessState'
 
 export interface AnimationDevelopmentState {
   animationModuleSourceState: AnimationModuleSourceState
   availableAssetsFilePathMap: {
-    [assetKey: string]: string
+    [graphicAssetPathKey: string]: string
   }
 }
 
@@ -20,8 +17,7 @@ export interface AnimationModuleSourceInitializingState
 export interface AnimationModuleSourceReadyState
   extends AnimationModuleSourceStateBase<'sourceReady'> {
   animationModuleSessionVersion: number
-  animationRenderProcessState: AnimationRenderProcessState | null
-  frameRenderProcessStates: Record<number, FrameRenderProcessState>
+  graphicsRendererProcessStates: Record<string, GraphicsRendererProcessState>
 }
 
 interface AnimationModuleSourceStateBase<SourceStatus extends string> {

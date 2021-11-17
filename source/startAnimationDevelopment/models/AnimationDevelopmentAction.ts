@@ -1,138 +1,105 @@
-import { FunctionBrand } from '../../models/common'
-import {
-  spawnAnimationRenderProcess,
-  SpawnAnimationRenderProcessApi,
-  spawnFrameRenderProcess,
-  SpawnFrameRenderProcessApi,
-} from '../sagas/renderProcessManagerSaga'
 import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
 import { AnimationModuleSourceChangedEvent } from './AnimationModuleSourceEvent'
 import { ActionBase } from './common'
-import { SpawnedGraphicsRendererProcessFailedEvent } from './SpawnedGraphicsRendererProcessEvent'
+import {
+  GraphicsRendererProcessActiveState,
+  GraphicsRendererProcessFailedState,
+  GraphicsRendererProcessState,
+  GraphicsRendererProcessSuccessfulState,
+} from './GraphicsRendererProcessState'
 
 export type AnimationDevelopmentAction =
   | AnimationModuleSourceChangedAction
   | AnimationModuleSourceUpdatedAction
-  | SpawnAnimationRenderProcessAction
-  | AnimationRenderProcessActiveAction
-  | AnimationRenderProcessUpdateAction
-  | AnimationRenderProcessSuccessfulAction
-  | AnimationRenderProcessFailedAction
-  | SpawnFrameRenderProcessAction
-  | FrameRenderProcessActiveAction
-  | FrameRenderProcessUpdateAction
-  | FrameRenderProcessSuccessfulAction
-  | FrameRenderProcessFailedAction
+  | SpawnGraphicsRendererProcessAction
+  | GraphicsRendererProcessActiveAction
+  | GraphicsRendererProcessProgressInfoUpdatedAction
+  | GraphicsRendererProcessSuccessfulAction
+  | GraphicsRendererProcessFailedAction
 
 export interface AnimationModuleSourceChangedAction
   extends ActionBase<
     'animationModuleSourceChanged',
     Pick<
       AnimationModuleSourceChangedEvent['eventPayload'],
-      'animationModuleSessionVersion'
+      'nextAnimationModuleSessionVersion'
     >
   > {}
 
 export interface AnimationModuleSourceUpdatedAction
   extends ActionBase<
     'animationModuleSourceUpdated',
-    Pick<
-      AnimationModuleSourceChangedAction['actionPayload'],
-      'animationModuleSessionVersion'
-    >
-  > {}
-
-export interface SpawnAnimationRenderProcessAction
-  extends ActionBase<
-    'spawnAnimationRenderProcess',
-    Pick<AnimationModuleSourceReadyState, 'animationModuleSessionVersion'>
-  > {}
-
-export interface AnimationRenderProcessActiveAction
-  extends ActionBase<
-    'animationRenderProcessActive',
-    Pick<
-      FunctionBrand<typeof spawnAnimationRenderProcess>,
-      'spawnedAnimationRenderProcess'
-    >
-  > {}
-
-export interface AnimationRenderProcessUpdateAction
-  extends ActionBase<
-    'animationRenderProcessUpdate',
     {
-      targetAnimationModuleSessionVersion: SpawnAnimationRenderProcessAction['actionPayload']['animationModuleSessionVersion']
-      animationRenderProcessMessage: string
+      animationModuleSourceState: AnimationModuleSourceReadyState
     }
   > {}
 
-export interface AnimationRenderProcessSuccessfulAction
+export interface SpawnGraphicsRendererProcessAction
   extends ActionBase<
-    'animationRenderProcessSuccessful',
+    'spawnGraphicsRendererProcess',
     {
-      targetAnimationModuleSessionVersion: SpawnAnimationRenderProcessAction['actionPayload']['animationModuleSessionVersion']
-      animationAssetPath: SpawnAnimationRenderProcessApi['animationMp4OutputPath']
+      animationModuleSessionVersionStamp: number
+      graphicsRendererProcessKey: string
+      graphicsRendererProcessCommandString: string
+      initialProcessProgressInfo: string
+      graphicAssetPathKey: string
+      graphicAssetPath: string
+      graphicAssetUrlResult: string
     }
   > {}
 
-export interface AnimationRenderProcessFailedAction
-  extends ActionBase<
-    'animationRenderProcessFailed',
+export interface GraphicsRendererProcessActiveAction
+  extends GraphicsRendererProcessActionBase<
+    'graphicsRendererProcessActive',
+    GraphicsRendererProcessActiveState
+  > {}
+
+export interface GraphicsRendererProcessProgressInfoUpdatedAction
+  extends GraphicsRendererProcessStateUpdaterAction<
+    'graphicsRendererProcessProgressInfoUpdated',
+    GraphicsRendererProcessActiveState
+  > {}
+
+export interface GraphicsRendererProcessSuccessfulAction
+  extends GraphicsRendererProcessStateUpdaterAction<
+    'graphicsRendererProcessSuccessful',
+    GraphicsRendererProcessSuccessfulState,
     {
-      targetAnimationModuleSessionVersion: SpawnAnimationRenderProcessAction['actionPayload']['animationModuleSessionVersion']
-      animationRenderProcessErrorMessage: SpawnedGraphicsRendererProcessFailedEvent['eventPayload']['graphicsRendererProcessErrorMessage']
+      targetGraphicAssetKey: string
+      targetGraphicAssetPath: string
     }
   > {}
 
-export interface SpawnFrameRenderProcessAction
-  extends ActionBase<
-    'spawnFrameRenderProcess',
-    Pick<AnimationModuleSourceReadyState, 'animationModuleSessionVersion'> & {
-      frameIndex: number
-    }
+export interface GraphicsRendererProcessFailedAction
+  extends GraphicsRendererProcessStateUpdaterAction<
+    'graphicsRendererProcessFailed',
+    GraphicsRendererProcessFailedState
   > {}
 
-export interface FrameRenderProcessActiveAction
-  extends ActionBase<
-    'frameRenderProcessActive',
-    Pick<SpawnFrameRenderProcessAction['actionPayload'], 'frameIndex'> &
-      Pick<
-        FunctionBrand<typeof spawnFrameRenderProcess>,
-        'spawnedFrameRenderProcess'
-      >
-  > {}
-
-export interface FrameRenderProcessUpdateAction
-  extends ActionBase<
-    'frameRenderProcessUpdate',
+interface GraphicsRendererProcessStateUpdaterAction<
+  GraphicsRendererProcessActionType extends string,
+  TargetGraphicsRendererProcessState extends GraphicsRendererProcessState,
+  GraphicsRendererProcessStateUpdaterAction extends object = {}
+> extends GraphicsRendererProcessActionBase<
+    GraphicsRendererProcessActionType,
+    TargetGraphicsRendererProcessState,
     {
-      targetAnimationModuleSessionVersion: SpawnFrameRenderProcessAction['actionPayload']['animationModuleSessionVersion']
-      targetFrameIndex: SpawnFrameRenderProcessAction['actionPayload']['frameIndex']
-      frameRenderProcessMessage: string
-    }
+      animationModuleSessionVersionStamp: number
+    } & GraphicsRendererProcessStateUpdaterAction
   > {}
 
-export interface FrameRenderProcessSuccessfulAction
-  extends ActionBase<
-    'frameRenderProcessSuccessful',
+interface GraphicsRendererProcessActionBase<
+  GraphicsRendererProcessActionType extends string,
+  TargetGraphicsRendererProcessState extends GraphicsRendererProcessState,
+  GraphicsRendererProcessActionPayload extends object = {}
+> extends ActionBase<
+    GraphicsRendererProcessActionType,
     {
-      targetAnimationModuleSessionVersion: SpawnFrameRenderProcessAction['actionPayload']['animationModuleSessionVersion']
-      targetFrameIndex: SpawnFrameRenderProcessAction['actionPayload']['frameIndex']
-      frameAssetPath: SpawnFrameRenderProcessApi['frameFileOutputPath']
-    }
+      targetGraphicsRendererProcessKey: string
+      targetGraphicsRendererProcessState: TargetGraphicsRendererProcessState
+    } & GraphicsRendererProcessActionPayload
   > {}
 
-export interface FrameRenderProcessFailedAction
-  extends ActionBase<
-    'frameRenderProcessFailed',
-    {
-      targetAnimationModuleSessionVersion: SpawnFrameRenderProcessAction['actionPayload']['animationModuleSessionVersion']
-      targetFrameIndex: SpawnFrameRenderProcessAction['actionPayload']['frameIndex']
-      frameRenderProcessErrorMessage: SpawnedGraphicsRendererProcessFailedEvent['eventPayload']['graphicsRendererProcessErrorMessage']
-    }
-  > {}
-
-export type RenderProcessManagerAction =
+export type GraphicsRendererProcessManagerAction =
   | AnimationModuleSourceChangedAction
-  | SpawnAnimationRenderProcessAction
-  | SpawnFrameRenderProcessAction
+  | SpawnGraphicsRendererProcessAction

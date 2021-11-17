@@ -1,29 +1,46 @@
 import * as IO from 'io-ts'
+import ReactDomServer from 'react-dom/server'
 import { SagaReturnType } from 'redux-saga/effects'
-import { NumberFromString } from '../../helpers/codecTypes'
 import { decodeData } from '../../helpers/decodeData'
+import { FunctionBrand } from '../../models/common'
 import { call, put, select, spawn, takeEvent } from '../helpers/storeEffects'
+import { AnimationModuleSourceReadyState } from '../models/AnimationDevelopmentState'
 import {
-  ClientApiRequestEvent,
-  ClientAssetRequestEvent,
-  ClientPageRequestEvent,
+  ClientRequestsGraphicAssetEvent,
+  ClientRequestsPageEvent,
   ClientServerEvent,
 } from '../models/ClientServerEvent'
+import {
+  GraphicsRendererProcessStateRequestQueryParams,
+  GraphicsRendererProcessStateRequestQueryParamsCodec,
+} from '../models/GraphicsRendererProcessStateRequestQueryParams'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
-import ReactDomServer from 'react-dom/server'
-import { getClientAnimationRenderProcessState } from '../helpers/getClientAnimationRenderProcessState'
-import { getClientFrameRenderProcessState } from '../helpers/getClientFrameRenderProcessState'
+import { InitialSagaApi } from './initialSaga'
+import Path from 'path'
+import { GraphicsRendererProcessState } from '../models/GraphicsRendererProcessState'
 
 export interface ClientServerEventHandlerSagaApi
   extends Pick<
-    SagaReturnType<typeof animationDevelopmentSetupSaga>,
-    'clientServerEventChannel' | 'clientPageBundle'
-  > {}
+      InitialSagaApi,
+      | 'generatedAssetsDirectoryPath'
+      | 'animationModulePath'
+      | 'numberOfFrameRendererWorkers'
+    >,
+    Pick<
+      SagaReturnType<typeof animationDevelopmentSetupSaga>,
+      'clientServerEventChannel' | 'clientPageBundle'
+    > {}
 
 export function* clientServerEventHandlerSaga(
   api: ClientServerEventHandlerSagaApi
 ) {
-  const { clientServerEventChannel, clientPageBundle } = api
+  const {
+    clientServerEventChannel,
+    generatedAssetsDirectoryPath,
+    animationModulePath,
+    numberOfFrameRendererWorkers,
+    clientPageBundle,
+  } = api
   while (true) {
     const someClientServerEvent = yield* takeEvent<ClientServerEvent>(
       clientServerEventChannel
@@ -31,148 +48,253 @@ export function* clientServerEventHandlerSaga(
     switch (someClientServerEvent.eventType) {
       case 'clientServerListening':
         break
-      case 'clientApiRequest':
-        switch (someClientServerEvent.eventPayload.apiRequestType) {
-          case 'getAnimationRenderProcessState':
-            yield* spawn(getAnimationRenderProcessStateRequestHandler, {
-              apiResponse: someClientServerEvent.eventPayload.apiResponse,
-            })
-            break
-          case 'getFrameRenderProcessState':
-            yield* spawn(getFrameRenderProcessStateRequestHandler, {
-              apiRequest: someClientServerEvent.eventPayload.apiRequest,
-              apiResponse: someClientServerEvent.eventPayload.apiResponse,
-            })
-            break
-        }
-        break
-      case 'clientAssetRequest':
-        yield* spawn(getClientAssetRequestHandler, {
-          assetRequest: someClientServerEvent.eventPayload.assetRequest,
-          assetResponse: someClientServerEvent.eventPayload.assetResponse,
+      case 'clientRequestsGraphicsRendererProcessState':
+        yield* spawn(clientRequestsGraphicsRendererProcessStateHandler, {
+          generatedAssetsDirectoryPath,
+          animationModulePath,
+          numberOfFrameRendererWorkers,
+          clientRequest: someClientServerEvent.eventPayload.clientRequest,
+          serverResponse: someClientServerEvent.eventPayload.serverResponse,
         })
         break
-      case 'clientPageRequest':
-        yield* spawn(getClientPageRequestHandler, {
+      case 'clientRequestsGraphicAsset':
+        yield* spawn(clientRequestsGraphicAssetHandler, {
+          clientRequest: someClientServerEvent.eventPayload.clientRequest,
+          serverResponse: someClientServerEvent.eventPayload.serverResponse,
+        })
+        break
+      case 'clientRequestsPage':
+        yield* spawn(clientRequestsPageHandler, {
           clientPageBundle,
-          pageResponse: someClientServerEvent.eventPayload.pageResponse,
+          serverResponse: someClientServerEvent.eventPayload.serverResponse,
         })
         break
     }
   }
 }
 
-interface GetAnimationRenderProcessStateRequestHandlerApi
-  extends Pick<ClientApiRequestEvent['eventPayload'], 'apiResponse'> {}
-
-function* getAnimationRenderProcessStateRequestHandler(
-  api: GetAnimationRenderProcessStateRequestHandlerApi
-) {
-  const { apiResponse } = api
-  const currentAnimationModuleSourceState = yield* select(
-    (currentAnimationDevelopmentState) =>
-      currentAnimationDevelopmentState.animationModuleSourceState
-  )
-  switch (currentAnimationModuleSourceState.sourceStatus) {
-    case 'sourceInitializing':
-      apiResponse.sendStatus(204)
-      break
-    case 'sourceReady':
-      if (
-        currentAnimationModuleSourceState.animationRenderProcessState === null
-      ) {
-        yield* put({
-          type: 'spawnAnimationRenderProcess',
-          actionPayload: {
-            animationModuleSessionVersion:
-              currentAnimationModuleSourceState.animationModuleSessionVersion,
-          },
-        })
-      }
-      const currentClientAnimationRenderProcessState =
-        getClientAnimationRenderProcessState({
-          animationModuleSessionVersion:
-            currentAnimationModuleSourceState.animationModuleSessionVersion,
-          animationRenderProcessState:
-            currentAnimationModuleSourceState.animationRenderProcessState,
-        })
-      apiResponse.statusCode = 200
-      apiResponse.send(JSON.stringify(currentClientAnimationRenderProcessState))
-      break
-  }
-}
-
-interface GetFrameRenderProcessStateRequestHandlerApi
+interface ClientRequestsGraphicsRendererProcessStateHandlerApi
   extends Pick<
-    ClientApiRequestEvent['eventPayload'],
-    'apiResponse' | 'apiRequest'
-  > {}
+      ClientServerEventHandlerSagaApi,
+      | 'generatedAssetsDirectoryPath'
+      | 'animationModulePath'
+      | 'numberOfFrameRendererWorkers'
+    >,
+    Pick<
+      ClientRequestsGraphicAssetEvent['eventPayload'],
+      'clientRequest' | 'serverResponse'
+    > {}
 
-function* getFrameRenderProcessStateRequestHandler(
-  api: GetFrameRenderProcessStateRequestHandlerApi
+function* clientRequestsGraphicsRendererProcessStateHandler(
+  api: ClientRequestsGraphicsRendererProcessStateHandlerApi
 ) {
-  const { apiResponse, apiRequest } = api
+  const {
+    serverResponse,
+    clientRequest,
+    generatedAssetsDirectoryPath,
+    animationModulePath,
+    numberOfFrameRendererWorkers,
+  } = api
   const currentAnimationModuleSourceState = yield* select(
     (currentAnimationDevelopmentState) =>
       currentAnimationDevelopmentState.animationModuleSourceState
   )
-  switch (currentAnimationModuleSourceState.sourceStatus) {
-    case 'sourceInitializing':
-      apiResponse.sendStatus(204)
-      break
-    case 'sourceReady':
-      const getFrameRenderProcessStateRequestParams = yield* call(() =>
-        decodeData<{ frameIndex: number }, { frameIndex: string }>({
-          targetCodec: IO.exact(
-            IO.type({
-              frameIndex: NumberFromString,
+  try {
+    const { graphicsRendererProcessStateRequestQueryParams } = yield* call(
+      getGraphicsRendererProcessStateRequestQueryParams,
+      {
+        clientRequestQueryData: clientRequest.query,
+      }
+    )
+    switch (currentAnimationModuleSourceState.sourceStatus) {
+      case 'sourceInitializing':
+        serverResponse.sendStatus(204)
+        break
+      case 'sourceReady':
+        const { specifiedGraphicsRendererProcessKey } =
+          getSpecifiedGraphicsRendererProcessKey({
+            graphicsRendererProcessStateRequestQueryParams,
+          })
+        const specifiedGraphicsRendererProcessState =
+          currentAnimationModuleSourceState.graphicsRendererProcessStates[
+            specifiedGraphicsRendererProcessKey
+          ]
+        if (specifiedGraphicsRendererProcessState === undefined) {
+          const { partialSpawnGraphicsRendererProcessActionPayload } =
+            getPartialSpawnGraphicsRendererProcessActionPayload({
+              generatedAssetsDirectoryPath,
+              animationModulePath,
+              numberOfFrameRendererWorkers,
+              graphicsRendererProcessStateRequestQueryParams,
+              currentAnimationModuleSessionVersion:
+                currentAnimationModuleSourceState.animationModuleSessionVersion,
             })
-          ),
-          inputData: apiRequest.params,
-        })
-      )
-      const targetFrameRenderProcessState =
-        currentAnimationModuleSourceState.frameRenderProcessStates[
-          getFrameRenderProcessStateRequestParams.frameIndex
-        ]
-      if (targetFrameRenderProcessState === undefined) {
-        yield* put({
-          type: 'spawnFrameRenderProcess',
-          actionPayload: {
-            frameIndex: getFrameRenderProcessStateRequestParams.frameIndex,
-            animationModuleSessionVersion:
+          yield* put({
+            type: 'spawnGraphicsRendererProcess',
+            actionPayload: {
+              ...partialSpawnGraphicsRendererProcessActionPayload,
+              animationModuleSessionVersionStamp:
+                currentAnimationModuleSourceState.animationModuleSessionVersion,
+              graphicsRendererProcessKey: specifiedGraphicsRendererProcessKey,
+            },
+          })
+        }
+        const { specifiedClientGraphicsRendererProcessState } =
+          getSpecifiedClientGraphicsRendererProcessState({
+            specifiedGraphicsRendererProcessState,
+            currentAnimationModuleSessionVersion:
               currentAnimationModuleSourceState.animationModuleSessionVersion,
-          },
-        })
-      }
-      const currentClientFrameRenderProcessState =
-        getClientFrameRenderProcessState({
-          animationModuleSessionVersion:
-            currentAnimationModuleSourceState.animationModuleSessionVersion,
-          frameRenderProcessState: targetFrameRenderProcessState,
-        })
-      apiResponse.statusCode = 200
-      apiResponse.send(JSON.stringify(currentClientFrameRenderProcessState))
-      break
+          })
+        serverResponse.statusCode = 200
+        serverResponse.send(
+          JSON.stringify(specifiedClientGraphicsRendererProcessState)
+        )
+        break
+    }
+  } catch {
+    // invalid query params
+    serverResponse.sendStatus(400)
   }
 }
 
-interface GetClientAssetRequestHandlerApi
-  extends Pick<
-    ClientAssetRequestEvent['eventPayload'],
-    'assetRequest' | 'assetResponse'
+interface GetGraphicsRendererProcessStateRequestQueryParamsApi {
+  clientRequestQueryData: ClientRequestsGraphicsRendererProcessStateHandlerApi['clientRequest']['query']
+}
+
+async function getGraphicsRendererProcessStateRequestQueryParams(
+  api: GetGraphicsRendererProcessStateRequestQueryParamsApi
+) {
+  const { clientRequestQueryData } = api
+  const graphicsRendererProcessStateRequestQueryParams =
+    await decodeData<GraphicsRendererProcessStateRequestQueryParams>({
+      targetCodec: GraphicsRendererProcessStateRequestQueryParamsCodec,
+      inputData: clientRequestQueryData,
+    })
+  return { graphicsRendererProcessStateRequestQueryParams }
+}
+
+interface GetSpecifiedGraphicsRendererProcessKeyApi
+  extends FunctionBrand<
+    typeof getGraphicsRendererProcessStateRequestQueryParams,
+    'graphicsRendererProcessStateRequestQueryParams'
   > {}
 
-function* getClientAssetRequestHandler(api: GetClientAssetRequestHandlerApi) {
-  const { assetRequest, assetResponse } = api
-  const getClientAssetRequestParams = yield* call(() =>
+function getSpecifiedGraphicsRendererProcessKey(
+  api: GetSpecifiedGraphicsRendererProcessKeyApi
+) {
+  const { graphicsRendererProcessStateRequestQueryParams } = api
+  switch (graphicsRendererProcessStateRequestQueryParams.assetType) {
+    case 'mp4':
+      return {
+        specifiedGraphicsRendererProcessKey: 'animation',
+      }
+    case 'png':
+      return {
+        specifiedGraphicsRendererProcessKey: `${graphicsRendererProcessStateRequestQueryParams.frameIndex}`,
+      }
+    default:
+      throw new Error('wtf? getSpecifiedGraphicsRendererProcessKey')
+  }
+}
+
+interface GetPartialSpawnGraphicsRendererProcessActionPayloadApi
+  extends Pick<
+      ClientRequestsGraphicsRendererProcessStateHandlerApi,
+      | 'generatedAssetsDirectoryPath'
+      | 'animationModulePath'
+      | 'numberOfFrameRendererWorkers'
+    >,
+    FunctionBrand<
+      typeof getGraphicsRendererProcessStateRequestQueryParams,
+      'graphicsRendererProcessStateRequestQueryParams'
+    > {
+  currentAnimationModuleSessionVersion: AnimationModuleSourceReadyState['animationModuleSessionVersion']
+}
+
+function getPartialSpawnGraphicsRendererProcessActionPayload(
+  api: GetPartialSpawnGraphicsRendererProcessActionPayloadApi
+) {
+  const {
+    generatedAssetsDirectoryPath,
+    animationModulePath,
+    graphicsRendererProcessStateRequestQueryParams,
+    currentAnimationModuleSessionVersion,
+    numberOfFrameRendererWorkers,
+  } = api
+  const generatedAssetsDirectoryAbsolutePath = Path.resolve(
+    generatedAssetsDirectoryPath
+  )
+  const animationModuleAbsolutePath = Path.resolve(animationModulePath)
+  switch (graphicsRendererProcessStateRequestQueryParams.assetType) {
+    case 'mp4':
+      const animationAssetFilename = `${currentAnimationModuleSessionVersion}.mp4`
+      const animationMp4OutputPath = Path.join(
+        generatedAssetsDirectoryAbsolutePath,
+        animationAssetFilename
+      )
+      return {
+        partialSpawnGraphicsRendererProcessActionPayload: {
+          graphicAssetPathKey: animationAssetFilename,
+          graphicAssetPath: animationMp4OutputPath,
+          graphicAssetUrlResult: `/asset/${animationAssetFilename}`,
+          graphicsRendererProcessCommandString: `graphics-renderer renderAnimation --animationModulePath=${animationModuleAbsolutePath} --animationMp4OutputPath=${animationMp4OutputPath} --numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
+          initialProcessProgressInfo: 'starting animation rendering...',
+        },
+      }
+    case 'png':
+      const frameAssetFilename = `${currentAnimationModuleSessionVersion}_${graphicsRendererProcessStateRequestQueryParams.frameIndex}.png`
+      const frameFileOutputPath = Path.join(
+        generatedAssetsDirectoryAbsolutePath,
+        frameAssetFilename
+      )
+      return {
+        partialSpawnGraphicsRendererProcessActionPayload: {
+          graphicAssetPathKey: frameAssetFilename,
+          graphicAssetPath: frameFileOutputPath,
+          graphicsRendererProcessCommandString: `graphics-renderer renderAnimationFrame --animationModulePath=${animationModuleAbsolutePath} --frameIndex=${graphicsRendererProcessStateRequestQueryParams.frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
+          graphicAssetUrlResult: `/asset/${frameAssetFilename}`,
+          initialProcessProgressInfo: 'starting frame rendering...',
+        },
+      }
+  }
+}
+
+interface GetSpecifiedClientGraphicsRendererProcessStateApi {
+  specifiedGraphicsRendererProcessState:
+    | AnimationModuleSourceReadyState['graphicsRendererProcessStates'][string]
+    | undefined
+  currentAnimationModuleSessionVersion: AnimationModuleSourceReadyState['animationModuleSessionVersion']
+}
+
+function getSpecifiedClientGraphicsRendererProcessState(
+  api: GetSpecifiedClientGraphicsRendererProcessStateApi
+) {
+  const { currentAnimationModuleSessionVersion } = api
+  return {
+    specifiedClientGraphicsRendererProcessState: {
+      animationModuleSessionVerions: currentAnimationModuleSessionVersion,
+    },
+  }
+}
+
+interface ClientRequestsGraphicAssetHandlerApi
+  extends Pick<
+    ClientRequestsGraphicAssetEvent['eventPayload'],
+    'clientRequest' | 'serverResponse'
+  > {}
+
+function* clientRequestsGraphicAssetHandler(
+  api: ClientRequestsGraphicAssetHandlerApi
+) {
+  const { clientRequest, serverResponse } = api
+  const clientRequestRouteParams = yield* call(() =>
     decodeData<{ assetFilename: string }>({
       targetCodec: IO.exact(
         IO.type({
           assetFilename: IO.string,
         })
       ),
-      inputData: assetRequest.params,
+      inputData: clientRequest.params,
     })
   )
   const currentAvailableAssetsFilePathMap = yield* select(
@@ -180,23 +302,23 @@ function* getClientAssetRequestHandler(api: GetClientAssetRequestHandlerApi) {
       currentAnimationDevelopmentState.availableAssetsFilePathMap
   )
   const targetAssetFilepath =
-    currentAvailableAssetsFilePathMap[getClientAssetRequestParams.assetFilename]
+    currentAvailableAssetsFilePathMap[clientRequestRouteParams.assetFilename]
   if (targetAssetFilepath) {
-    assetResponse.sendFile(targetAssetFilepath)
+    serverResponse.sendFile(targetAssetFilepath)
   } else {
-    assetResponse.sendStatus(404)
+    serverResponse.sendStatus(404)
   }
 }
 
-interface GetClientPageRequestHandlerApi
+interface ClientRequestsPageHandlerApi
   extends Pick<ClientServerEventHandlerSagaApi, 'clientPageBundle'>,
-    Pick<ClientPageRequestEvent['eventPayload'], 'pageResponse'> {}
+    Pick<ClientRequestsPageEvent['eventPayload'], 'serverResponse'> {}
 
-function* getClientPageRequestHandler(api: GetClientPageRequestHandlerApi) {
-  const { pageResponse, clientPageBundle } = api
-  pageResponse.statusCode = 200
-  pageResponse.setHeader('Content-Type', 'text/html')
-  pageResponse.send(
+function* clientRequestsPageHandler(api: ClientRequestsPageHandlerApi) {
+  const { serverResponse, clientPageBundle } = api
+  serverResponse.statusCode = 200
+  serverResponse.setHeader('Content-Type', 'text/html')
+  serverResponse.send(
     ReactDomServer.renderToStaticMarkup(
       <html lang={'en'}>
         <head>

@@ -1,9 +1,9 @@
 import { call, spawn } from '../helpers/storeEffects'
 import { StartAnimationDevelopmentApi } from '../startAnimationDevelopment'
+import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
 import { animationModuleSourceEventHandlerSaga } from './animationModuleSourceEventHandlerSaga'
 import { clientServerEventHandlerSaga } from './clientServerEventHandlerSaga'
-import { renderProcessManagerSaga } from './renderProcessManagerSaga'
-import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
+import { graphicsRendererProcessManagerSaga } from './graphicsRendererProcessManagerSaga'
 
 export interface InitialSagaApi
   extends Pick<
@@ -25,7 +25,7 @@ export function* initialSaga(api: InitialSagaApi) {
     animationModuleSourceEventChannel,
     clientServerEventChannel,
     clientPageBundle,
-    renderProcessManagerActionChannel,
+    graphicsRendererProcessManagerActionChannel,
   } = yield* call(animationDevelopmentSetupSaga, {
     animationModulePath,
     generatedAssetsDirectoryPath,
@@ -35,13 +35,13 @@ export function* initialSaga(api: InitialSagaApi) {
     animationModuleSourceEventChannel,
   })
   yield* spawn(clientServerEventHandlerSaga, {
-    clientServerEventChannel,
-    clientPageBundle,
-  })
-  yield* spawn(renderProcessManagerSaga, {
     animationModulePath,
     generatedAssetsDirectoryPath,
     numberOfFrameRendererWorkers,
-    renderProcessManagerActionChannel,
+    clientServerEventChannel,
+    clientPageBundle,
+  })
+  yield* spawn(graphicsRendererProcessManagerSaga, {
+    graphicsRendererProcessManagerActionChannel,
   })
 }

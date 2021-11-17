@@ -3,42 +3,28 @@ import { EventBase } from './common'
 
 export type ClientServerEvent =
   | ClientServerListeningEvent
-  | ClientApiRequestEvent
-  | ClientAssetRequestEvent
-  | ClientPageRequestEvent
+  | ClientRequestsGraphicsRendererProcessStateEvent
+  | ClientRequestsGraphicAssetEvent
+  | ClientRequestsPageEvent
 
 export interface ClientServerListeningEvent
   extends EventBase<'clientServerListening', {}> {}
 
-export type ClientApiRequestEvent =
-  | ClientApiRequestEventBase<'getAnimationRenderProcessState'>
-  | ClientApiRequestEventBase<'getFrameRenderProcessState'>
+export interface ClientRequestsGraphicsRendererProcessStateEvent
+  extends ClientRequestsEventBase<'clientRequestsGraphicsRendererProcessState'> {}
 
-interface ClientApiRequestEventBase<
-  ApiRequestType extends string
+export interface ClientRequestsGraphicAssetEvent
+  extends ClientRequestsEventBase<'clientRequestsGraphicAsset'> {}
+
+export interface ClientRequestsPageEvent
+  extends ClientRequestsEventBase<'clientRequestsPage'> {}
+
+interface ClientRequestsEventBase<
+  ClientRequestsEventType extends string
 > extends EventBase<
-    'clientApiRequest',
+    ClientRequestsEventType,
     {
-      apiRequestType: ApiRequestType
-      apiRequest: ClientRequest
-      apiResponse: ServerResponse
-    }
-  > {}
-
-export interface ClientAssetRequestEvent
-  extends EventBase<
-    'clientAssetRequest',
-    {
-      assetRequest: ClientRequest
-      assetResponse: ServerResponse
-    }
-  > {}
-
-export interface ClientPageRequestEvent
-  extends EventBase<
-    'clientPageRequest',
-    {
-      pageRequest: ClientRequest
-      pageResponse: ServerResponse
+      clientRequest: ClientRequest
+      serverResponse: ServerResponse
     }
   > {}

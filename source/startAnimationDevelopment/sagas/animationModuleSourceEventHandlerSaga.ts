@@ -23,9 +23,9 @@ export function* animationModuleSourceEventHandlerSaga(
         yield* put({
           type: 'animationModuleSourceChanged',
           actionPayload: {
-            animationModuleSessionVersion:
+            nextAnimationModuleSessionVersion:
               someAnimationModuleSourceEvent.eventPayload
-                .animationModuleSessionVersion,
+                .nextAnimationModuleSessionVersion,
           },
         })
         break

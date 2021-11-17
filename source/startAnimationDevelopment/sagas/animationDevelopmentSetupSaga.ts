@@ -1,12 +1,12 @@
+import { build as buildScript } from 'esbuild'
 import FileSystem from 'fs'
 import Path from 'path'
 import { buffers as SagaBuffers } from 'redux-saga'
 import { getAnimationModuleSourceEventChannel } from '../externals/getAnimationModuleSourceEventChannel'
 import { getClientServerEventChannel } from '../externals/getClientServerEventChannel'
 import { actionChannel, call } from '../helpers/storeEffects'
-import { RenderProcessManagerAction } from '../models/AnimationDevelopmentAction'
+import { GraphicsRendererProcessManagerAction } from '../models/AnimationDevelopmentAction'
 import { InitialSagaApi } from './initialSaga'
-import { build as buildScript } from 'esbuild'
 
 export interface AnimationDevelopmentSetupSagaApi
   extends Pick<
@@ -35,20 +35,16 @@ export function* animationDevelopmentSetupSaga(
   const { clientServerEventChannel } = getClientServerEventChannel({
     clientServerPort,
   })
-  const renderProcessManagerActionChannel =
-    yield* actionChannel<RenderProcessManagerAction>(
-      [
-        'animationModuleSourceChanged',
-        'spawnAnimationRenderProcess',
-        'spawnFrameRenderProcess',
-      ],
+  const graphicsRendererProcessManagerActionChannel =
+    yield* actionChannel<GraphicsRendererProcessManagerAction>(
+      ['animationModuleSourceChanged', 'spawnGraphicsRendererProcess'],
       SagaBuffers.expanding(3)
     )
   const { clientPageBundle } = yield* call(getClientPageBundle)
   return {
     animationModuleSourceEventChannel,
     clientServerEventChannel,
-    renderProcessManagerActionChannel,
+    graphicsRendererProcessManagerActionChannel,
     clientPageBundle,
   }
 }

@@ -1,24 +1,12 @@
 import {
   AnimationDevelopmentAction,
   AnimationModuleSourceUpdatedAction,
-  AnimationRenderProcessActiveAction,
-  AnimationRenderProcessFailedAction,
-  AnimationRenderProcessSuccessfulAction,
-  AnimationRenderProcessUpdateAction,
-  FrameRenderProcessActiveAction,
-  FrameRenderProcessFailedAction,
-  FrameRenderProcessSuccessfulAction,
-  FrameRenderProcessUpdateAction,
+  GraphicsRendererProcessActiveAction,
+  GraphicsRendererProcessFailedAction,
+  GraphicsRendererProcessProgressInfoUpdatedAction,
+  GraphicsRendererProcessSuccessfulAction,
 } from './models/AnimationDevelopmentAction'
 import { AnimationDevelopmentState } from './models/AnimationDevelopmentState'
-import {
-  AnimationRenderProcessActiveState,
-  AnimationRenderProcessFailedState,
-  AnimationRenderProcessSuccessfulState,
-  FrameRenderProcessActiveState,
-  FrameRenderProcessFailedState,
-  FrameRenderProcessSuccessfulState,
-} from './models/RenderProcessState'
 
 export function animationDevelopmentStateReducer(
   currentAnimationDevelopmentState: AnimationDevelopmentState = {
@@ -35,43 +23,23 @@ export function animationDevelopmentStateReducer(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
-    case 'animationRenderProcessActive':
-      return handleAnimationRenderProcessActive(
+    case 'graphicsRendererProcessActive':
+      return handleGraphicsRendererProcessActive(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
-    case 'animationRenderProcessUpdate':
-      return handleAnimationRenderProcessUpdate(
+    case 'graphicsRendererProcessProgressInfoUpdated':
+      return handleGraphicsRendererProcessProgessInfoUpdated(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
-    case 'animationRenderProcessSuccessful':
-      return handleAnimationRenderProcessSuccessful(
+    case 'graphicsRendererProcessSuccessful':
+      return handleGraphicsRendererProcessSuccessful(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
-    case 'animationRenderProcessFailed':
-      return handleAnimationRenderProcessFailed(
-        currentAnimationDevelopmentState,
-        someAnimationDevelopmentAction.actionPayload
-      )
-    case 'frameRenderProcessActive':
-      return handleFrameRenderProcessActive(
-        currentAnimationDevelopmentState,
-        someAnimationDevelopmentAction.actionPayload
-      )
-    case 'frameRenderProcessUpdate':
-      return handleFrameRenderProcessUpdate(
-        currentAnimationDevelopmentState,
-        someAnimationDevelopmentAction.actionPayload
-      )
-    case 'frameRenderProcessSuccessful':
-      return handleFrameRenderProcessSuccessful(
-        currentAnimationDevelopmentState,
-        someAnimationDevelopmentAction.actionPayload
-      )
-    case 'frameRenderProcessFailed':
-      return handleFrameRenderProcessFailed(
+    case 'graphicsRendererProcessFailed':
+      return handleGraphicsRendererProcessFailed(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
@@ -84,344 +52,157 @@ function handleAnimationModuleSourceUpdated(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   animationModuleSourceUpdatedActionPayload: AnimationModuleSourceUpdatedAction['actionPayload']
 ): AnimationDevelopmentState {
-  const { animationModuleSessionVersion } =
+  const { animationModuleSourceState } =
     animationModuleSourceUpdatedActionPayload
   return {
     ...currentAnimationDevelopmentState,
-    animationModuleSourceState: {
-      animationModuleSessionVersion,
-      sourceStatus: 'sourceReady',
-      animationRenderProcessState: null,
-      frameRenderProcessStates: {},
-    },
+    animationModuleSourceState,
   }
 }
 
-function handleAnimationRenderProcessActive(
+function handleGraphicsRendererProcessActive(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
-  animationRenderProcessActiveActionPayload: AnimationRenderProcessActiveAction['actionPayload']
+  graphicsRendererProcessActiveActionPayload: GraphicsRendererProcessActiveAction['actionPayload']
 ): AnimationDevelopmentState {
-  const { spawnedAnimationRenderProcess } =
-    animationRenderProcessActiveActionPayload
+  const {
+    targetGraphicsRendererProcessKey,
+    targetGraphicsRendererProcessState,
+  } = graphicsRendererProcessActiveActionPayload
   if (
     currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceReady'
+    'sourceInitializing'
   ) {
-    const nextAnimationRenderProcessState: AnimationRenderProcessActiveState = {
-      spawnedProcess: spawnedAnimationRenderProcess,
-      lastProcessMessage: null,
-      processStatus: 'processActive',
-    }
+    throw new Error('wtf? handleGraphicsRendererProcessActive')
+  } else {
     return {
       ...currentAnimationDevelopmentState,
       animationModuleSourceState: {
         ...currentAnimationDevelopmentState.animationModuleSourceState,
-        animationRenderProcessState: nextAnimationRenderProcessState,
+        graphicsRendererProcessStates: {
+          ...currentAnimationDevelopmentState.animationModuleSourceState
+            .graphicsRendererProcessStates,
+          [targetGraphicsRendererProcessKey]:
+            targetGraphicsRendererProcessState,
+        },
       },
     }
-  } else {
-    throw new Error('wtf? handleAnimationRenderProcessActive')
   }
 }
 
-function handleAnimationRenderProcessUpdate(
+function handleGraphicsRendererProcessProgessInfoUpdated(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
-  animationRenderProcessUpdateActionPayload: AnimationRenderProcessUpdateAction['actionPayload']
-): AnimationDevelopmentState {
-  const { targetAnimationModuleSessionVersion, animationRenderProcessMessage } =
-    animationRenderProcessUpdateActionPayload
-  if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceReady'
-  ) {
-    if (
-      currentAnimationDevelopmentState.animationModuleSourceState
-        .animationModuleSessionVersion ===
-        targetAnimationModuleSessionVersion &&
-      currentAnimationDevelopmentState.animationModuleSourceState
-        .animationRenderProcessState?.processStatus === 'processActive'
-    ) {
-      const nextAnimationRenderProcessState: AnimationRenderProcessActiveState =
-        {
-          ...currentAnimationDevelopmentState.animationModuleSourceState
-            .animationRenderProcessState,
-          lastProcessMessage: animationRenderProcessMessage,
-        }
-      return {
-        ...currentAnimationDevelopmentState,
-        animationModuleSourceState: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState,
-          animationRenderProcessState: nextAnimationRenderProcessState,
-        },
-      }
-    } else {
-      return currentAnimationDevelopmentState
-    }
-  } else {
-    throw new Error('wtf? handleAnimationRenderProcessUpdate')
-  }
-}
-
-function handleAnimationRenderProcessSuccessful(
-  currentAnimationDevelopmentState: AnimationDevelopmentState,
-  animationRenderProcessSuccessfulActionPayload: AnimationRenderProcessSuccessfulAction['actionPayload']
-): AnimationDevelopmentState {
-  const { targetAnimationModuleSessionVersion, animationAssetPath } =
-    animationRenderProcessSuccessfulActionPayload
-  if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-      'sourceReady' &&
-    currentAnimationDevelopmentState.animationModuleSourceState
-      .animationRenderProcessState !== null
-  ) {
-    const nextAvailableAssetsFilePathMap = {
-      ...currentAnimationDevelopmentState.availableAssetsFilePathMap,
-      [`${targetAnimationModuleSessionVersion}.mp4`]: animationAssetPath,
-    }
-    if (
-      currentAnimationDevelopmentState.animationModuleSourceState
-        .animationModuleSessionVersion === targetAnimationModuleSessionVersion
-    ) {
-      const nextAnimationRenderProcessState: AnimationRenderProcessSuccessfulState =
-        {
-          spawnedProcess:
-            currentAnimationDevelopmentState.animationModuleSourceState
-              .animationRenderProcessState.spawnedProcess,
-          animationAssetUrl: `/asset/${targetAnimationModuleSessionVersion}.mp4`,
-          processStatus: 'processSuccessful',
-        }
-      return {
-        ...currentAnimationDevelopmentState,
-        animationModuleSourceState: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState,
-          animationRenderProcessState: nextAnimationRenderProcessState,
-        },
-        availableAssetsFilePathMap: nextAvailableAssetsFilePathMap,
-      }
-    } else {
-      return {
-        ...currentAnimationDevelopmentState,
-        availableAssetsFilePathMap: nextAvailableAssetsFilePathMap,
-      }
-    }
-  } else {
-    throw new Error('wtf? handleAnimationRenderProcessSuccessful')
-  }
-}
-
-function handleAnimationRenderProcessFailed(
-  currentAnimationDevelopmentState: AnimationDevelopmentState,
-  animationRenderProcessFailedActionPayload: AnimationRenderProcessFailedAction['actionPayload']
+  graphicsRendererProcessUpdateActionPayload: GraphicsRendererProcessProgressInfoUpdatedAction['actionPayload']
 ): AnimationDevelopmentState {
   const {
-    targetAnimationModuleSessionVersion,
-    animationRenderProcessErrorMessage,
-  } = animationRenderProcessFailedActionPayload
+    animationModuleSessionVersionStamp,
+    targetGraphicsRendererProcessKey,
+    targetGraphicsRendererProcessState,
+  } = graphicsRendererProcessUpdateActionPayload
   if (
     currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-      'sourceReady' &&
+    'sourceInitializing'
+  ) {
+    throw new Error('wtf? handleGraphicsRendererProcessProgessInfoUpdated')
+  } else if (
     currentAnimationDevelopmentState.animationModuleSourceState
-      .animationRenderProcessState !== null
+      .animationModuleSessionVersion === animationModuleSessionVersionStamp &&
+    currentAnimationDevelopmentState.animationModuleSourceState
+      .graphicsRendererProcessStates[targetGraphicsRendererProcessKey]
+      ?.processStatus === 'processActive'
   ) {
-    if (
-      currentAnimationDevelopmentState.animationModuleSourceState
-        .animationModuleSessionVersion === targetAnimationModuleSessionVersion
-    ) {
-      const nextAnimationRenderProcessState: AnimationRenderProcessFailedState =
-        {
-          spawnedProcess:
-            currentAnimationDevelopmentState.animationModuleSourceState
-              .animationRenderProcessState.spawnedProcess,
-          processErrorMessage: animationRenderProcessErrorMessage,
-          processStatus: 'processFailed',
-        }
-      return {
-        ...currentAnimationDevelopmentState,
-        animationModuleSourceState: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState,
-          animationRenderProcessState: nextAnimationRenderProcessState,
-        },
-      }
-    } else {
-      return currentAnimationDevelopmentState
-    }
-  } else {
-    throw new Error('wtf? handleAnimationRenderProcessFailed')
-  }
-}
-
-function handleFrameRenderProcessActive(
-  currentAnimationDevelopmentState: AnimationDevelopmentState,
-  frameRenderProcessActiveActionPayload: FrameRenderProcessActiveAction['actionPayload']
-): AnimationDevelopmentState {
-  const { frameIndex, spawnedFrameRenderProcess } =
-    frameRenderProcessActiveActionPayload
-  if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceReady'
-  ) {
-    const nextFrameRenderProcessState: FrameRenderProcessActiveState = {
-      spawnedProcess: spawnedFrameRenderProcess,
-      lastProcessMessage: null,
-      processStatus: 'processActive',
-    }
     return {
       ...currentAnimationDevelopmentState,
       animationModuleSourceState: {
         ...currentAnimationDevelopmentState.animationModuleSourceState,
-        frameRenderProcessStates: {
+        graphicsRendererProcessStates: {
           ...currentAnimationDevelopmentState.animationModuleSourceState
-            .frameRenderProcessStates,
-          [frameIndex]: nextFrameRenderProcessState,
+            .graphicsRendererProcessStates,
+          [targetGraphicsRendererProcessKey]:
+            targetGraphicsRendererProcessState,
         },
       },
     }
   } else {
-    throw new Error('wtf? handleFrameRenderProcessActive')
+    return currentAnimationDevelopmentState
   }
 }
 
-function handleFrameRenderProcessUpdate(
+function handleGraphicsRendererProcessSuccessful(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
-  frameRenderProcessUpdateActionPayload: FrameRenderProcessUpdateAction['actionPayload']
+  graphicsRendererProcessSuccessfulActionPayload: GraphicsRendererProcessSuccessfulAction['actionPayload']
 ): AnimationDevelopmentState {
   const {
-    targetAnimationModuleSessionVersion,
-    frameRenderProcessMessage,
-    targetFrameIndex,
-  } = frameRenderProcessUpdateActionPayload
+    animationModuleSessionVersionStamp,
+    targetGraphicsRendererProcessKey,
+    targetGraphicsRendererProcessState,
+    targetGraphicAssetKey,
+    targetGraphicAssetPath,
+  } = graphicsRendererProcessSuccessfulActionPayload
+  const availableAssetsFilePathMap = {
+    ...currentAnimationDevelopmentState.availableAssetsFilePathMap,
+    [targetGraphicAssetKey]: targetGraphicAssetPath,
+  }
   if (
     currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceReady'
+    'sourceInitializing'
   ) {
-    const targetFrameRenderProcessState =
-      currentAnimationDevelopmentState.animationModuleSourceState
-        .frameRenderProcessStates[targetFrameIndex]
-
-    if (
-      currentAnimationDevelopmentState.animationModuleSourceState
-        .animationModuleSessionVersion ===
-        targetAnimationModuleSessionVersion &&
-      targetFrameRenderProcessState?.processStatus === 'processActive'
-    ) {
-      const nextTargetFrameRenderProcessState: FrameRenderProcessActiveState = {
-        ...targetFrameRenderProcessState,
-        lastProcessMessage: frameRenderProcessMessage,
-      }
-      return {
-        ...currentAnimationDevelopmentState,
-        animationModuleSourceState: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState,
-          frameRenderProcessStates: {
-            ...currentAnimationDevelopmentState.animationModuleSourceState
-              .frameRenderProcessStates,
-            [targetFrameIndex]: nextTargetFrameRenderProcessState,
-          },
-        },
-      }
-    } else {
-      return currentAnimationDevelopmentState
-    }
-  } else {
-    throw new Error('wtf? handleFrameRenderProcessUpdate')
-  }
-}
-
-function handleFrameRenderProcessSuccessful(
-  currentAnimationDevelopmentState: AnimationDevelopmentState,
-  frameRenderProcessSuccessfulActionPayload: FrameRenderProcessSuccessfulAction['actionPayload']
-): AnimationDevelopmentState {
-  const {
-    targetAnimationModuleSessionVersion,
-    frameAssetPath,
-    targetFrameIndex,
-  } = frameRenderProcessSuccessfulActionPayload
-  if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-      'sourceReady' &&
+    throw new Error('wtf? handleGraphicsRendererProcessSuccessful')
+  } else if (
     currentAnimationDevelopmentState.animationModuleSourceState
-      .frameRenderProcessStates[targetFrameIndex] !== undefined
+      .animationModuleSessionVersion === animationModuleSessionVersionStamp
   ) {
-    const nextAvailableAssetsFilePathMap = {
-      ...currentAnimationDevelopmentState.availableAssetsFilePathMap,
-      [`${targetAnimationModuleSessionVersion}_${targetFrameIndex}.png`]:
-        frameAssetPath,
-    }
-    if (
-      currentAnimationDevelopmentState.animationModuleSourceState
-        .animationModuleSessionVersion === targetAnimationModuleSessionVersion
-    ) {
-      const nextFrameRenderProcessState: FrameRenderProcessSuccessfulState = {
-        spawnedProcess:
-          currentAnimationDevelopmentState.animationModuleSourceState
-            .frameRenderProcessStates[targetFrameIndex]!.spawnedProcess,
-        frameAssetUrl: `/asset/${targetAnimationModuleSessionVersion}_${targetFrameIndex}.png`,
-        processStatus: 'processSuccessful',
-      }
-      return {
-        ...currentAnimationDevelopmentState,
-        animationModuleSourceState: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState,
-          frameRenderProcessStates: {
-            ...currentAnimationDevelopmentState.animationModuleSourceState
-              .frameRenderProcessStates,
-            [targetFrameIndex]: nextFrameRenderProcessState,
-          },
+    return {
+      ...currentAnimationDevelopmentState,
+      availableAssetsFilePathMap,
+      animationModuleSourceState: {
+        ...currentAnimationDevelopmentState.animationModuleSourceState,
+        graphicsRendererProcessStates: {
+          ...currentAnimationDevelopmentState.animationModuleSourceState
+            .graphicsRendererProcessStates,
+          [targetGraphicsRendererProcessKey]:
+            targetGraphicsRendererProcessState,
         },
-        availableAssetsFilePathMap: nextAvailableAssetsFilePathMap,
-      }
-    } else {
-      return {
-        ...currentAnimationDevelopmentState,
-        availableAssetsFilePathMap: nextAvailableAssetsFilePathMap,
-      }
+      },
     }
   } else {
-    throw new Error('wtf? handleFrameRenderProcessSuccessful')
+    return {
+      ...currentAnimationDevelopmentState,
+      availableAssetsFilePathMap,
+    }
   }
 }
 
-function handleFrameRenderProcessFailed(
+function handleGraphicsRendererProcessFailed(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
-  frameRenderProcessFailedActionPayload: FrameRenderProcessFailedAction['actionPayload']
+  graphicsRendererProcessFailedActionPayload: GraphicsRendererProcessFailedAction['actionPayload']
 ): AnimationDevelopmentState {
   const {
-    targetAnimationModuleSessionVersion,
-    targetFrameIndex,
-    frameRenderProcessErrorMessage,
-  } = frameRenderProcessFailedActionPayload
+    animationModuleSessionVersionStamp,
+    targetGraphicsRendererProcessKey,
+    targetGraphicsRendererProcessState,
+  } = graphicsRendererProcessFailedActionPayload
   if (
     currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-      'sourceReady' &&
-    currentAnimationDevelopmentState.animationModuleSourceState
-      .frameRenderProcessStates[targetFrameIndex] !== undefined
+    'sourceInitializing'
   ) {
-    if (
-      currentAnimationDevelopmentState.animationModuleSourceState
-        .animationModuleSessionVersion === targetAnimationModuleSessionVersion
-    ) {
-      const nextFrameRenderProcessState: FrameRenderProcessFailedState = {
-        spawnedProcess:
-          currentAnimationDevelopmentState.animationModuleSourceState
-            .frameRenderProcessStates[targetFrameIndex]!.spawnedProcess,
-        processErrorMessage: frameRenderProcessErrorMessage,
-        processStatus: 'processFailed',
-      }
-      return {
-        ...currentAnimationDevelopmentState,
-        animationModuleSourceState: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState,
-          frameRenderProcessStates: {
-            ...currentAnimationDevelopmentState.animationModuleSourceState
-              .frameRenderProcessStates,
-            [targetFrameIndex]: nextFrameRenderProcessState,
-          },
+    throw new Error('wtf? handleGraphicsRendererProcessFailed')
+  } else if (
+    currentAnimationDevelopmentState.animationModuleSourceState
+      .animationModuleSessionVersion === animationModuleSessionVersionStamp
+  ) {
+    return {
+      ...currentAnimationDevelopmentState,
+      animationModuleSourceState: {
+        ...currentAnimationDevelopmentState.animationModuleSourceState,
+        graphicsRendererProcessStates: {
+          ...currentAnimationDevelopmentState.animationModuleSourceState
+            .graphicsRendererProcessStates,
+          [targetGraphicsRendererProcessKey]:
+            targetGraphicsRendererProcessState,
         },
-      }
-    } else {
-      return currentAnimationDevelopmentState
+      },
     }
   } else {
-    throw new Error('wtf? handleFrameRenderProcessFailed')
+    return currentAnimationDevelopmentState
   }
 }

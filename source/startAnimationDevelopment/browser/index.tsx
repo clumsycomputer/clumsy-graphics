@@ -6,10 +6,6 @@ import {
   Routes,
   useParams as useRouteParams,
 } from 'react-router-dom'
-import {
-  ClientAnimationRenderProcessState,
-  ClientFrameRenderProcessState,
-} from '../models/RenderProcessState'
 
 const appContainer = document.createElement('div')
 document.body.append(appContainer)
@@ -37,7 +33,7 @@ function ClientApp() {
 
 function AnimationPage() {
   const [animationRenderProcessState, setAnimationRenderProcessState] =
-    useState<ClientAnimationRenderProcessState | null>(null)
+    useState<any>(null)
   useEffect(() => {
     setInterval(() => {
       fetch('/api/latestAnimationModule/animationRenderProcessState')
@@ -99,7 +95,7 @@ function AnimationPage() {
 function FramePage() {
   const framePageParams = useRouteParams()
   const [frameRenderProcessState, setFrameRenderProcessState] =
-    useState<ClientFrameRenderProcessState | null>(null)
+    useState<any>(null)
   useEffect(() => {
     setInterval(() => {
       fetch(

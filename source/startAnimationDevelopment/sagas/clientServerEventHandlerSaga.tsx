@@ -1,4 +1,6 @@
+import { ChildProcess } from 'child_process'
 import * as IO from 'io-ts'
+import Path from 'path'
 import ReactDomServer from 'react-dom/server'
 import { SagaReturnType } from 'redux-saga/effects'
 import { decodeData } from '../../helpers/decodeData'
@@ -10,18 +12,13 @@ import {
   ClientRequestsPageEvent,
   ClientServerEvent,
 } from '../models/ClientServerEvent'
+import { GraphicsRendererProcessState } from '../models/GraphicsRendererProcessState'
 import {
   GraphicsRendererProcessStateRequestQueryParams,
   GraphicsRendererProcessStateRequestQueryParamsCodec,
 } from '../models/GraphicsRendererProcessStateRequestQueryParams'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
 import { InitialSagaApi } from './initialSaga'
-import Path from 'path'
-import {
-  GraphicsRendererProcessActiveState,
-  GraphicsRendererProcessState,
-} from '../models/GraphicsRendererProcessState'
-import { ChildProcess, ChildProcessWithoutNullStreams } from 'child_process'
 
 export interface ClientServerEventHandlerSagaApi
   extends Pick<
@@ -161,9 +158,13 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
         )
         break
     }
-  } catch {
-    // invalid query params
-    serverResponse.sendStatus(400)
+  } catch (queryParamsError) {
+    if (queryParamsError instanceof Error) {
+      serverResponse.statusCode = 400
+      serverResponse.send(`${queryParamsError}`)
+    } else {
+      serverResponse.sendStatus(500)
+    }
   }
 }
 

@@ -21,25 +21,22 @@ export function getSpawnedGraphicsRendererProcessEventChannel(
       (emitGraphicsRendererProcessEvent) => {
         spawnedGraphicsRendererProcess.stdout.setEncoding('utf-8')
         spawnedGraphicsRendererProcess.stdout.on('data', (someStdoutData) => {
-          if (typeof someStdoutData === 'string') {
-            const graphicsRendererProcessMessageTokens =
-              someStdoutData.split(/\r?\n/)
+          try {
+            const graphicsRendererProcessMessageTokens = (
+              someStdoutData as string
+            ).split(/\r?\n/)
             const graphicsRendererProcessMessage =
               graphicsRendererProcessMessageTokens[
                 graphicsRendererProcessMessageTokens.length - 2
-              ]
-            if (graphicsRendererProcessMessage) {
-              emitGraphicsRendererProcessEvent({
-                eventType: 'graphicsRendererProcessMessage',
-                eventPayload: {
-                  graphicsRendererProcessMessage,
-                },
-              })
-            } else {
-              throw new Error('wtf? graphicsRendererProcessMessageTokens')
-            }
-          } else {
-            throw new Error('wtf? someStdoutData')
+              ]!
+            emitGraphicsRendererProcessEvent({
+              eventType: 'graphicsRendererProcessMessage',
+              eventPayload: {
+                graphicsRendererProcessMessage,
+              },
+            })
+          } catch {
+            throw new Error('wtf? graphicsRendererProcessMessageTokens')
           }
         })
         const spawnedGraphicsRendererProcessErrorMessagePromise = new Promise<{

@@ -1,6 +1,7 @@
 import FileSystem from 'fs'
 // @ts-expect-error
 import Inkscape from 'inkscape'
+import * as IO from 'io-ts'
 import ReactDomServer from 'react-dom/server'
 import { Readable as ReadableStream } from 'stream'
 import Stream from 'stream/promises'
@@ -8,7 +9,7 @@ import { AnimationModule } from '../models/AnimationModule'
 import { FunctionResult } from '../models/common'
 import { decodeData } from './decodeData'
 import { getAnimationModule } from './getAnimationModule'
-import * as IO from 'io-ts'
+import { writeProcessProgressInfoToStdout } from './writeProcessProgressInfo'
 
 export interface RenderAnimationFrameApi {
   animationModule: FunctionResult<typeof getAnimationModule>
@@ -19,11 +20,15 @@ export interface RenderAnimationFrameApi {
 export async function renderAnimationFrame(api: RenderAnimationFrameApi) {
   const { animationModule, frameIndex, frameFileOutputPath } = api
   const { FrameDescriptor, frameCount } = animationModule
-  process.stdout.write(`rendering frame: ${frameIndex}\n`)
+  writeProcessProgressInfoToStdout({
+    processProgressInfo: `rendering frame: ${frameIndex}`,
+  })
   const frameSvgMarkup = ReactDomServer.renderToStaticMarkup(
     <FrameDescriptor frameCount={frameCount} frameIndex={frameIndex} />
   )
-  process.stdout.write('encoding svg markup to image file...\n')
+  writeProcessProgressInfoToStdout({
+    processProgressInfo: 'encoding svg markup to image file...',
+  })
   await writeSvgMarkupToImageFile({
     frameFileOutputPath,
     frameSvgMarkup,

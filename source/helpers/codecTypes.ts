@@ -11,3 +11,16 @@ export const NumberFromString = new IO.Type<number, string, unknown>(
   },
   (numberInput) => `${numberInput}`
 )
+
+export const NaturalNumber = new IO.Type<string, string, unknown>(
+  'naturalNumber',
+  (unknownInput): unknownInput is string => typeof unknownInput === 'string',
+  (unknownInput, ioContext) => {
+    const stringInput = `${unknownInput}`
+    const digitStringMatch = /^(\d+)$/.test(stringInput)
+    return digitStringMatch
+      ? IO.success(stringInput)
+      : IO.failure(unknownInput, ioContext)
+  },
+  (stringInput) => stringInput
+)

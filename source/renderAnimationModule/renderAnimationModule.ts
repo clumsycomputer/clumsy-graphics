@@ -5,6 +5,7 @@ import { Worker } from 'worker_threads'
 import { decodeData } from '../helpers/decodeData'
 import { getAnimationModule } from '../helpers/getAnimationModule'
 import { getAnimationModuleBundle } from '../helpers/getAnimationModuleBundle'
+import { writeProcessProgressInfoToStdout } from '../helpers/writeProcessProgressInfo'
 import { AnimationModule } from '../models/AnimationModule'
 import { FunctionBrand, FunctionResult } from '../models/common'
 import {
@@ -107,7 +108,7 @@ async function renderAnimationFrames(api: RenderAnimationFramesApi) {
             workerData: {
               animationModuleBundle,
             },
-            // surpress worker stdout
+            // suppress worker stdout
             stdout: true,
           })
       )
@@ -124,9 +125,9 @@ async function renderAnimationFrames(api: RenderAnimationFramesApi) {
               // @ts-expect-error
               case 'workerRenderedFrame':
                 framesRenderedCount = framesRenderedCount + 1
-                process.stdout.write(
-                  `rendering frames: ${framesRenderedCount} / ${animationModule.frameCount}\n`
-                )
+                writeProcessProgressInfoToStdout({
+                  processProgressInfo: `rendering frames: ${framesRenderedCount} / ${animationModule.frameCount}`,
+                })
               case 'workerInitialized':
                 if (nextFrameIndex < animationModule.frameCount) {
                   const renderAnimationFrameMessage: RenderAnimationFrameMessage =
@@ -179,7 +180,9 @@ function composeAnimationMp4(api: ComposeAnimationMp4Api) {
     constantRateFactor,
     animationMp4OutputPath,
   } = api
-  process.stdout.write('encoding animation...\n')
+  writeProcessProgressInfoToStdout({
+    processProgressInfo: 'encoding animation...',
+  })
   ChildProcess.execSync(`
     ffmpeg \
       -y \

@@ -1,5 +1,5 @@
 import * as IO from 'io-ts'
-import { NaturalNumber } from '../../helpers/codecTypes'
+import { NaturalNumberString } from '../../helpers/codecTypes'
 
 export type GraphicsRendererProcessStateRequestQueryParams =
   | RenderAnimationProcessStateRequestQueryParams
@@ -22,7 +22,7 @@ export interface RenderFrameProcessStateRequestQueryParams
 const RenderFrameProcessStateRequestQueryParamsCodec = IO.exact(
   IO.type({
     assetType: IO.literal('png'),
-    frameIndex: NaturalNumber,
+    frameIndex: NaturalNumberString,
   })
 )
 

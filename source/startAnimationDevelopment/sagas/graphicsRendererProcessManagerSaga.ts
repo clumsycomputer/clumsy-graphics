@@ -85,10 +85,6 @@ export function* graphicsRendererProcessManagerSaga(
       ] === undefined
     ) {
       yield* call(function* () {
-        // const targetFramePngOutputPath = Path.resolve(
-        //   generatedAssetsDirectoryPath,
-        //   `${someGraphicRendererProcessManagerAction.actionPayload.animationModuleSessionVersion}_${someGraphicRendererProcessManagerAction.actionPayload.frameIndex}.png`
-        // )
         const { spawnedGraphicsRendererProcess } = spawnGraphicsRendererProcess(
           {
             graphicsRendererCommandString:

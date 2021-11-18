@@ -12,8 +12,8 @@ export const NumberFromString = new IO.Type<number, string, unknown>(
   (numberInput) => `${numberInput}`
 )
 
-export const NaturalNumber = new IO.Type<string, string, unknown>(
-  'naturalNumber',
+export const NaturalNumberString = new IO.Type<string, string, unknown>(
+  'NaturalNumberString',
   (unknownInput): unknownInput is string => typeof unknownInput === 'string',
   (unknownInput, ioContext) => {
     const stringInput = `${unknownInput}`

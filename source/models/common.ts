@@ -33,3 +33,8 @@ export type Optional<
 
 export type PromiseResult<SomePromise extends Promise<any>> =
   SomePromise extends Promise<infer Result> ? Result : never
+
+export type DistributiveOmit<
+  SomeObject extends object,
+  ObjectKey extends keyof SomeObject
+> = SomeObject extends SomeObject ? Omit<SomeObject, ObjectKey> : never

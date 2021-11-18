@@ -1,6 +1,7 @@
 import { ChildProcess as SpawnedNodeProcess } from 'child_process'
 import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
 import * as IO from 'io-ts'
+import { DistributiveOmit } from '../../models/common'
 
 export type GraphicsRendererProcessState =
   | GraphicsRendererProcessActiveState
@@ -27,12 +28,11 @@ interface GraphicsRendererProcessStateBase<ProcessStatus extends string> {
   spawnedProcess: SpawnedNodeProcess
 }
 
-export type ClientGraphicsRendererProcessState<
-  SomeClientGraphicsRendererProcessState = GraphicsRendererProcessState
-> = SomeClientGraphicsRendererProcessState extends GraphicsRendererProcessState
-  ? Pick<AnimationModuleSourceReadyState, 'animationModuleSessionVersion'> &
-      Omit<SomeClientGraphicsRendererProcessState, 'spawnedProcess'>
-  : never
+export type ClientGraphicsRendererProcessState = Pick<
+  AnimationModuleSourceReadyState,
+  'animationModuleSessionVersion'
+> &
+  DistributiveOmit<GraphicsRendererProcessState, 'spawnedProcess'>
 
 export type ClientGraphicsRendererProcessActiveState = Extract<
   ClientGraphicsRendererProcessState,

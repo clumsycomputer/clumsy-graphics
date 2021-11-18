@@ -1,10 +1,9 @@
-import { ChildProcess } from 'child_process'
 import * as IO from 'io-ts'
 import Path from 'path'
 import ReactDomServer from 'react-dom/server'
 import { SagaReturnType } from 'redux-saga/effects'
 import { decodeData } from '../../helpers/decodeData'
-import { FunctionBrand } from '../../models/common'
+import { DistributiveOmit, FunctionBrand } from '../../models/common'
 import { call, put, select, spawn, takeEvent } from '../helpers/storeEffects'
 import { AnimationModuleSourceReadyState } from '../models/AnimationDevelopmentState'
 import {
@@ -12,7 +11,10 @@ import {
   ClientRequestsPageEvent,
   ClientServerEvent,
 } from '../models/ClientServerEvent'
-import { GraphicsRendererProcessState } from '../models/GraphicsRendererProcessState'
+import {
+  ClientGraphicsRendererProcessState,
+  GraphicsRendererProcessState,
+} from '../models/GraphicsRendererProcessState'
 import {
   GraphicsRendererProcessStateRequestQueryParams,
   GraphicsRendererProcessStateRequestQueryParamsCodec,
@@ -120,20 +122,29 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
           currentAnimationModuleSourceState.graphicsRendererProcessStates[
             specifiedGraphicsRendererProcessKey
           ]
-        const { partialSpawnGraphicsRendererProcessActionPayload } =
-          getPartialSpawnGraphicsRendererProcessActionPayload({
-            generatedAssetsDirectoryPath,
-            animationModulePath,
-            numberOfFrameRendererWorkers,
-            graphicsRendererProcessStateRequestQueryParams,
-            currentAnimationModuleSessionVersion:
-              currentAnimationModuleSourceState.animationModuleSessionVersion,
-          })
+        const {
+          graphicsRendererProcessCommandString,
+          initialProcessProgressInfo,
+          graphicAssetPathKey,
+          graphicAssetPath,
+          graphicAssetUrlResult,
+        } = getPartialSpawnGraphicsRendererProcessActionPayload({
+          generatedAssetsDirectoryPath,
+          animationModulePath,
+          numberOfFrameRendererWorkers,
+          graphicsRendererProcessStateRequestQueryParams,
+          currentAnimationModuleSessionVersion:
+            currentAnimationModuleSourceState.animationModuleSessionVersion,
+        })
         if (specifiedGraphicsRendererProcessState === undefined) {
           yield* put({
             type: 'spawnGraphicsRendererProcess',
             actionPayload: {
-              ...partialSpawnGraphicsRendererProcessActionPayload,
+              graphicsRendererProcessCommandString,
+              initialProcessProgressInfo,
+              graphicAssetPathKey,
+              graphicAssetPath,
+              graphicAssetUrlResult,
               animationModuleSessionVersionStamp:
                 currentAnimationModuleSourceState.animationModuleSessionVersion,
               graphicsRendererProcessKey: specifiedGraphicsRendererProcessKey,
@@ -142,12 +153,10 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
         }
         const { specifiedClientGraphicsRendererProcessState } =
           getSpecifiedClientGraphicsRendererProcessState({
-            currentGraphicsRendererProcessState:
+            currentPartialGraphicsRendererProcessState:
               specifiedGraphicsRendererProcessState || {
-                processProgressInfo:
-                  partialSpawnGraphicsRendererProcessActionPayload.initialProcessProgressInfo,
+                processProgressInfo: initialProcessProgressInfo,
                 processStatus: 'processActive',
-                spawnedProcess: {} as ChildProcess,
               },
             currentAnimationModuleSessionVersion:
               currentAnimationModuleSourceState.animationModuleSessionVersion,
@@ -244,13 +253,11 @@ function getPartialSpawnGraphicsRendererProcessActionPayload(
         animationAssetFilename
       )
       return {
-        partialSpawnGraphicsRendererProcessActionPayload: {
-          graphicAssetPathKey: animationAssetFilename,
-          graphicAssetPath: animationMp4OutputPath,
-          graphicAssetUrlResult: `/asset/${animationAssetFilename}`,
-          graphicsRendererProcessCommandString: `graphics-renderer renderAnimation --animationModulePath=${animationModuleAbsolutePath} --animationMp4OutputPath=${animationMp4OutputPath} --numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
-          initialProcessProgressInfo: 'starting animation rendering...',
-        },
+        graphicAssetPathKey: animationAssetFilename,
+        graphicAssetPath: animationMp4OutputPath,
+        graphicAssetUrlResult: `/asset/${animationAssetFilename}`,
+        graphicsRendererProcessCommandString: `graphics-renderer renderAnimation --animationModulePath=${animationModuleAbsolutePath} --animationMp4OutputPath=${animationMp4OutputPath} --numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
+        initialProcessProgressInfo: 'starting animation rendering...',
       }
     case 'png':
       const frameAssetFilename = `${currentAnimationModuleSessionVersion}_${graphicsRendererProcessStateRequestQueryParams.frameIndex}.png`
@@ -259,13 +266,11 @@ function getPartialSpawnGraphicsRendererProcessActionPayload(
         frameAssetFilename
       )
       return {
-        partialSpawnGraphicsRendererProcessActionPayload: {
-          graphicAssetPathKey: frameAssetFilename,
-          graphicAssetPath: frameFileOutputPath,
-          graphicsRendererProcessCommandString: `graphics-renderer renderAnimationFrame --animationModulePath=${animationModuleAbsolutePath} --frameIndex=${graphicsRendererProcessStateRequestQueryParams.frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
-          graphicAssetUrlResult: `/asset/${frameAssetFilename}`,
-          initialProcessProgressInfo: 'starting frame rendering...',
-        },
+        graphicAssetPathKey: frameAssetFilename,
+        graphicAssetPath: frameFileOutputPath,
+        graphicsRendererProcessCommandString: `graphics-renderer renderAnimationFrame --animationModulePath=${animationModuleAbsolutePath} --frameIndex=${graphicsRendererProcessStateRequestQueryParams.frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
+        graphicAssetUrlResult: `/asset/${frameAssetFilename}`,
+        initialProcessProgressInfo: 'starting frame rendering...',
       }
     default:
       throw new Error(
@@ -275,30 +280,29 @@ function getPartialSpawnGraphicsRendererProcessActionPayload(
 }
 
 interface GetSpecifiedClientGraphicsRendererProcessStateApi {
-  currentGraphicsRendererProcessState: GraphicsRendererProcessState
+  currentPartialGraphicsRendererProcessState: DistributiveOmit<
+    GraphicsRendererProcessState,
+    'spawnedProcess'
+  >
   currentAnimationModuleSessionVersion: AnimationModuleSourceReadyState['animationModuleSessionVersion']
 }
 
 function getSpecifiedClientGraphicsRendererProcessState(
   api: GetSpecifiedClientGraphicsRendererProcessStateApi
-) {
+): {
+  specifiedClientGraphicsRendererProcessState: ClientGraphicsRendererProcessState
+} {
   const {
+    currentPartialGraphicsRendererProcessState,
     currentAnimationModuleSessionVersion,
-    currentGraphicsRendererProcessState,
   } = api
-  const { spawnedProcess, ...partialGraphicsRendererProcessState } =
-    currentGraphicsRendererProcessState
   return {
     specifiedClientGraphicsRendererProcessState: {
-      ...partialGraphicsRendererProcessState,
+      ...currentPartialGraphicsRendererProcessState,
       animationModuleSessionVersion: currentAnimationModuleSessionVersion,
     },
   }
 }
-
-export type ClientGraphicsRendererProcessState = ReturnType<
-  typeof getSpecifiedClientGraphicsRendererProcessState
->['specifiedClientGraphicsRendererProcessState']
 
 interface ClientRequestsGraphicAssetHandlerApi
   extends Pick<

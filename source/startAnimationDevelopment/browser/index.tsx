@@ -1,163 +1,97 @@
 import React, { ReactNode, useEffect, useState } from 'react'
 import ReactDom from 'react-dom'
-import {
-  BrowserRouter,
-  Route,
-  Routes,
-  useParams as useRouteParams,
-} from 'react-router-dom'
 import { ClientGraphicsRendererProcessState } from '../sagas/clientServerEventHandlerSaga'
 
 const appContainer = document.createElement('div')
 document.body.append(appContainer)
-ReactDom.render(
-  <BrowserRouter>
-    <ClientApp />
-  </BrowserRouter>,
-  appContainer
-)
+ReactDom.render(<GraphicsRendererProcessStatePage />, appContainer)
 
-function ClientApp() {
-  return (
-    <Routes>
-      <Route
-        path={'/latestAnimationModule/animation'}
-        element={<AnimationPage />}
-      />
-      <Route
-        path={'/latestAnimationModule/frame/:frameIndex'}
-        element={<FramePage />}
-      />
-    </Routes>
-  )
-}
-
-function AnimationPage() {
-  const [animationRenderProcessState, setAnimationRenderProcessState] =
+function GraphicsRendererProcessStatePage() {
+  const [graphicsRendererProcessState, setGraphicsRendererProcessState] =
     useState<ClientGraphicsRendererProcessState | null>(null)
   useEffect(() => {
     setInterval(() => {
       fetch(
-        '/api/latestAnimationModule/graphicsRendererProcessState?assetType=mp4'
+        `/api/latestAnimationModule/graphicsRendererProcessState${window.location.search}`
       )
         .then((fetchResult) => fetchResult.json())
-        .then((nextAnimationRenderProcessState) => {
-          setAnimationRenderProcessState(nextAnimationRenderProcessState)
+        .then((nextGraphicsRendererProcessState) => {
+          setGraphicsRendererProcessState(nextGraphicsRendererProcessState)
         })
-        .catch((fetchAnimationRenderProcessStateError) => {
-          console.error(fetchAnimationRenderProcessStateError)
+        .catch((fetchGraphicsRenderProcessStateError) => {
+          console.error(fetchGraphicsRenderProcessStateError)
         })
     }, 500)
   }, [])
-  if (animationRenderProcessState?.processStatus === 'processSuccessful') {
-    return (
-      <PageContainer>
-        <AssetContainer>
-          <video
+  const [pageContent, setPageContent] = useState<ReactNode>(null)
+  useEffect(() => {
+    switch (graphicsRendererProcessState?.processStatus) {
+      case 'processActive':
+        setPageContent(
+          <div style={{ padding: 8 }}>
+            {graphicsRendererProcessState.processProgressInfo}
+          </div>
+        )
+        break
+      case 'processSuccessful':
+        const [_, graphicAssetType] =
+          graphicsRendererProcessState.graphicAssetUrl.split('.')
+        switch (graphicAssetType) {
+          case 'mp4':
+            setPageContent(
+              <AssetContainer>
+                <video
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                  }}
+                  controls={true}
+                  loop={true}
+                  autoPlay={true}
+                >
+                  <source
+                    type={'video/mp4'}
+                    src={graphicsRendererProcessState.graphicAssetUrl}
+                  />
+                </video>
+              </AssetContainer>
+            )
+            break
+          case 'png':
+            setPageContent(
+              <AssetContainer>
+                <img
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                  }}
+                  src={graphicsRendererProcessState.graphicAssetUrl}
+                />
+              </AssetContainer>
+            )
+            break
+          default:
+            throw new Error('wtf? graphicAssetType')
+        }
+        break
+      case 'processFailed':
+        setPageContent(
+          <div
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
+              whiteSpace: 'pre-wrap',
+              backgroundColor: 'red',
+              color: 'white',
+              padding: 8,
             }}
-            controls={true}
-            loop={true}
-            autoPlay={true}
           >
-            <source
-              type={'video/mp4'}
-              src={animationRenderProcessState.graphicAssetUrl}
-            />
-          </video>
-        </AssetContainer>
-      </PageContainer>
-    )
-  } else if (animationRenderProcessState?.processStatus === 'processActive') {
-    return (
-      <div>
-        {animationRenderProcessState.processProgressInfo ||
-          'starting animation render...'}
-      </div>
-    )
-  } else if (animationRenderProcessState?.processStatus === 'processFailed') {
-    return (
-      <div
-        style={{
-          whiteSpace: 'pre-wrap',
-          backgroundColor: 'red',
-          color: 'white',
-        }}
-      >
-        {animationRenderProcessState.processErrorMessage}
-      </div>
-    )
-  } else {
-    return null
-  }
-}
-
-function FramePage() {
-  const framePageParams = useRouteParams()
-  const [frameRenderProcessState, setFrameRenderProcessState] =
-    useState<ClientGraphicsRendererProcessState | null>(null)
-  useEffect(() => {
-    setInterval(() => {
-      fetch(
-        `/api/latestAnimationModule/graphicsRendererProcessState?assetType=png&frameIndex=${framePageParams.frameIndex}`
-      )
-        .then((fetchResult) => fetchResult.json())
-        .then((nextFrameRenderProcessState) => {
-          setFrameRenderProcessState(nextFrameRenderProcessState)
-        })
-        .catch((fetchFrameRenderProcessStateError) => {
-          console.error(fetchFrameRenderProcessStateError)
-        })
-    }, 500)
-  }, [])
-  if (frameRenderProcessState?.processStatus === 'processSuccessful') {
-    return (
-      <PageContainer>
-        <AssetContainer>
-          <img
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
-            }}
-            src={frameRenderProcessState.graphicAssetUrl}
-          />
-        </AssetContainer>
-      </PageContainer>
-    )
-  } else if (frameRenderProcessState?.processStatus === 'processActive') {
-    return (
-      <div>
-        {frameRenderProcessState.processProgressInfo ||
-          `rendering frame: ${framePageParams.frameIndex}`}
-      </div>
-    )
-  } else if (frameRenderProcessState?.processStatus === 'processFailed') {
-    return (
-      <div
-        style={{
-          whiteSpace: 'pre-wrap',
-          backgroundColor: 'red',
-          color: 'white',
-        }}
-      >
-        {frameRenderProcessState.processErrorMessage}
-      </div>
-    )
-  } else {
-    return null
-  }
-}
-
-interface PageContainerProps {
-  children: ReactNode
-}
-
-function PageContainer(props: PageContainerProps) {
-  const { children } = props
+            {graphicsRendererProcessState.processErrorMessage}
+          </div>
+        )
+        break
+    }
+  }, [graphicsRendererProcessState])
   return (
     <div
       style={{
@@ -170,7 +104,7 @@ function PageContainer(props: PageContainerProps) {
         flexDirection: 'column',
       }}
     >
-      {children}
+      {pageContent}
     </div>
   )
 }

@@ -9,6 +9,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": false,
     "jsx": "react"
   },
   "exclude": ["node_modules"]

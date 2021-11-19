@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 import OperatingSystem from 'os'
+import Path from 'path'
 import { convertAnimationMp4ToGif } from './convertAnimationMp4ToGif/convertAnimationMp4ToGif'
 import { decodeData } from './helpers/decodeData'
 import {
   GraphicsRendererCommand,
   GraphicsRendererCommandCodec,
 } from './models/GraphicsRendererCommand'
-import { renderAnimationModuleFrame } from './renderAnimationModuleFrame/renderAnimationModuleFrame'
 import { renderAnimationModule } from './renderAnimationModule/renderAnimationModule'
+import { renderAnimationModuleFrame } from './renderAnimationModuleFrame/renderAnimationModuleFrame'
+import { startAnimationDevelopment } from './startAnimationDevelopment/startAnimationDevelopment'
 
 export type { AnimationModule } from './models/AnimationModule'
 
@@ -27,6 +29,17 @@ async function runGraphicsRendererCommand() {
     }),
   })
   switch (graphicsRendererCommand.commandName) {
+    case 'startDevelopment':
+      startAnimationDevelopment({
+        clientServerPort: 3000,
+        generatedAssetsDirectoryPath: Path.resolve(
+          __dirname,
+          './developmentAssets'
+        ),
+        numberOfFrameRendererWorkers: OperatingSystem.cpus().length - 2,
+        ...graphicsRendererCommand.commandApi,
+      })
+      break
     case 'renderAnimation':
       await renderAnimationModule({
         numberOfFrameRendererWorkers: OperatingSystem.cpus().length - 1,

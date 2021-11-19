@@ -6,3 +6,4 @@ temp-*-frames
 .DS_Store
 *.tgz
 example-project/foo*
+test-results

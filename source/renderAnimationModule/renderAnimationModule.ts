@@ -5,6 +5,7 @@ import { Worker } from 'worker_threads'
 import { decodeData } from '../helpers/decodeData'
 import { getAnimationModule } from '../helpers/getAnimationModule'
 import { getAnimationModuleBundle } from '../helpers/getAnimationModuleBundle'
+import { writeProcessProgressInfoToStdout } from '../helpers/writeProcessProgressInfo'
 import { AnimationModule } from '../models/AnimationModule'
 import { FunctionBrand, FunctionResult } from '../models/common'
 import {
@@ -15,14 +16,14 @@ import { RenderAnimationFrameMessage } from './models/RenderFrameMessage'
 
 export interface RenderAnimationModuleApi {
   animationModulePath: string
-  outputDirectoryPath: string
+  animationMp4OutputPath: string
   numberOfFrameRendererWorkers: number
 }
 
 export async function renderAnimationModule(api: RenderAnimationModuleApi) {
   const {
     animationModulePath,
-    outputDirectoryPath,
+    animationMp4OutputPath,
     numberOfFrameRendererWorkers,
   } = api
   const { animationModuleBundle } = await getAnimationModuleBundle({
@@ -32,7 +33,6 @@ export async function renderAnimationModule(api: RenderAnimationModuleApi) {
     animationModuleBundle,
   })
   const { tempFramesDirectoryPath } = getTempFramesDirectoryPath({
-    outputDirectoryPath,
     animationModule,
   })
   try {
@@ -46,13 +46,10 @@ export async function renderAnimationModule(api: RenderAnimationModuleApi) {
       animationModule,
     })
     composeAnimationMp4({
+      animationMp4OutputPath,
       frameRate: animationModule.animationSettings.frameRate,
       constantRateFactor: animationModule.animationSettings.constantRateFactor,
       framePathPattern: `${tempFramesDirectoryPath}/${animationModule.animationName}_%d.png`,
-      animationMp4OutputPath: Path.resolve(
-        outputDirectoryPath,
-        `${animationModule.animationName}.mp4`
-      ),
     })
   } finally {
     cleanupTempFramesDirectory({
@@ -61,16 +58,17 @@ export async function renderAnimationModule(api: RenderAnimationModuleApi) {
   }
 }
 
-interface GetTempFramesDirectoryPathApi
-  extends Pick<RenderAnimationModuleApi, 'outputDirectoryPath'> {
+interface GetTempFramesDirectoryPathApi {
   animationModule: FunctionResult<typeof getAnimationModule>
 }
 
 function getTempFramesDirectoryPath(api: GetTempFramesDirectoryPathApi) {
-  const { outputDirectoryPath, animationModule } = api
+  const { animationModule } = api
   const tempFramesDirectoryPath = Path.resolve(
-    outputDirectoryPath,
-    `./temp-${animationModule.animationName}-frames`
+    __dirname,
+    `./${animationModule.animationName}-frames_${Math.ceil(
+      Math.random() * 10000
+    )}`
   )
   return { tempFramesDirectoryPath }
 }
@@ -110,6 +108,8 @@ async function renderAnimationFrames(api: RenderAnimationFramesApi) {
             workerData: {
               animationModuleBundle,
             },
+            // suppress worker stdout
+            stdout: true,
           })
       )
       .forEach((someFrameRendererWorker) => {
@@ -122,8 +122,12 @@ async function renderAnimationFrames(api: RenderAnimationFramesApi) {
                 inputData: someFrameRendererWorkerMessageData,
               })
             switch (someFrameRendererWorkerMessage.messageType) {
+              // @ts-expect-error
               case 'workerRenderedFrame':
                 framesRenderedCount = framesRenderedCount + 1
+                writeProcessProgressInfoToStdout({
+                  processProgressInfo: `rendering frames: ${framesRenderedCount} / ${animationModule.frameCount}`,
+                })
               case 'workerInitialized':
                 if (nextFrameIndex < animationModule.frameCount) {
                   const renderAnimationFrameMessage: RenderAnimationFrameMessage =
@@ -162,11 +166,11 @@ async function renderAnimationFrames(api: RenderAnimationFramesApi) {
 
 interface ComposeAnimationMp4Api
   extends Pick<
-    AnimationModule['animationSettings'],
-    'frameRate' | 'constantRateFactor'
-  > {
+      AnimationModule['animationSettings'],
+      'frameRate' | 'constantRateFactor'
+    >,
+    Pick<RenderAnimationModuleApi, 'animationMp4OutputPath'> {
   framePathPattern: string
-  animationMp4OutputPath: string
 }
 
 function composeAnimationMp4(api: ComposeAnimationMp4Api) {
@@ -176,6 +180,9 @@ function composeAnimationMp4(api: ComposeAnimationMp4Api) {
     constantRateFactor,
     animationMp4OutputPath,
   } = api
+  writeProcessProgressInfoToStdout({
+    processProgressInfo: 'encoding animation...',
+  })
   ChildProcess.execSync(`
     ffmpeg \
       -y \
@@ -186,7 +193,7 @@ function composeAnimationMp4(api: ComposeAnimationMp4Api) {
       -preset veryslow \
       -crf ${constantRateFactor} \
       -pix_fmt yuv420p \
-      ${animationMp4OutputPath}
+      ${Path.resolve(animationMp4OutputPath)}
   `)
 }
 

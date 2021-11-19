@@ -162,6 +162,7 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
               currentAnimationModuleSourceState.animationModuleSessionVersion,
           })
         serverResponse.statusCode = 200
+        serverResponse.setHeader('Content-Type', 'application/json')
         serverResponse.send(
           JSON.stringify(specifiedClientGraphicsRendererProcessState)
         )
@@ -331,9 +332,34 @@ function* clientRequestsGraphicAssetHandler(
   const targetAssetFilepath =
     currentAvailableAssetsFilePathMap[clientRequestRouteParams.assetFilename]
   if (targetAssetFilepath) {
+    const targetAssetMimeType = getTargetAssetMimeType({
+      targetAssetFilepath,
+    })
+    serverResponse.setHeader('Content-Type', targetAssetMimeType)
     serverResponse.sendFile(targetAssetFilepath)
   } else {
     serverResponse.sendStatus(404)
+  }
+}
+
+interface GetTargetAssetMimeTypeApi {
+  targetAssetFilepath: string
+}
+
+function getTargetAssetMimeType(api: GetTargetAssetMimeTypeApi) {
+  const { targetAssetFilepath } = api
+  const assetType = targetAssetFilepath.split(/\.(svg|png|mp4|gif)$/, 2)[1]
+  switch (assetType) {
+    case 'svg':
+      return 'image/svg+xml'
+    case 'png':
+      return 'image/png'
+    case 'mp4':
+      return 'video/mp4'
+    case 'gif':
+      return 'image/gif'
+    default:
+      throw new Error('wtf? getTargetAssetMimeType')
   }
 }
 

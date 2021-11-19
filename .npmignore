@@ -5,7 +5,7 @@ node_modules
 __tests__
 tsconfig.json
 tsconfig.dist.json
-jest.config.js
+!dist/startAnimationDevelopment/browser/tsconfig.json
 *.tgz
 package*
 assets

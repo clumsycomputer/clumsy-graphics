@@ -99,21 +99,35 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
 #### api
 
-- **`animationModulePath:`** path to animation module export file
+- **`animationModulePath`:** path to animation module export file
 
   - required
 
-- **`clientServerPort:`** the port on the host machine to use for handling api, asset, and page requests
+- **`clientServerPort`:** the port on the host machine to use for handling api, asset, and page requests
 
   - defaultValue = _3000_
 
-- **`generatedAssetsDirectoryPath:`** path to directory where requested assets will live
+- **`generatedAssetsDirectoryPath`:** path to directory where requested assets will live
 
   - defaultValue = _Path.resolve(\_\_dirname, './developmentAssets')_
 
-- **`numberOfFrameRendererWorkers:`** the number of workers to allocate for rendering frames
+- **`numberOfFrameRendererWorkers`:** the number of workers to allocate for rendering frames
 
   - defaultValue = _numberOfCpuCores - 2_
+
+#### how-to
+
+- run _startDevelopment_ command
+
+- open browser at development service with a valid query string detailing desired asset
+
+  - schema: `localhost:<ClientServerPort>(?assetType=mp4 | ?assetType=png&frameIndex=<FrameIndex>)`
+
+  - animation example: `localhost:3000?assetType=mp4`
+
+  - frame example: `localhost:3000?assetType=png&frameIndex=0`
+
+- begin making changes on the active animation module
 
 ### renderAnimation
 
@@ -121,15 +135,15 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
 #### api
 
-- **`animationModulePath:`** path to animation module export file
+- **`animationModulePath`:** path to animation module export file
 
   - required
 
-- **`animationMp4OutputPath:`** path to write _.mp4_ file
+- **`animationMp4OutputPath`:** path to write _.mp4_ file
 
   - required
 
-- **`numberOfFrameRendererWorkers:`** the number of workers to allocate for rendering frames
+- **`numberOfFrameRendererWorkers`:** the number of workers to allocate for rendering frames
 
   - defaultValue = _numberOfCpuCores - 1_
 
@@ -139,17 +153,17 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
 #### api
 
-- **`animationModulePath:`** path to animation module export file
+- **`animationModulePath`:** path to animation module export file
 
   - required
 
-- **`frameFileOutputPath:`** path to write frame file
+- **`frameFileOutputPath`:** path to write frame file
 
   - required
 
   - file type can be _**svg**_ or _**png**_
 
-- **`frameIndex:`** the index of the frame to render
+- **`frameIndex`:** the index of the frame to render
 
   - required
 
@@ -159,15 +173,15 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
 #### api
 
-- **`animationMp4SourcePath:`** path of _.mp4_ file
+- **`animationMp4SourcePath`:** path of _.mp4_ file
 
   - required
 
-- **`animationGifOutputPath:`** path to write _.gif_ file
+- **`animationGifOutputPath`:** path to write _.gif_ file
 
   - required
 
-- **`gifAspectRatioWidth:`** width of _.gif_ file in pixels
+- **`gifAspectRatioWidth`:** width of _.gif_ file in pixels
 
   - defaultValue = _widthOfSourceMp4_
 

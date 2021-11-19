@@ -24,6 +24,7 @@ export function getAnimationModuleSourceEventChannel(
           bundle: true,
           write: false,
           incremental: true,
+          logLevel: 'silent',
           absWorkingDir: process.cwd(),
           entryPoints: [Path.resolve(animationModulePath)],
           plugins: [getNodeExternalsPlugin()],

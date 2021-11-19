@@ -88,7 +88,7 @@ test.describe('graphics-renderer', () => {
     test.afterAll(() => {
       spawnedDevelopmentProcess!.kill('SIGINT')
     })
-    test('startAnimationDevelopment renders and serves animation asset', async ({
+    test('startAnimationDevelopment renders and serves initial animation asset', async ({
       page,
     }) => {
       await page.goto('localhost:3000/?assetType=mp4')
@@ -97,7 +97,7 @@ test.describe('graphics-renderer', () => {
         'video/mp4',
       ])
     })
-    test('startAnimationDevelopment renders and serves frame asset', async ({
+    test('startAnimationDevelopment renders and serves initial frame asset', async ({
       page,
     }) => {
       await page.goto('localhost:3000/?assetType=png&frameIndex=0')

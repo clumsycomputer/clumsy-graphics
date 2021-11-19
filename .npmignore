@@ -4,7 +4,10 @@ node_modules
 .prettierc
 __tests__
 tsconfig.json
+tsconfig.dist.json
 jest.config.js
 *.tgz
 package*
 assets
+developmentAssets
+test-results

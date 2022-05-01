@@ -5,6 +5,8 @@
   "types": "dist/main.d.ts",
   "license": "MIT",
   "dependencies": {
+    "@material-ui/core": "^4.12.4",
+    "@material-ui/lab": "^4.0.0-alpha.61",
     "@types/express": "^4.17.13",
     "@types/node": "^16.11.1",
     "@types/react": "^17.0.33",
@@ -17,6 +19,7 @@
     "io-ts": "^2.2.16",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-router-dom": "6",
     "redux": "^4.1.2",
     "redux-saga": "^1.1.3",
     "typescript": "4.4.3"
@@ -29,7 +32,7 @@
     "buildDist": "rm -rf ./dist && tsc --project ./tsconfig.dist.json --outDir ./dist && cp -r ./source/startAnimationDevelopment/browser ./dist/startAnimationDevelopment/browser",
     "buildLocal": "yarn buildDist && chmod +x ./dist/main.js && yarn link",
     "startExampleDevelopment": "graphics-renderer startDevelopment --animationModulePath=./example-project/Foo.animation.tsx",
-    "renderExampleAnimation": "graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --outputDirectoryPath=./example-project",
+    "renderExampleAnimation": "graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./example-project/example.mp4",
     "convertExampleAnimationToGif": "graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-project/foo.mp4 --animationGifOutputPath=./example-project/foo.gif --gifAspectRatioWidth=512"
   },
   "bin": {

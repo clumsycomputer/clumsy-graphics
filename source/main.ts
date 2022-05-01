@@ -43,6 +43,7 @@ async function runGraphicsRendererCommand() {
     case 'renderAnimation':
       await renderAnimationModule({
         numberOfFrameRendererWorkers: OperatingSystem.cpus().length - 1,
+        suppressWorkerStdout: false,
         ...graphicsRendererCommand.commandApi,
       })
       break

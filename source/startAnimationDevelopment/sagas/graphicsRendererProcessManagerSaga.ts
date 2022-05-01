@@ -42,6 +42,9 @@ export function* graphicsRendererProcessManagerSaga(
         type: 'animationModuleSourceUpdated',
         actionPayload: {
           animationModuleSourceState: {
+            animationModule:
+              someGraphicsRendererProcessManagerAction.actionPayload
+                .nextAnimationModule,
             animationModuleSessionVersion:
               someGraphicsRendererProcessManagerAction.actionPayload
                 .nextAnimationModuleSessionVersion,
@@ -63,6 +66,9 @@ export function* graphicsRendererProcessManagerSaga(
           type: 'animationModuleSourceUpdated',
           actionPayload: {
             animationModuleSourceState: {
+              animationModule:
+                someGraphicsRendererProcessManagerAction.actionPayload
+                  .nextAnimationModule,
               animationModuleSessionVersion:
                 someGraphicsRendererProcessManagerAction.actionPayload
                   .nextAnimationModuleSessionVersion,
@@ -99,15 +105,16 @@ export function* graphicsRendererProcessManagerSaga(
         yield* put({
           type: 'graphicsRendererProcessActive',
           actionPayload: {
-            targetGraphicsRendererProcessKey:
+            newGraphicsRendererProcessKey:
               someGraphicsRendererProcessManagerAction.actionPayload
                 .graphicsRendererProcessKey,
-            targetGraphicsRendererProcessState: {
-              processProgressInfo:
+            newGraphicsRendererProcessState: {
+              assetType:
                 someGraphicsRendererProcessManagerAction.actionPayload
-                  .initialProcessProgressInfo,
+                  .assetType,
               spawnedProcess: spawnedGraphicsRendererProcess,
               processStatus: 'processActive',
+              processStdoutLog: '',
             },
           },
         })
@@ -119,21 +126,19 @@ export function* graphicsRendererProcessManagerSaga(
                 spawnedGraphicsRendererProcessEventChannel
               )
             switch (someSpawnedGraphicsRendererProcessEvent.eventType) {
-              case 'graphicsRendererProcessMessage':
+              case 'graphicsRendererProcessStdoutLogUpdated':
                 yield* put({
-                  type: 'graphicsRendererProcessProgressInfoUpdated',
+                  type: 'graphicsRendererProcessStdoutLogUpdated',
                   actionPayload: {
                     targetGraphicsRendererProcessKey:
                       someGraphicsRendererProcessManagerAction.actionPayload
                         .graphicsRendererProcessKey,
                     animationModuleSessionVersionStamp:
                       currentAnimationModuleSourceState.animationModuleSessionVersion,
-                    targetGraphicsRendererProcessState: {
-                      spawnedProcess: spawnedGraphicsRendererProcess,
-                      processProgressInfo:
+                    targetGraphicsRendererProcessStateUpdates: {
+                      processStdoutLog:
                         someSpawnedGraphicsRendererProcessEvent.eventPayload
-                          .graphicsRendererProcessMessage,
-                      processStatus: 'processActive',
+                          .updatedGraphicsRendererProcessStdoutLog,
                     },
                   },
                 })
@@ -153,11 +158,10 @@ export function* graphicsRendererProcessManagerSaga(
                         .graphicsRendererProcessKey,
                     animationModuleSessionVersionStamp:
                       currentAnimationModuleSourceState.animationModuleSessionVersion,
-                    targetGraphicsRendererProcessState: {
+                    targetGraphicsRendererProcessStateUpdates: {
                       graphicAssetUrl:
                         someGraphicsRendererProcessManagerAction.actionPayload
                           .graphicAssetUrlResult,
-                      spawnedProcess: spawnedGraphicsRendererProcess,
                       processStatus: 'processSuccessful',
                     },
                   },
@@ -172,11 +176,10 @@ export function* graphicsRendererProcessManagerSaga(
                         .graphicsRendererProcessKey,
                     animationModuleSessionVersionStamp:
                       currentAnimationModuleSourceState.animationModuleSessionVersion,
-                    targetGraphicsRendererProcessState: {
+                    targetGraphicsRendererProcessStateUpdates: {
                       processErrorMessage:
                         someSpawnedGraphicsRendererProcessEvent.eventPayload
                           .graphicsRendererProcessErrorMessage,
-                      spawnedProcess: spawnedGraphicsRendererProcess,
                       processStatus: 'processFailed',
                     },
                   },

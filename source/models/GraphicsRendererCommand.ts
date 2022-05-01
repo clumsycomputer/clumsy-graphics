@@ -1,6 +1,6 @@
 import * as IO from 'io-ts'
 import { ConvertAnimationMp4ToGifApi } from '../convertAnimationMp4ToGif/convertAnimationMp4ToGif'
-import { NumberFromString } from '../helpers/codecTypes'
+import { BooleanFromString, NumberFromString } from '../helpers/codecTypes'
 import { RenderAnimationModuleApi } from '../renderAnimationModule/renderAnimationModule'
 import { StartAnimationDevelopmentApi } from '../startAnimationDevelopment/startAnimationDevelopment'
 import { Optional } from './common'
@@ -43,7 +43,10 @@ const StartDevelopmentCommandCodec = IO.exact(
 interface RenderAnimationCommand
   extends CliCommandBase<
     'renderAnimation',
-    Optional<RenderAnimationModuleApi, 'numberOfFrameRendererWorkers'>
+    Optional<
+      RenderAnimationModuleApi,
+      'numberOfFrameRendererWorkers' | 'suppressWorkerStdout'
+    >
   > {}
 
 const RenderAnimationCommandCodec = IO.exact(
@@ -57,6 +60,7 @@ const RenderAnimationCommandCodec = IO.exact(
         }),
         IO.partial({
           numberOfFrameRendererWorkers: NumberFromString,
+          suppressWorkerStdout: BooleanFromString,
         }),
       ])
     ),

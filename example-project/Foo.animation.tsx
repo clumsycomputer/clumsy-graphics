@@ -2,7 +2,7 @@ import React from 'react'
 import { AnimationModule } from '../source/models/AnimationModule'
 
 const FooAnimationModule: AnimationModule = {
-  animationName: 'foo',
+  animationName: 'Foo',
   frameSize: 512,
   frameCount: 10,
   animationSettings: {

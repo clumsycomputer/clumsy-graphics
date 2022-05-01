@@ -2,6 +2,7 @@ import { ChildProcess as SpawnedNodeProcess } from 'child_process'
 import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
 import * as IO from 'io-ts'
 import { DistributiveOmit } from '../../models/common'
+import { ClientAnimationModuleCodec } from '../../models/AnimationModule'
 
 export type GraphicsRendererProcessState =
   | GraphicsRendererProcessActiveState
@@ -9,9 +10,7 @@ export type GraphicsRendererProcessState =
   | GraphicsRendererProcessFailedState
 
 export interface GraphicsRendererProcessActiveState
-  extends GraphicsRendererProcessStateBase<'processActive'> {
-  processProgressInfo: string
-}
+  extends GraphicsRendererProcessStateBase<'processActive'> {}
 
 export interface GraphicsRendererProcessSuccessfulState
   extends GraphicsRendererProcessStateBase<'processSuccessful'> {
@@ -26,13 +25,20 @@ export interface GraphicsRendererProcessFailedState
 interface GraphicsRendererProcessStateBase<ProcessStatus extends string> {
   processStatus: ProcessStatus
   spawnedProcess: SpawnedNodeProcess
+  processStdoutLog: string
+  assetType: 'mp4' | 'png'
 }
 
 export type ClientGraphicsRendererProcessState = Pick<
   AnimationModuleSourceReadyState,
   'animationModuleSessionVersion'
 > &
-  DistributiveOmit<GraphicsRendererProcessState, 'spawnedProcess'>
+  DistributiveOmit<GraphicsRendererProcessState, 'spawnedProcess'> & {
+    animationModule: Omit<
+      AnimationModuleSourceReadyState['animationModule'],
+      'FrameDescriptor'
+    >
+  }
 
 export type ClientGraphicsRendererProcessActiveState = Extract<
   ClientGraphicsRendererProcessState,
@@ -41,9 +47,11 @@ export type ClientGraphicsRendererProcessActiveState = Extract<
 
 const ClientGraphicsRendererProcessActiveStateCodec = IO.exact(
   IO.type({
-    processStatus: IO.literal('processActive'),
-    processProgressInfo: IO.string,
+    animationModule: ClientAnimationModuleCodec,
     animationModuleSessionVersion: IO.number,
+    assetType: IO.union([IO.literal('mp4'), IO.literal('png')]),
+    processStatus: IO.literal('processActive'),
+    processStdoutLog: IO.string,
   })
 )
 
@@ -54,9 +62,12 @@ export type ClientGraphicsRendererProcessSuccessfulState = Extract<
 
 const ClientGraphicsRendererProcessSuccessfulStateCodec = IO.exact(
   IO.type({
-    processStatus: IO.literal('processSuccessful'),
-    graphicAssetUrl: IO.string,
+    animationModule: ClientAnimationModuleCodec,
     animationModuleSessionVersion: IO.number,
+    assetType: IO.union([IO.literal('mp4'), IO.literal('png')]),
+    processStatus: IO.literal('processSuccessful'),
+    processStdoutLog: IO.string,
+    graphicAssetUrl: IO.string,
   })
 )
 
@@ -67,9 +78,12 @@ export type ClientGraphicsRendererProcessFailedState = Extract<
 
 const ClientGraphicsRendererProcessFailedStateCodec = IO.exact(
   IO.type({
-    processStatus: IO.literal('processFailed'),
-    processErrorMessage: IO.string,
+    animationModule: ClientAnimationModuleCodec,
     animationModuleSessionVersion: IO.number,
+    assetType: IO.union([IO.literal('mp4'), IO.literal('png')]),
+    processStatus: IO.literal('processFailed'),
+    processStdoutLog: IO.string,
+    processErrorMessage: IO.string,
   })
 )
 

@@ -9,7 +9,6 @@ import { AnimationModule } from '../models/AnimationModule'
 import { FunctionResult } from '../models/common'
 import { decodeData } from './decodeData'
 import { getAnimationModule } from './getAnimationModule'
-import { writeProcessProgressInfoToStdout } from './writeProcessProgressInfo'
 
 export interface RenderAnimationFrameApi {
   animationModule: FunctionResult<typeof getAnimationModule>
@@ -20,15 +19,11 @@ export interface RenderAnimationFrameApi {
 export async function renderAnimationFrame(api: RenderAnimationFrameApi) {
   const { animationModule, frameIndex, frameFileOutputPath } = api
   const { FrameDescriptor, frameCount } = animationModule
-  writeProcessProgressInfoToStdout({
-    processProgressInfo: `rendering frame: ${frameIndex}`,
-  })
+  console.log(`[${frameIndex}]: rendering svg markup...`)
   const frameSvgMarkup = ReactDomServer.renderToStaticMarkup(
     <FrameDescriptor frameCount={frameCount} frameIndex={frameIndex} />
   )
-  writeProcessProgressInfoToStdout({
-    processProgressInfo: 'encoding svg markup to image file...',
-  })
+  console.log(`[${frameIndex}]: encoding svg markup to image file...`)
   await writeSvgMarkupToImageFile({
     frameFileOutputPath,
     frameSvgMarkup,

@@ -12,6 +12,7 @@ export interface GetAnimationModuleApi {
 export async function getAnimationModule(api: GetAnimationModuleApi) {
   const { animationModuleBundle } = api
   const evaluationContext = VirtualMachine.createContext({
+    console,
     process: {
       env: {
         NODE_ENV: 'development',

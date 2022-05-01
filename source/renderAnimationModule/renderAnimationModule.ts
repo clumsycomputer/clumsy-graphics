@@ -5,7 +5,6 @@ import { Worker } from 'worker_threads'
 import { decodeData } from '../helpers/decodeData'
 import { getAnimationModule } from '../helpers/getAnimationModule'
 import { getAnimationModuleBundle } from '../helpers/getAnimationModuleBundle'
-import { writeProcessProgressInfoToStdout } from '../helpers/writeProcessProgressInfo'
 import { AnimationModule } from '../models/AnimationModule'
 import { FunctionBrand, FunctionResult } from '../models/common'
 import {
@@ -18,6 +17,7 @@ export interface RenderAnimationModuleApi {
   animationModulePath: string
   animationMp4OutputPath: string
   numberOfFrameRendererWorkers: number
+  suppressWorkerStdout: boolean
 }
 
 export async function renderAnimationModule(api: RenderAnimationModuleApi) {
@@ -25,6 +25,7 @@ export async function renderAnimationModule(api: RenderAnimationModuleApi) {
     animationModulePath,
     animationMp4OutputPath,
     numberOfFrameRendererWorkers,
+    suppressWorkerStdout,
   } = api
   const { animationModuleBundle } = await getAnimationModuleBundle({
     animationModulePath,
@@ -41,6 +42,7 @@ export async function renderAnimationModule(api: RenderAnimationModuleApi) {
     })
     await renderAnimationFrames({
       numberOfFrameRendererWorkers,
+      suppressWorkerStdout,
       tempFramesDirectoryPath,
       animationModuleBundle,
       animationModule,
@@ -84,7 +86,10 @@ function setupTempFramesDirectory(api: SetupTempFramesDirectoryPathApi) {
 }
 
 interface RenderAnimationFramesApi
-  extends Pick<RenderAnimationModuleApi, 'numberOfFrameRendererWorkers'>,
+  extends Pick<
+      RenderAnimationModuleApi,
+      'numberOfFrameRendererWorkers' | 'suppressWorkerStdout'
+    >,
     FunctionBrand<typeof getAnimationModuleBundle>,
     FunctionBrand<typeof getTempFramesDirectoryPath> {
   animationModule: FunctionResult<typeof getAnimationModule>
@@ -93,10 +98,12 @@ interface RenderAnimationFramesApi
 async function renderAnimationFrames(api: RenderAnimationFramesApi) {
   const {
     numberOfFrameRendererWorkers,
-    animationModule,
     animationModuleBundle,
+    suppressWorkerStdout,
+    animationModule,
     tempFramesDirectoryPath,
   } = api
+  console.log('rendering frames...')
   await new Promise<void>((resolve, reject) => {
     let framesRenderedCount = 0
     let nextFrameIndex = 0
@@ -108,8 +115,7 @@ async function renderAnimationFrames(api: RenderAnimationFramesApi) {
             workerData: {
               animationModuleBundle,
             },
-            // suppress worker stdout
-            stdout: true,
+            stdout: suppressWorkerStdout,
           })
       )
       .forEach((someFrameRendererWorker) => {
@@ -125,9 +131,6 @@ async function renderAnimationFrames(api: RenderAnimationFramesApi) {
               // @ts-expect-error
               case 'workerRenderedFrame':
                 framesRenderedCount = framesRenderedCount + 1
-                writeProcessProgressInfoToStdout({
-                  processProgressInfo: `rendering frames: ${framesRenderedCount} / ${animationModule.frameCount}`,
-                })
               case 'workerInitialized':
                 if (nextFrameIndex < animationModule.frameCount) {
                   const renderAnimationFrameMessage: RenderAnimationFrameMessage =
@@ -180,9 +183,7 @@ function composeAnimationMp4(api: ComposeAnimationMp4Api) {
     constantRateFactor,
     animationMp4OutputPath,
   } = api
-  writeProcessProgressInfoToStdout({
-    processProgressInfo: 'encoding animation...',
-  })
+  console.log('encoding animation...')
   ChildProcess.execSync(`
     ffmpeg \
       -y \

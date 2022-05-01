@@ -5,6 +5,7 @@ import {
   GraphicsRendererProcessFailedAction,
   GraphicsRendererProcessProgressInfoUpdatedAction,
   GraphicsRendererProcessSuccessfulAction,
+  GraphicsRendererProcessUpdatedAction,
 } from './models/AnimationDevelopmentAction'
 import { AnimationDevelopmentState } from './models/AnimationDevelopmentState'
 
@@ -28,8 +29,8 @@ export function animationDevelopmentStateReducer(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
-    case 'graphicsRendererProcessProgressInfoUpdated':
-      return handleGraphicsRendererProcessProgessInfoUpdated(
+    case 'graphicsRendererProcessStdoutLogUpdated':
+      return handleGraphicsRendererProcessStdoutLogUpdated(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
@@ -64,10 +65,8 @@ function handleGraphicsRendererProcessActive(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   graphicsRendererProcessActiveActionPayload: GraphicsRendererProcessActiveAction['actionPayload']
 ): AnimationDevelopmentState {
-  const {
-    targetGraphicsRendererProcessKey,
-    targetGraphicsRendererProcessState,
-  } = graphicsRendererProcessActiveActionPayload
+  const { newGraphicsRendererProcessKey, newGraphicsRendererProcessState } =
+    graphicsRendererProcessActiveActionPayload
   if (
     currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
     'sourceInitializing'
@@ -81,94 +80,38 @@ function handleGraphicsRendererProcessActive(
         graphicsRendererProcessStates: {
           ...currentAnimationDevelopmentState.animationModuleSourceState
             .graphicsRendererProcessStates,
-          [targetGraphicsRendererProcessKey]:
-            targetGraphicsRendererProcessState,
+          [newGraphicsRendererProcessKey]: newGraphicsRendererProcessState,
         },
       },
     }
   }
 }
 
-function handleGraphicsRendererProcessProgessInfoUpdated(
+function handleGraphicsRendererProcessStdoutLogUpdated(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   graphicsRendererProcessUpdateActionPayload: GraphicsRendererProcessProgressInfoUpdatedAction['actionPayload']
 ): AnimationDevelopmentState {
-  const {
-    animationModuleSessionVersionStamp,
-    targetGraphicsRendererProcessKey,
-    targetGraphicsRendererProcessState,
-  } = graphicsRendererProcessUpdateActionPayload
-  if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceInitializing'
-  ) {
-    throw new Error('wtf? handleGraphicsRendererProcessProgessInfoUpdated')
-  } else if (
-    currentAnimationDevelopmentState.animationModuleSourceState
-      .animationModuleSessionVersion === animationModuleSessionVersionStamp &&
-    currentAnimationDevelopmentState.animationModuleSourceState
-      .graphicsRendererProcessStates[targetGraphicsRendererProcessKey]
-      ?.processStatus === 'processActive'
-  ) {
-    return {
-      ...currentAnimationDevelopmentState,
-      animationModuleSourceState: {
-        ...currentAnimationDevelopmentState.animationModuleSourceState,
-        graphicsRendererProcessStates: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState
-            .graphicsRendererProcessStates,
-          [targetGraphicsRendererProcessKey]:
-            targetGraphicsRendererProcessState,
-        },
-      },
-    }
-  } else {
-    return currentAnimationDevelopmentState
-  }
+  return handleGraphicsRendererProcessUpdated(
+    currentAnimationDevelopmentState,
+    graphicsRendererProcessUpdateActionPayload
+  )
 }
 
 function handleGraphicsRendererProcessSuccessful(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   graphicsRendererProcessSuccessfulActionPayload: GraphicsRendererProcessSuccessfulAction['actionPayload']
 ): AnimationDevelopmentState {
-  const {
-    animationModuleSessionVersionStamp,
-    targetGraphicsRendererProcessKey,
-    targetGraphicsRendererProcessState,
-    targetGraphicAssetKey,
-    targetGraphicAssetPath,
-  } = graphicsRendererProcessSuccessfulActionPayload
-  const availableAssetsFilePathMap = {
-    ...currentAnimationDevelopmentState.availableAssetsFilePathMap,
-    [targetGraphicAssetKey]: targetGraphicAssetPath,
-  }
-  if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceInitializing'
-  ) {
-    throw new Error('wtf? handleGraphicsRendererProcessSuccessful')
-  } else if (
-    currentAnimationDevelopmentState.animationModuleSourceState
-      .animationModuleSessionVersion === animationModuleSessionVersionStamp
-  ) {
-    return {
-      ...currentAnimationDevelopmentState,
-      availableAssetsFilePathMap,
-      animationModuleSourceState: {
-        ...currentAnimationDevelopmentState.animationModuleSourceState,
-        graphicsRendererProcessStates: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState
-            .graphicsRendererProcessStates,
-          [targetGraphicsRendererProcessKey]:
-            targetGraphicsRendererProcessState,
-        },
-      },
-    }
-  } else {
-    return {
-      ...currentAnimationDevelopmentState,
-      availableAssetsFilePathMap,
-    }
+  const { targetGraphicAssetKey, targetGraphicAssetPath } =
+    graphicsRendererProcessSuccessfulActionPayload
+  return {
+    ...handleGraphicsRendererProcessUpdated(
+      currentAnimationDevelopmentState,
+      graphicsRendererProcessSuccessfulActionPayload
+    ),
+    availableAssetsFilePathMap: {
+      ...currentAnimationDevelopmentState.availableAssetsFilePathMap,
+      [targetGraphicAssetKey]: targetGraphicAssetPath,
+    },
   }
 }
 
@@ -176,29 +119,45 @@ function handleGraphicsRendererProcessFailed(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   graphicsRendererProcessFailedActionPayload: GraphicsRendererProcessFailedAction['actionPayload']
 ): AnimationDevelopmentState {
+  return handleGraphicsRendererProcessUpdated(
+    currentAnimationDevelopmentState,
+    graphicsRendererProcessFailedActionPayload
+  )
+}
+
+function handleGraphicsRendererProcessUpdated(
+  currentAnimationDevelopmentState: AnimationDevelopmentState,
+  graphicsRendererProcessFailedActionPayload: GraphicsRendererProcessUpdatedAction['actionPayload']
+): AnimationDevelopmentState {
   const {
     animationModuleSessionVersionStamp,
     targetGraphicsRendererProcessKey,
-    targetGraphicsRendererProcessState,
+    targetGraphicsRendererProcessStateUpdates,
   } = graphicsRendererProcessFailedActionPayload
-  if (
+  const currentAnimationModuleSourceState =
     currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceInitializing'
-  ) {
-    throw new Error('wtf? handleGraphicsRendererProcessFailed')
-  } else if (
+      'sourceReady' &&
     currentAnimationDevelopmentState.animationModuleSourceState
-      .animationModuleSessionVersion === animationModuleSessionVersionStamp
-  ) {
+  const currentTargetGraphicRendererProcessState =
+    currentAnimationModuleSourceState &&
+    currentAnimationModuleSourceState.animationModuleSessionVersion ===
+      animationModuleSessionVersionStamp &&
+    currentAnimationModuleSourceState.graphicsRendererProcessStates[
+      targetGraphicsRendererProcessKey
+    ]
+  if (!currentAnimationModuleSourceState) {
+    throw new Error('wtf? handleGraphicsRendererProcessFailed')
+  } else if (currentTargetGraphicRendererProcessState) {
     return {
       ...currentAnimationDevelopmentState,
       animationModuleSourceState: {
-        ...currentAnimationDevelopmentState.animationModuleSourceState,
+        ...currentAnimationModuleSourceState,
         graphicsRendererProcessStates: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState
-            .graphicsRendererProcessStates,
-          [targetGraphicsRendererProcessKey]:
-            targetGraphicsRendererProcessState,
+          ...currentAnimationModuleSourceState.graphicsRendererProcessStates,
+          [targetGraphicsRendererProcessKey]: {
+            ...currentTargetGraphicRendererProcessState,
+            ...targetGraphicsRendererProcessStateUpdates,
+          },
         },
       },
     }

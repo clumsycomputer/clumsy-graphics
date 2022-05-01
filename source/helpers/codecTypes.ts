@@ -24,3 +24,16 @@ export const NaturalNumberString = new IO.Type<string, string, unknown>(
   },
   (stringInput) => stringInput
 )
+
+export const BooleanFromString = new IO.Type<boolean, string, unknown>(
+  'BooleanFromString',
+  (unknownInput): unknownInput is boolean => typeof unknownInput === 'boolean',
+  (unknownInput, ioContext) => {
+    const booleanOutput =
+      unknownInput === 'true' ? true : unknownInput === 'false' ? false : null
+    return booleanOutput === null
+      ? IO.failure(unknownInput, ioContext)
+      : IO.success(booleanOutput)
+  },
+  (numberInput) => `${numberInput}`
+)

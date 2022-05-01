@@ -5,6 +5,8 @@ import {
   buffers as SagaBuffers,
   eventChannel as getEventChannel,
 } from 'redux-saga'
+import { getAnimationModule } from '../../helpers/getAnimationModule'
+import { getAnimationModuleBundle } from '../../helpers/getAnimationModuleBundle'
 import { AnimationModuleSourceEvent } from '../models/AnimationModuleSourceEvent'
 import { InitialSagaApi } from '../sagas/initialSaga'
 
@@ -29,21 +31,37 @@ export function getAnimationModuleSourceEventChannel(
           entryPoints: [Path.resolve(animationModulePath)],
           plugins: [getNodeExternalsPlugin()],
           watch: {
-            onRebuild: () => {
+            onRebuild: async () => {
               nextAnimationModuleSessionVersion =
                 nextAnimationModuleSessionVersion + 1
+              // todo handle bundle errors
+              const { animationModuleBundle } = await getAnimationModuleBundle({
+                animationModulePath,
+              })
+              const nextAnimationModule = await getAnimationModule({
+                animationModuleBundle,
+              })
               emitAnimationModuleSourceEvent({
                 eventType: 'animationModuleSourceChanged',
                 eventPayload: {
+                  nextAnimationModule,
                   nextAnimationModuleSessionVersion,
                 },
               })
             },
           },
-        }).then(() => {
+        }).then(async () => {
+          // todo handle bundle errors
+          const { animationModuleBundle } = await getAnimationModuleBundle({
+            animationModulePath,
+          })
+          const nextAnimationModule = await getAnimationModule({
+            animationModuleBundle,
+          })
           emitAnimationModuleSourceEvent({
             eventType: 'animationModuleSourceChanged',
             eventPayload: {
+              nextAnimationModule,
               nextAnimationModuleSessionVersion,
             },
           })

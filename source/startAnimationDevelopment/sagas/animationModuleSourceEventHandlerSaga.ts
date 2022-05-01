@@ -23,6 +23,8 @@ export function* animationModuleSourceEventHandlerSaga(
         yield* put({
           type: 'animationModuleSourceChanged',
           actionPayload: {
+            nextAnimationModule:
+              someAnimationModuleSourceEvent.eventPayload.nextAnimationModule,
             nextAnimationModuleSessionVersion:
               someAnimationModuleSourceEvent.eventPayload
                 .nextAnimationModuleSessionVersion,

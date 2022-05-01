@@ -1,3 +1,4 @@
+import { AnimationModule } from '../../models/AnimationModule'
 import { GraphicsRendererProcessState } from './GraphicsRendererProcessState'
 
 export interface AnimationDevelopmentState {
@@ -16,6 +17,7 @@ export interface AnimationModuleSourceInitializingState
 
 export interface AnimationModuleSourceReadyState
   extends AnimationModuleSourceStateBase<'sourceReady'> {
+  animationModule: AnimationModule
   animationModuleSessionVersion: number
   graphicsRendererProcessStates: Record<string, GraphicsRendererProcessState>
 }

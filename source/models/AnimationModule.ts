@@ -22,21 +22,37 @@ export interface EsModuleDefault<SomeDefaultExport extends object> {
   default: SomeDefaultExport
 }
 
-export const AnimationModuleContainerCodec = IO.exact(
+export const AnimationModuleCodec = IO.exact(
   IO.type({
-    default: IO.exact(
+    animationName: IO.string,
+    FrameDescriptor: IO.any,
+    frameCount: IO.number,
+    frameSize: IO.number,
+    animationSettings: IO.exact(
       IO.type({
-        animationName: IO.string,
-        FrameDescriptor: IO.any,
-        frameCount: IO.number,
-        frameSize: IO.number,
-        animationSettings: IO.exact(
-          IO.type({
-            frameRate: IO.number,
-            constantRateFactor: IO.number,
-          })
-        ),
+        frameRate: IO.number,
+        constantRateFactor: IO.number,
       })
     ),
+  })
+)
+
+export const ClientAnimationModuleCodec = IO.exact(
+  IO.type({
+    animationName: IO.string,
+    frameCount: IO.number,
+    frameSize: IO.number,
+    animationSettings: IO.exact(
+      IO.type({
+        frameRate: IO.number,
+        constantRateFactor: IO.number,
+      })
+    ),
+  })
+)
+
+export const AnimationModuleContainerCodec = IO.exact(
+  IO.type({
+    default: AnimationModuleCodec,
   })
 )

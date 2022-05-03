@@ -109,9 +109,9 @@ export function* graphicsRendererProcessManagerSaga(
               someGraphicsRendererProcessManagerAction.actionPayload
                 .graphicsRendererProcessKey,
             newGraphicsRendererProcessState: {
-              assetType:
+              graphicsRendererProcessKey:
                 someGraphicsRendererProcessManagerAction.actionPayload
-                  .assetType,
+                  .graphicsRendererProcessKey,
               spawnedProcess: spawnedGraphicsRendererProcess,
               processStatus: 'processActive',
               processStdoutLog: '',

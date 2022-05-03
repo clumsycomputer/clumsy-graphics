@@ -8,9 +8,10 @@ export interface ProcessResultPageProps
   extends Pick<
       ProcessPageProps,
       | 'baseRoute'
-      | 'animationModuleName'
+      | 'animationName'
       | 'animationModuleSessionVersion'
-      | 'renderTarget'
+      | 'graphicsRendererProcessKey'
+      | 'renderStatus'
     >,
     Pick<
       FetchGraphicsRendererProcessSuccessState,
@@ -30,7 +31,7 @@ export function ProcessResultPage(props: ProcessResultPageProps) {
   const styles = useStyles()
   const processResultContent = useMemo(() => {
     if (fetchedGraphicsRendererProcessState.processStatus === 'processActive') {
-      return <div>in progress...</div>
+      return <div className={styles.inProgressContainer}>in progress...</div>
     } else if (
       fetchedGraphicsRendererProcessState.processStatus === 'processSuccessful'
     ) {
@@ -65,6 +66,9 @@ export function ProcessResultPage(props: ProcessResultPageProps) {
 }
 
 const useStyles = makeStyles((theme) => ({
+  inProgressContainer: {
+    padding: theme.spacing(1),
+  },
   assetContainer: {
     flexGrow: 1,
     flexShrink: 1,

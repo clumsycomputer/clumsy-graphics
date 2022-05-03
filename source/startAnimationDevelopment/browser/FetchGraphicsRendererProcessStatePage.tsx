@@ -1,3 +1,4 @@
+import { makeStyles } from '@material-ui/core'
 import React from 'react'
 import { ClientGraphicsRendererProcessState } from '../models/GraphicsRendererProcessState'
 import { Page } from './Page'
@@ -7,7 +8,10 @@ import {
 } from './useFetchGraphicsRendererProcessState'
 
 export interface FetchGraphicsRendererProcessStatePageProps
-  extends Pick<UseFetchGraphicsRendererProcessStateApi, 'renderTargetParams'> {
+  extends Pick<
+    UseFetchGraphicsRendererProcessStateApi,
+    'graphicsRendererProcessKey'
+  > {
   GraphicsRendererProcessStateFetchedPage: (api: {
     fetchedGraphicsRendererProcessState: ClientGraphicsRendererProcessState
   }) => JSX.Element
@@ -16,13 +20,24 @@ export interface FetchGraphicsRendererProcessStatePageProps
 export function FetchGraphicsRendererProcessStatePage(
   props: FetchGraphicsRendererProcessStatePageProps
 ) {
-  const { renderTargetParams, GraphicsRendererProcessStateFetchedPage } = props
+  const {
+    graphicsRendererProcessKey,
+    GraphicsRendererProcessStateFetchedPage,
+  } = props
   const { fetchGraphicsRendererProcessState } =
     useFetchGraphicsRendererProcessState({
-      renderTargetParams,
+      graphicsRendererProcessKey,
+      staticPollRate: 500,
     })
+  const styles = useStyles()
   if (fetchGraphicsRendererProcessState.fetchStatus === 'serverInitializing') {
-    return <Page pageBody={'initializing...'} />
+    return (
+      <Page
+        pageBody={
+          <div className={styles.initializingContainer}>initializing...</div>
+        }
+      />
+    )
   } else if (
     fetchGraphicsRendererProcessState.fetchStatus === 'fetchSuccessful'
   ) {
@@ -41,3 +56,9 @@ export function FetchGraphicsRendererProcessStatePage(
     throw new Error('wtf? FetchGraphicsRendererProcessStatePage')
   }
 }
+
+const useStyles = makeStyles((theme) => ({
+  initializingContainer: {
+    padding: theme.spacing(1),
+  },
+}))

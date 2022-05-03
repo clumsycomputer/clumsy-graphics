@@ -1,8 +1,8 @@
 import { ChildProcess as SpawnedNodeProcess } from 'child_process'
-import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
 import * as IO from 'io-ts'
-import { DistributiveOmit } from '../../models/common'
 import { ClientAnimationModuleCodec } from '../../models/AnimationModule'
+import { DistributiveOmit } from '../../models/common'
+import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
 
 export type GraphicsRendererProcessState =
   | GraphicsRendererProcessActiveState
@@ -24,9 +24,9 @@ export interface GraphicsRendererProcessFailedState
 
 interface GraphicsRendererProcessStateBase<ProcessStatus extends string> {
   processStatus: ProcessStatus
+  graphicsRendererProcessKey: string
   spawnedProcess: SpawnedNodeProcess
   processStdoutLog: string
-  assetType: 'mp4' | 'png'
 }
 
 export type ClientGraphicsRendererProcessState = Pick<
@@ -49,8 +49,8 @@ const ClientGraphicsRendererProcessActiveStateCodec = IO.exact(
   IO.type({
     animationModule: ClientAnimationModuleCodec,
     animationModuleSessionVersion: IO.number,
-    assetType: IO.union([IO.literal('mp4'), IO.literal('png')]),
     processStatus: IO.literal('processActive'),
+    graphicsRendererProcessKey: IO.string,
     processStdoutLog: IO.string,
   })
 )
@@ -64,8 +64,8 @@ const ClientGraphicsRendererProcessSuccessfulStateCodec = IO.exact(
   IO.type({
     animationModule: ClientAnimationModuleCodec,
     animationModuleSessionVersion: IO.number,
-    assetType: IO.union([IO.literal('mp4'), IO.literal('png')]),
     processStatus: IO.literal('processSuccessful'),
+    graphicsRendererProcessKey: IO.string,
     processStdoutLog: IO.string,
     graphicAssetUrl: IO.string,
   })
@@ -80,8 +80,8 @@ const ClientGraphicsRendererProcessFailedStateCodec = IO.exact(
   IO.type({
     animationModule: ClientAnimationModuleCodec,
     animationModuleSessionVersion: IO.number,
-    assetType: IO.union([IO.literal('mp4'), IO.literal('png')]),
     processStatus: IO.literal('processFailed'),
+    graphicsRendererProcessKey: IO.string,
     processStdoutLog: IO.string,
     processErrorMessage: IO.string,
   })

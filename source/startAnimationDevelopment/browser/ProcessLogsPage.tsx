@@ -6,9 +6,10 @@ export interface ProcessLogsPageProps
   extends Pick<
     ProcessPageProps,
     | 'baseRoute'
-    | 'animationModuleName'
+    | 'animationName'
     | 'animationModuleSessionVersion'
-    | 'renderTarget'
+    | 'graphicsRendererProcessKey'
+    | 'processStatus'
   > {
   processStdoutLog: string
 }

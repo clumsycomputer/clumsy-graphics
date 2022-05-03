@@ -1,4 +1,3 @@
-import { AnimationModule } from '../../main'
 import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
 import { AnimationModuleSourceChangedEvent } from './AnimationModuleSourceEvent'
 import { ActionBase } from './common'
@@ -48,7 +47,6 @@ export interface SpawnGraphicsRendererProcessAction
       graphicAssetPathKey: string
       graphicAssetPath: string
       graphicAssetUrlResult: string
-      assetType: 'mp4' | 'png'
     }
   > {}
 

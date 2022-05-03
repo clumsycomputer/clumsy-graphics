@@ -1,38 +1,11 @@
 import * as IO from 'io-ts'
-import { NaturalNumberString } from '../../helpers/codecTypes'
 
-export type GraphicsRendererProcessStateRequestQueryParams =
-  | RenderAnimationProcessStateRequestQueryParams
-  | RenderFrameProcessStateRequestQueryParams
-
-export interface RenderAnimationProcessStateRequestQueryParams
-  extends GraphicsRendererProcessStateRequestQueryParamsBase<'mp4'> {}
-
-const RenderAnimationProcessStateRequestQueryParamsCodec = IO.exact(
-  IO.type({
-    assetType: IO.literal('mp4'),
-  })
-)
-
-export interface RenderFrameProcessStateRequestQueryParams
-  extends GraphicsRendererProcessStateRequestQueryParamsBase<'png'> {
-  frameIndex: string
+export interface GraphicsRendererProcessStateRequestQueryParams {
+  graphicsRendererProcessKey: string
 }
 
-const RenderFrameProcessStateRequestQueryParamsCodec = IO.exact(
+export const GraphicsRendererProcessStateRequestQueryParamsCodec = IO.exact(
   IO.type({
-    assetType: IO.literal('png'),
-    frameIndex: NaturalNumberString,
+    graphicsRendererProcessKey: IO.string,
   })
 )
-
-interface GraphicsRendererProcessStateRequestQueryParamsBase<
-  AssetType extends string
-> {
-  assetType: AssetType
-}
-
-export const GraphicsRendererProcessStateRequestQueryParamsCodec = IO.union([
-  RenderAnimationProcessStateRequestQueryParamsCodec,
-  RenderFrameProcessStateRequestQueryParamsCodec,
-])

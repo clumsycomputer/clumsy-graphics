@@ -1,24 +1,33 @@
 import { makeStyles, Theme, useTheme } from '@material-ui/core'
 import React, { Fragment, HTMLAttributes, ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ClientGraphicsRendererProcessState } from '../models/GraphicsRendererProcessState'
 import { Page } from './Page'
 
-export interface ProcessPageProps {
+export interface ProcessPageProps
+  extends Pick<
+      ClientGraphicsRendererProcessState,
+      | 'animationModuleSessionVersion'
+      | 'graphicsRendererProcessKey'
+      | 'processStatus'
+    >,
+    Pick<
+      ClientGraphicsRendererProcessState['animationModule'],
+      'animationName'
+    > {
   baseRoute: '/animation' | `/frame/${number}`
   childRoute: '/logs' | '/result'
   childContent: ReactNode
-  animationModuleName: string
-  animationModuleSessionVersion: number
-  renderTarget: 'animation' | `frame/${number}`
 }
 
 export function ProcessPage(props: ProcessPageProps) {
   const {
     childRoute,
     baseRoute,
-    animationModuleName,
+    animationName,
     animationModuleSessionVersion,
-    renderTarget,
+    graphicsRendererProcessKey,
+    processStatus,
     childContent,
   } = props
   const styles = useStyles()
@@ -47,17 +56,20 @@ export function ProcessPage(props: ProcessPageProps) {
             <div className={'pageDetails'}>
               <FieldDisplay
                 fieldLabel={'animation name'}
-                fieldValue={animationModuleName}
+                fieldValue={animationName}
               />
               <FieldDisplay
                 fieldLabel={'session version'}
                 fieldValue={`${animationModuleSessionVersion}`}
               />
               <FieldDisplay
-                fieldLabel={'render target'}
-                fieldValue={renderTarget}
+                fieldLabel={'process key'}
+                fieldValue={graphicsRendererProcessKey}
               />
-              <FieldDisplay fieldLabel={'render status'} fieldValue={'todo'} />
+              <FieldDisplay
+                fieldLabel={'process status'}
+                fieldValue={getProcessStatusMessage({ processStatus })}
+              />
             </div>
           </div>
           {childContent}
@@ -84,6 +96,22 @@ export const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
   },
 }))
+
+interface GetProcessStatusMessageApi
+  extends Pick<ProcessPageProps, 'processStatus'> {}
+
+function getProcessStatusMessage(api: GetProcessStatusMessageApi) {
+  const { processStatus } = api
+  if (processStatus === 'processActive') {
+    return 'in progress...'
+  } else if (processStatus === 'processSuccessful') {
+    return 'success'
+  } else if (processStatus === 'processFailed') {
+    return 'error'
+  } else {
+    throw new Error('wtf? getProcessStatusMessage')
+  }
+}
 
 interface OptionFieldProps
   extends Pick<HTMLAttributes<HTMLDivElement>, 'onClick'> {

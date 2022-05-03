@@ -114,13 +114,10 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
         serverResponse.sendStatus(204)
         break
       case 'sourceReady':
-        const { specifiedGraphicsRendererProcessKey } =
-          getSpecifiedGraphicsRendererProcessKey({
-            graphicsRendererProcessStateRequestQueryParams,
-          })
         const specifiedGraphicsRendererProcessState =
           currentAnimationModuleSourceState.graphicsRendererProcessStates[
-            specifiedGraphicsRendererProcessKey
+            graphicsRendererProcessStateRequestQueryParams
+              .graphicsRendererProcessKey
           ]
         const {
           graphicsRendererProcessCommandString,
@@ -143,11 +140,10 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
               graphicAssetPathKey,
               graphicAssetPath,
               graphicAssetUrlResult,
-              assetType:
-                graphicsRendererProcessStateRequestQueryParams.assetType,
               animationModuleSessionVersionStamp:
                 currentAnimationModuleSourceState.animationModuleSessionVersion,
-              graphicsRendererProcessKey: specifiedGraphicsRendererProcessKey,
+              graphicsRendererProcessKey:
+                graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey,
             },
           })
         }
@@ -155,10 +151,10 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
           getSpecifiedClientGraphicsRendererProcessState({
             currentPartialGraphicsRendererProcessState:
               specifiedGraphicsRendererProcessState || {
-                assetType:
-                  graphicsRendererProcessStateRequestQueryParams.assetType,
-                processStdoutLog: '',
                 processStatus: 'processActive',
+                processStdoutLog: '',
+                graphicsRendererProcessKey:
+                  graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey,
               },
             currentAnimationModule:
               currentAnimationModuleSourceState.animationModule,
@@ -198,30 +194,6 @@ async function getGraphicsRendererProcessStateRequestQueryParams(
   return { graphicsRendererProcessStateRequestQueryParams }
 }
 
-interface GetSpecifiedGraphicsRendererProcessKeyApi
-  extends FunctionBrand<
-    typeof getGraphicsRendererProcessStateRequestQueryParams,
-    'graphicsRendererProcessStateRequestQueryParams'
-  > {}
-
-function getSpecifiedGraphicsRendererProcessKey(
-  api: GetSpecifiedGraphicsRendererProcessKeyApi
-) {
-  const { graphicsRendererProcessStateRequestQueryParams } = api
-  switch (graphicsRendererProcessStateRequestQueryParams.assetType) {
-    case 'mp4':
-      return {
-        specifiedGraphicsRendererProcessKey: 'animation',
-      }
-    case 'png':
-      return {
-        specifiedGraphicsRendererProcessKey: `${graphicsRendererProcessStateRequestQueryParams.frameIndex}`,
-      }
-    default:
-      throw new Error('wtf? getSpecifiedGraphicsRendererProcessKey')
-  }
-}
-
 interface GetPartialSpawnGraphicsRendererProcessActionPayloadApi
   extends Pick<
       ClientRequestsGraphicsRendererProcessStateHandlerApi,
@@ -250,35 +222,46 @@ function getPartialSpawnGraphicsRendererProcessActionPayload(
     generatedAssetsDirectoryPath
   )
   const animationModuleAbsolutePath = Path.resolve(animationModulePath)
-  switch (graphicsRendererProcessStateRequestQueryParams.assetType) {
-    case 'mp4':
-      const animationAssetFilename = `${currentAnimationModuleSessionVersion}.mp4`
-      const animationMp4OutputPath = Path.join(
-        generatedAssetsDirectoryAbsolutePath,
-        animationAssetFilename
-      )
-      return {
-        graphicAssetPathKey: animationAssetFilename,
-        graphicAssetPath: animationMp4OutputPath,
-        graphicAssetUrlResult: `/asset/${animationAssetFilename}`,
-        graphicsRendererProcessCommandString: `graphics-renderer renderAnimation --animationModulePath=${animationModuleAbsolutePath} --animationMp4OutputPath=${animationMp4OutputPath} --numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
-      }
-    case 'png':
-      const frameAssetFilename = `${currentAnimationModuleSessionVersion}_${graphicsRendererProcessStateRequestQueryParams.frameIndex}.png`
-      const frameFileOutputPath = Path.join(
-        generatedAssetsDirectoryAbsolutePath,
-        frameAssetFilename
-      )
-      return {
-        graphicAssetPathKey: frameAssetFilename,
-        graphicAssetPath: frameFileOutputPath,
-        graphicsRendererProcessCommandString: `graphics-renderer renderAnimationFrame --animationModulePath=${animationModuleAbsolutePath} --frameIndex=${graphicsRendererProcessStateRequestQueryParams.frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
-        graphicAssetUrlResult: `/asset/${frameAssetFilename}`,
-      }
-    default:
-      throw new Error(
-        'wtf? getPartialSpawnGraphicsRendererProcessActionPayload'
-      )
+  if (
+    graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey.startsWith(
+      'animation'
+    )
+  ) {
+    const animationAssetFilename = `${currentAnimationModuleSessionVersion}.mp4`
+    const animationMp4OutputPath = Path.join(
+      generatedAssetsDirectoryAbsolutePath,
+      animationAssetFilename
+    )
+    return {
+      graphicAssetPathKey: animationAssetFilename,
+      graphicAssetPath: animationMp4OutputPath,
+      graphicAssetUrlResult: `/asset/${animationAssetFilename}`,
+      graphicsRendererProcessCommandString: `graphics-renderer renderAnimation --animationModulePath=${animationModuleAbsolutePath} --animationMp4OutputPath=${animationMp4OutputPath} --numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
+    }
+  } else if (
+    graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey.startsWith(
+      'frame'
+    )
+  ) {
+    const frameIndex = Number(
+      graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey.replace(
+        'frame/',
+        ''
+      )!
+    )
+    const frameAssetFilename = `${currentAnimationModuleSessionVersion}_${frameIndex}.png`
+    const frameFileOutputPath = Path.join(
+      generatedAssetsDirectoryAbsolutePath,
+      frameAssetFilename
+    )
+    return {
+      graphicAssetPathKey: frameAssetFilename,
+      graphicAssetPath: frameFileOutputPath,
+      graphicsRendererProcessCommandString: `graphics-renderer renderAnimationFrame --animationModulePath=${animationModuleAbsolutePath} --frameIndex=${frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
+      graphicAssetUrlResult: `/asset/${frameAssetFilename}`,
+    }
+  } else {
+    throw new Error('wtf? getPartialSpawnGraphicsRendererProcessActionPayload')
   }
 }
 
@@ -392,6 +375,8 @@ function* clientRequestsPageHandler(api: ClientRequestsPageHandlerApi) {
         </head>
         <body>
           <script
+            id={'client-page-bundle-script'}
+            data-local-storage-session-cache-id={`${Math.random()}`}
             dangerouslySetInnerHTML={{
               __html: clientPageBundle,
             }}

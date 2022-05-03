@@ -1,7 +1,7 @@
 import { createTheme, ThemeProvider } from '@material-ui/core'
 import React from 'react'
 import ReactDom from 'react-dom'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom'
 import { FetchGraphicsRendererProcessStatePage } from './FetchGraphicsRendererProcessStatePage'
 import { ProcessLogsPage } from './ProcessLogsPage'
 import { ProcessResultPage } from './ProcessResultPage'
@@ -45,25 +45,26 @@ function GraphicsRendererApp() {
 function AnimationProcessLogsPage() {
   return (
     <FetchGraphicsRendererProcessStatePage
-      renderTargetParams={{
-        renderType: 'animation',
-      }}
+      graphicsRendererProcessKey={'animation'}
       GraphicsRendererProcessStateFetchedPage={({
         fetchedGraphicsRendererProcessState,
       }) => {
         return (
           <ProcessLogsPage
-            animationModuleName={
+            baseRoute={'/animation'}
+            animationName={
               fetchedGraphicsRendererProcessState.animationModule.animationName
             }
             animationModuleSessionVersion={
               fetchedGraphicsRendererProcessState.animationModuleSessionVersion
             }
+            graphicsRendererProcessKey={
+              fetchedGraphicsRendererProcessState.graphicsRendererProcessKey
+            }
+            processStatus={fetchedGraphicsRendererProcessState.processStatus}
             processStdoutLog={
               fetchedGraphicsRendererProcessState.processStdoutLog
             }
-            renderTarget={'animation'}
-            baseRoute={'/animation'}
           />
         )
       }}
@@ -74,25 +75,26 @@ function AnimationProcessLogsPage() {
 function AnimationProcessResultPage() {
   return (
     <FetchGraphicsRendererProcessStatePage
-      renderTargetParams={{
-        renderType: 'animation',
-      }}
+      graphicsRendererProcessKey={'animation'}
       GraphicsRendererProcessStateFetchedPage={({
         fetchedGraphicsRendererProcessState,
       }) => {
         return (
           <ProcessResultPage
+            baseRoute={'/animation'}
             fetchedGraphicsRendererProcessState={
               fetchedGraphicsRendererProcessState
             }
-            animationModuleName={
+            animationName={
               fetchedGraphicsRendererProcessState.animationModule.animationName
             }
             animationModuleSessionVersion={
               fetchedGraphicsRendererProcessState.animationModuleSessionVersion
             }
-            renderTarget={'animation'}
-            baseRoute={'/animation'}
+            graphicsRendererProcessKey={
+              fetchedGraphicsRendererProcessState.graphicsRendererProcessKey
+            }
+            processStatus={fetchedGraphicsRendererProcessState.processStatus}
             AssetDisplay={({ graphicAssetUrl }) => (
               <video
                 style={{
@@ -115,28 +117,31 @@ function AnimationProcessResultPage() {
 }
 
 function FrameProcessLogsPage() {
+  const routeParams = useParams()
   return (
     <FetchGraphicsRendererProcessStatePage
-      renderTargetParams={{
-        renderType: 'frame',
-        frameIndex: `${-1}`,
-      }}
+      graphicsRendererProcessKey={`frame/${
+        routeParams.frameIndex as unknown as number
+      }`}
       GraphicsRendererProcessStateFetchedPage={({
         fetchedGraphicsRendererProcessState,
       }) => {
         return (
           <ProcessLogsPage
-            animationModuleName={
+            baseRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
+            animationName={
               fetchedGraphicsRendererProcessState.animationModule.animationName
             }
             animationModuleSessionVersion={
               fetchedGraphicsRendererProcessState.animationModuleSessionVersion
             }
+            graphicsRendererProcessKey={
+              fetchedGraphicsRendererProcessState.graphicsRendererProcessKey
+            }
+            processStatus={fetchedGraphicsRendererProcessState.processStatus}
             processStdoutLog={
               fetchedGraphicsRendererProcessState.processStdoutLog
             }
-            renderTarget={'frame/-1'}
-            baseRoute={'/frame/-1'}
           />
         )
       }}
@@ -145,28 +150,31 @@ function FrameProcessLogsPage() {
 }
 
 function FrameProcessResultPage() {
+  const routeParams = useParams()
   return (
     <FetchGraphicsRendererProcessStatePage
-      renderTargetParams={{
-        renderType: 'frame',
-        frameIndex: `${-1}`,
-      }}
+      graphicsRendererProcessKey={`frame/${
+        routeParams.frameIndex as unknown as number
+      }`}
       GraphicsRendererProcessStateFetchedPage={({
         fetchedGraphicsRendererProcessState,
       }) => {
         return (
           <ProcessResultPage
+            baseRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
             fetchedGraphicsRendererProcessState={
               fetchedGraphicsRendererProcessState
             }
-            animationModuleName={
+            animationName={
               fetchedGraphicsRendererProcessState.animationModule.animationName
             }
             animationModuleSessionVersion={
               fetchedGraphicsRendererProcessState.animationModuleSessionVersion
             }
-            renderTarget={`frame/-1`}
-            baseRoute={'/frame/-1'}
+            graphicsRendererProcessKey={
+              fetchedGraphicsRendererProcessState.graphicsRendererProcessKey
+            }
+            processStatus={fetchedGraphicsRendererProcessState.processStatus}
             AssetDisplay={({ graphicAssetUrl }) => (
               <img
                 style={{

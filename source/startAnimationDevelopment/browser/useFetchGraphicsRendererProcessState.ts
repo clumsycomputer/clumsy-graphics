@@ -13,11 +13,9 @@ import {
   ClientGraphicsRendererProcessStateCodec,
 } from '../models/GraphicsRendererProcessState'
 
-const FetchGraphicsRendererProcessStateStorageKey =
-  'storedFetchGraphicsRendererProcessState'
-
 export interface UseFetchGraphicsRendererProcessStateApi {
-  renderTargetParams: RenderTargetParams
+  graphicsRendererProcessKey: string
+  staticPollRate: number
 }
 
 export type RenderTargetParams =
@@ -68,41 +66,33 @@ interface FetchGraphicsRendererProcessStateBase<
 export function useFetchGraphicsRendererProcessState(
   api: UseFetchGraphicsRendererProcessStateApi
 ) {
-  const { renderTargetParams } = api
+  const { graphicsRendererProcessKey, staticPollRate } = api
+  const localStorageSessionCacheId = useMemo(
+    () =>
+      document
+        .getElementById('client-page-bundle-script')
+        ?.getAttribute('data-local-storage-session-cache-id')!,
+    []
+  )
   const [
     fetchGraphicsRendererProcessState,
     setFetchGraphicsRendererProcessState,
   ] = useState<FetchGraphicsRendererProcessState>(
     getInitialFetchGraphicsRendererProcessState({
-      renderTargetParams,
+      graphicsRendererProcessKey,
+      localStorageSessionCacheId,
     })
   )
   const fetchGraphicsRendererProcessStateRef =
     useRef<FetchGraphicsRendererProcessState>(fetchGraphicsRendererProcessState)
-  const fetchQueryParamString = useMemo(() => {
-    if (renderTargetParams.renderType === 'animation') {
-      return `?assetType=mp4`
-    } else if (renderTargetParams.renderType === 'frame') {
-      return `?assetType=png&frameIndex=${renderTargetParams.frameIndex}`
-    }
-  }, [])
   useEffect(() => {
     const fetchLatestGraphicsRendererProcessStateIntervalHandle = setInterval(
       async () => {
         const fetchLatestGraphicsRendererProcessStateResponse = await fetch(
-          `/api/latestAnimationModule/graphicsRendererProcessState${fetchQueryParamString}`
+          `/api/latestAnimationModule/graphicsRendererProcessState?graphicsRendererProcessKey=${graphicsRendererProcessKey}`
         )
         switch (fetchLatestGraphicsRendererProcessStateResponse.status) {
           case 204:
-            // maybeSetFetchGraphicsRendererProcessState({
-            //   renderTargetParams,
-            //   setFetchGraphicsRendererProcessState,
-            //   fetchGraphicsRendererProcessStateRef,
-            //   maybeNextFetchGraphicsRendererProcessState: {
-            //     fetchStatus: 'serverInitializing',
-            //     fetchStatusCode: 204,
-            //   },
-            // })
             break
           case 200:
             const fetchLatestGraphicsRendererProcessStateResponseData =
@@ -113,7 +103,8 @@ export function useFetchGraphicsRendererProcessState(
                 targetCodec: ClientGraphicsRendererProcessStateCodec,
               })
             maybeSetFetchGraphicsRendererProcessState({
-              renderTargetParams,
+              graphicsRendererProcessKey,
+              localStorageSessionCacheId,
               setFetchGraphicsRendererProcessState,
               fetchGraphicsRendererProcessStateRef,
               maybeNextFetchGraphicsRendererProcessState: {
@@ -127,7 +118,8 @@ export function useFetchGraphicsRendererProcessState(
             const fetchErrorMessage =
               await fetchLatestGraphicsRendererProcessStateResponse.text()
             maybeSetFetchGraphicsRendererProcessState({
-              renderTargetParams,
+              graphicsRendererProcessKey,
+              localStorageSessionCacheId,
               setFetchGraphicsRendererProcessState,
               fetchGraphicsRendererProcessStateRef,
               maybeNextFetchGraphicsRendererProcessState: {
@@ -139,7 +131,8 @@ export function useFetchGraphicsRendererProcessState(
             break
           case 500:
             maybeSetFetchGraphicsRendererProcessState({
-              renderTargetParams,
+              graphicsRendererProcessKey,
+              localStorageSessionCacheId,
               setFetchGraphicsRendererProcessState,
               fetchGraphicsRendererProcessStateRef,
               maybeNextFetchGraphicsRendererProcessState: {
@@ -152,7 +145,7 @@ export function useFetchGraphicsRendererProcessState(
             break
         }
       },
-      500
+      staticPollRate
     )
     return () => {
       clearInterval(fetchLatestGraphicsRendererProcessStateIntervalHandle)
@@ -162,27 +155,33 @@ export function useFetchGraphicsRendererProcessState(
 }
 
 interface GetInitialFetchGraphicsRendererProcessStateApi
-  extends Pick<UseFetchGraphicsRendererProcessStateApi, 'renderTargetParams'> {}
+  extends Pick<
+    UseFetchGraphicsRendererProcessStateApi,
+    'graphicsRendererProcessKey'
+  > {
+  localStorageSessionCacheId: string
+}
 
 function getInitialFetchGraphicsRendererProcessState(
   api: GetInitialFetchGraphicsRendererProcessStateApi
 ): FetchGraphicsRendererProcessState {
-  const { renderTargetParams } = api
-  const maybePersistedState = localStorage.getItem(
-    FetchGraphicsRendererProcessStateStorageKey
-  )
-  const persistedStateData = maybePersistedState
-    ? (JSON.parse(maybePersistedState) as unknown as {
-        storedRenderTargetParams: UseFetchGraphicsRendererProcessStateApi['renderTargetParams']
-        storedFetchGraphicsRendererProcessState: FetchGraphicsRendererProcessState
-      } | null)
-    : null
+  const { localStorageSessionCacheId, graphicsRendererProcessKey } = api
+  const maybeStoredFetchGraphicsRendererProcessStateDataString =
+    localStorage.getItem(cachedFetchGraphicsRendererProcessStateDataKey)
+  const maybeStoredFetchGraphicsRendererProcessStateData =
+    maybeStoredFetchGraphicsRendererProcessStateDataString
+      ? (JSON.parse(
+          maybeStoredFetchGraphicsRendererProcessStateDataString
+        ) as unknown as CachedFetchGraphicsRendererProcessStateData | null)
+      : null
   if (
-    persistedStateData &&
-    JSON.stringify(renderTargetParams) ===
-      JSON.stringify(persistedStateData.storedRenderTargetParams)
+    maybeStoredFetchGraphicsRendererProcessStateData &&
+    localStorageSessionCacheId ===
+      maybeStoredFetchGraphicsRendererProcessStateData.localStorageSessionCacheId &&
+    graphicsRendererProcessKey ===
+      maybeStoredFetchGraphicsRendererProcessStateData.graphicsRendererProcessKey
   ) {
-    return persistedStateData.storedFetchGraphicsRendererProcessState
+    return maybeStoredFetchGraphicsRendererProcessStateData.fetchGraphicsRendererProcessState
   } else {
     return {
       fetchStatus: 'serverInitializing',
@@ -192,7 +191,11 @@ function getInitialFetchGraphicsRendererProcessState(
 }
 
 interface MaybeSetFetchGraphicsRendererProcessStateApi
-  extends Pick<UseFetchGraphicsRendererProcessStateApi, 'renderTargetParams'> {
+  extends Pick<
+    UseFetchGraphicsRendererProcessStateApi,
+    'graphicsRendererProcessKey'
+  > {
+  localStorageSessionCacheId: string
   maybeNextFetchGraphicsRendererProcessState: FetchGraphicsRendererProcessState
   fetchGraphicsRendererProcessStateRef: MutableRefObject<FetchGraphicsRendererProcessState>
   setFetchGraphicsRendererProcessState: Dispatch<
@@ -206,7 +209,8 @@ function maybeSetFetchGraphicsRendererProcessState(
   const {
     maybeNextFetchGraphicsRendererProcessState,
     fetchGraphicsRendererProcessStateRef,
-    renderTargetParams,
+    localStorageSessionCacheId,
+    graphicsRendererProcessKey,
     setFetchGraphicsRendererProcessState,
   } = api
   const currentFetchGraphicsRendererProcessState =
@@ -243,16 +247,28 @@ function maybeSetFetchGraphicsRendererProcessState(
   ) {
     fetchGraphicsRendererProcessStateRef.current =
       maybeNextFetchGraphicsRendererProcessState
-    localStorage.setItem(
-      FetchGraphicsRendererProcessStateStorageKey,
-      JSON.stringify({
-        storedRenderTargetParams: renderTargetParams,
-        storedFetchGraphicsRendererProcessState:
+    const nextCachedFetchGraphicsRendererProcessStateData: CachedFetchGraphicsRendererProcessStateData =
+      {
+        graphicsRendererProcessKey,
+        localStorageSessionCacheId,
+        fetchGraphicsRendererProcessState:
           maybeNextFetchGraphicsRendererProcessState,
-      })
+      }
+    localStorage.setItem(
+      cachedFetchGraphicsRendererProcessStateDataKey,
+      JSON.stringify(nextCachedFetchGraphicsRendererProcessStateData)
     )
     setFetchGraphicsRendererProcessState(
       maybeNextFetchGraphicsRendererProcessState
     )
   }
+}
+
+const cachedFetchGraphicsRendererProcessStateDataKey =
+  'cachedFetchGraphicsRendererProcessStateData'
+
+interface CachedFetchGraphicsRendererProcessStateData {
+  graphicsRendererProcessKey: string
+  localStorageSessionCacheId: string
+  fetchGraphicsRendererProcessState: FetchGraphicsRendererProcessState
 }

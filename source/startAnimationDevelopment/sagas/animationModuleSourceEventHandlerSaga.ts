@@ -1,33 +1,45 @@
 import { SagaReturnType } from '@redux-saga/core/effects'
 import { put, takeEvent } from '../helpers/storeEffects'
-import { AnimationModuleSourceEvent } from '../models/AnimationModuleSourceEvent'
+import { AnimationModuleBundlerEvent } from '../models/AnimationModuleSourceEvent'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
 
-export interface AnimationModuleSourceEventHandlerSagaApi
+export interface AnimationModuleBundlerEventHandlerSagaApi
   extends Pick<
     SagaReturnType<typeof animationDevelopmentSetupSaga>,
-    'animationModuleSourceEventChannel'
+    'animationModuleBundlerEventChannel'
   > {}
 
-export function* animationModuleSourceEventHandlerSaga(
-  api: AnimationModuleSourceEventHandlerSagaApi
+export function* animationModuleBundlerEventHandlerSaga(
+  api: AnimationModuleBundlerEventHandlerSagaApi
 ) {
-  const { animationModuleSourceEventChannel } = api
+  const { animationModuleBundlerEventChannel } = api
   while (true) {
-    const someAnimationModuleSourceEvent =
-      yield* takeEvent<AnimationModuleSourceEvent>(
-        animationModuleSourceEventChannel
+    const someAnimationModuleBundlerEvent =
+      yield* takeEvent<AnimationModuleBundlerEvent>(
+        animationModuleBundlerEventChannel
       )
-    switch (someAnimationModuleSourceEvent.eventType) {
-      case 'animationModuleSourceChanged':
+    switch (someAnimationModuleBundlerEvent.eventType) {
+      case 'animationModuleBundler_initialBuildSucceeded':
         yield* put({
-          type: 'animationModuleSourceChanged',
+          type: someAnimationModuleBundlerEvent.eventType,
           actionPayload: {
-            nextAnimationModule:
-              someAnimationModuleSourceEvent.eventPayload.nextAnimationModule,
-            nextAnimationModuleSessionVersion:
-              someAnimationModuleSourceEvent.eventPayload
-                .nextAnimationModuleSessionVersion,
+            ...someAnimationModuleBundlerEvent.eventPayload,
+          },
+        })
+        break
+      case 'animationModuleBundler_rebuildSucceeded':
+        yield* put({
+          type: someAnimationModuleBundlerEvent.eventType,
+          actionPayload: {
+            ...someAnimationModuleBundlerEvent.eventPayload,
+          },
+        })
+        break
+      case 'animationModuleBundler_rebuildFailed':
+        yield* put({
+          type: someAnimationModuleBundlerEvent.eventType,
+          actionPayload: {
+            ...someAnimationModuleBundlerEvent.eventPayload,
           },
         })
         break

@@ -7,9 +7,9 @@ export interface ProcessLogsPageProps
     ProcessPageProps,
     | 'baseRoute'
     | 'animationName'
-    | 'animationModuleSessionVersion'
+    | 'bundleSessionVersion'
     | 'graphicsRendererProcessKey'
-    | 'processStatus'
+    | 'graphicsRendererProcessStatus'
   > {
   processStdoutLog: string
 }

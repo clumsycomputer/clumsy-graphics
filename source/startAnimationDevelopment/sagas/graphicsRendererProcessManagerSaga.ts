@@ -10,7 +10,10 @@ import {
   takeEvent,
 } from '../helpers/storeEffects'
 import { GraphicsRendererProcessManagerAction } from '../models/AnimationDevelopmentAction'
-import { AnimationModuleSourceReadyState } from '../models/AnimationDevelopmentState'
+import {
+  AnimationModuleBundlerActiveState,
+  AnimationModuleBundlerState,
+} from '../models/AnimationDevelopmentState'
 import { SpawnedGraphicsRendererProcessEvent } from '../models/SpawnedGraphicsRendererProcessEvent'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
 
@@ -29,63 +32,65 @@ export function* graphicsRendererProcessManagerSaga(
       yield* takeActionFromChannel<GraphicsRendererProcessManagerAction>(
         graphicsRendererProcessManagerActionChannel
       )
-    const currentAnimationModuleSourceState = yield* select(
+    const currentAnimationModuleBundlerState = yield* select(
       (currentAnimationDevelopmentState) =>
-        currentAnimationDevelopmentState.animationModuleSourceState
+        currentAnimationDevelopmentState.animationModuleBundlerState
     )
     if (
-      currentAnimationModuleSourceState.sourceStatus === 'sourceInitializing' &&
-      someGraphicsRendererProcessManagerAction.type ===
-        'animationModuleSourceChanged'
+      currentAnimationModuleBundlerState.bundlerStatus ===
+        'bundlerInitializing' &&
+      // (someGraphicsRendererProcessManagerAction.type ===
+      //   'animationModuleBundler_initialBuildSucceeded' ||
+      //   someGraphicsRendererProcessManagerAction.type ===
+      //     'animationModuleBundler_rebuildSucceeded' ||
+      //   someGraphicsRendererProcessManagerAction.type ===
+      //     'animationModuleBundler_rebuildFailed')
     ) {
       yield* put({
         type: 'animationModuleSourceUpdated',
         actionPayload: {
-          animationModuleSourceState: {
-            animationModule:
-              someGraphicsRendererProcessManagerAction.actionPayload
-                .nextAnimationModule,
-            animationModuleSessionVersion:
-              someGraphicsRendererProcessManagerAction.actionPayload
-                .nextAnimationModuleSessionVersion,
+          nextAnimationModuleBundlerState: {
+            bundlerStatus: 'bundlerActive',
             graphicsRendererProcessStates: {},
-            sourceStatus: 'sourceReady',
           },
         },
       })
     } else if (
-      currentAnimationModuleSourceState.sourceStatus === 'sourceReady' &&
-      someGraphicsRendererProcessManagerAction.type ===
-        'animationModuleSourceChanged'
+      currentAnimationModuleBundlerState.bundlerStatus === 'bundlerActive' 
+      // && (someGraphicsRendererProcessManagerAction.type ===
+      //   'animationModuleBundler_rebuildSucceeded' ||
+      //   someGraphicsRendererProcessManagerAction.type ===
+      //     'animationModuleBundler_rebuildFailed')
     ) {
       yield* call(function* () {
         terminateActiveGraphicsRendererProcesses({
-          currentAnimationModuleSourceState,
+          currentAnimationModuleBundlerState,
         })
         yield* put({
           type: 'animationModuleSourceUpdated',
           actionPayload: {
-            animationModuleSourceState: {
-              animationModule:
+            nextAnimationModuleBundlerState: {
+              // animationModule:
+              //   someGraphicsRendererProcessManagerAction.actionPayload
+              //     .nextAnimationModule,
+              // latestBundleStatus: someGraphicsRendererProcessManagerAction.actionPayload
+              bundleSessionVersion:
                 someGraphicsRendererProcessManagerAction.actionPayload
-                  .nextAnimationModule,
-              animationModuleSessionVersion:
-                someGraphicsRendererProcessManagerAction.actionPayload
-                  .nextAnimationModuleSessionVersion,
+                  .nextBundleSessionVersion,
+              bundlerStatus: 'bundlerActive',
               graphicsRendererProcessStates: {},
-              sourceStatus: 'sourceReady',
             },
           },
         })
       })
     } else if (
-      currentAnimationModuleSourceState.sourceStatus === 'sourceReady' &&
+      currentAnimationModuleBundlerState.bundlerStatus === 'bundlerActive' &&
       someGraphicsRendererProcessManagerAction.type ===
         'spawnGraphicsRendererProcess' &&
-      currentAnimationModuleSourceState.animationModuleSessionVersion ===
+      currentAnimationModuleBundlerState.bundleSessionVersion ===
         someGraphicsRendererProcessManagerAction.actionPayload
-          .animationModuleSessionVersionStamp &&
-      currentAnimationModuleSourceState.graphicsRendererProcessStates[
+          .bundleSessionVersion &&
+      currentAnimationModuleBundlerState.graphicsRendererProcessStates[
         someGraphicsRendererProcessManagerAction.actionPayload
           .graphicsRendererProcessKey
       ] === undefined
@@ -93,7 +98,7 @@ export function* graphicsRendererProcessManagerSaga(
       yield* call(function* () {
         const { spawnedGraphicsRendererProcess } = spawnGraphicsRendererProcess(
           {
-            graphicsRendererCommandString:
+            graphicsRendererProcessCommandString:
               someGraphicsRendererProcessManagerAction.actionPayload
                 .graphicsRendererProcessCommandString,
           }
@@ -113,7 +118,7 @@ export function* graphicsRendererProcessManagerSaga(
                 someGraphicsRendererProcessManagerAction.actionPayload
                   .graphicsRendererProcessKey,
               spawnedProcess: spawnedGraphicsRendererProcess,
-              processStatus: 'processActive',
+              graphicsRendererProcessStatus: 'processActive',
               processStdoutLog: '',
             },
           },
@@ -133,8 +138,8 @@ export function* graphicsRendererProcessManagerSaga(
                     targetGraphicsRendererProcessKey:
                       someGraphicsRendererProcessManagerAction.actionPayload
                         .graphicsRendererProcessKey,
-                    animationModuleSessionVersionStamp:
-                      currentAnimationModuleSourceState.animationModuleSessionVersion,
+                    bundleSessionVersion:
+                      currentAnimationModuleBundlerState.bundleSessionVersion,
                     targetGraphicsRendererProcessStateUpdates: {
                       processStdoutLog:
                         someSpawnedGraphicsRendererProcessEvent.eventPayload
@@ -156,13 +161,13 @@ export function* graphicsRendererProcessManagerSaga(
                     targetGraphicsRendererProcessKey:
                       someGraphicsRendererProcessManagerAction.actionPayload
                         .graphicsRendererProcessKey,
-                    animationModuleSessionVersionStamp:
-                      currentAnimationModuleSourceState.animationModuleSessionVersion,
+                    bundleSessionVersion:
+                      currentAnimationModuleBundlerState.bundleSessionVersion,
                     targetGraphicsRendererProcessStateUpdates: {
                       graphicAssetUrl:
                         someGraphicsRendererProcessManagerAction.actionPayload
                           .graphicAssetUrlResult,
-                      processStatus: 'processSuccessful',
+                      graphicsRendererProcessStatus: 'processSuccessful',
                     },
                   },
                 })
@@ -174,13 +179,13 @@ export function* graphicsRendererProcessManagerSaga(
                     targetGraphicsRendererProcessKey:
                       someGraphicsRendererProcessManagerAction.actionPayload
                         .graphicsRendererProcessKey,
-                    animationModuleSessionVersionStamp:
-                      currentAnimationModuleSourceState.animationModuleSessionVersion,
+                    bundleSessionVersion:
+                      currentAnimationModuleBundlerState.bundleSessionVersion,
                     targetGraphicsRendererProcessStateUpdates: {
                       processErrorMessage:
                         someSpawnedGraphicsRendererProcessEvent.eventPayload
                           .graphicsRendererProcessErrorMessage,
-                      processStatus: 'processFailed',
+                      graphicsRendererProcessStatus: 'processFailed',
                     },
                   },
                 })
@@ -206,29 +211,29 @@ export function* graphicsRendererProcessManagerSaga(
 }
 
 interface TerminateActiveGraphicsRenderProcessesApi {
-  currentAnimationModuleSourceState: AnimationModuleSourceReadyState
+  currentAnimationModuleBundlerState: AnimationModuleBundlerActiveState
 }
 
 function terminateActiveGraphicsRendererProcesses(
   api: TerminateActiveGraphicsRenderProcessesApi
 ) {
-  const { currentAnimationModuleSourceState } = api
+  const { currentAnimationModuleBundlerState } = api
   Object.values(
-    currentAnimationModuleSourceState.graphicsRendererProcessStates
+    currentAnimationModuleBundlerState.graphicsRendererProcessStates
   ).forEach((someGraphicsRendererProcessState) => {
     someGraphicsRendererProcessState.spawnedProcess.kill('SIGINT')
   })
 }
 
 export interface SpawnGraphicsRendererProcessApi {
-  graphicsRendererCommandString: string
+  graphicsRendererProcessCommandString: string
 }
 
 export function spawnGraphicsRendererProcess(
   api: SpawnGraphicsRendererProcessApi
 ) {
-  const { graphicsRendererCommandString } = api
-  const graphicsRendererCommandTokens = graphicsRendererCommandString.split(' ')
+  const { graphicsRendererProcessCommandString } = api
+  const graphicsRendererCommandTokens = graphicsRendererProcessCommandString.split(' ')
   const [
     mainGraphicsRendererCommandToken,
     ...graphicsRendererCommandArgumentTokens

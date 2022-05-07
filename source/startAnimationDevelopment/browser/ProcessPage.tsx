@@ -1,15 +1,15 @@
 import { makeStyles, Theme, useTheme } from '@material-ui/core'
 import React, { Fragment, HTMLAttributes, ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClientGraphicsRendererProcessState } from '../models/GraphicsRendererProcessState'
+import { ClientGraphicsRendererProcessState } from '../models/ClientGraphicsRendererProcessState'
 import { Page } from './Page'
 
 export interface ProcessPageProps
   extends Pick<
       ClientGraphicsRendererProcessState,
-      | 'animationModuleSessionVersion'
+      | 'bundleSessionVersion'
       | 'graphicsRendererProcessKey'
-      | 'processStatus'
+      | 'graphicsRendererProcessStatus'
     >,
     Pick<
       ClientGraphicsRendererProcessState['animationModule'],
@@ -25,9 +25,9 @@ export function ProcessPage(props: ProcessPageProps) {
     childRoute,
     baseRoute,
     animationName,
-    animationModuleSessionVersion,
+    bundleSessionVersion,
     graphicsRendererProcessKey,
-    processStatus,
+    graphicsRendererProcessStatus,
     childContent,
   } = props
   const styles = useStyles()
@@ -60,7 +60,7 @@ export function ProcessPage(props: ProcessPageProps) {
               />
               <FieldDisplay
                 fieldLabel={'session version'}
-                fieldValue={`${animationModuleSessionVersion}`}
+                fieldValue={`${bundleSessionVersion}`}
               />
               <FieldDisplay
                 fieldLabel={'process key'}
@@ -68,7 +68,9 @@ export function ProcessPage(props: ProcessPageProps) {
               />
               <FieldDisplay
                 fieldLabel={'process status'}
-                fieldValue={getProcessStatusMessage({ processStatus })}
+                fieldValue={getProcessStatusMessage({
+                  graphicsRendererProcessStatus,
+                })}
               />
             </div>
           </div>
@@ -98,15 +100,15 @@ export const useStyles = makeStyles((theme) => ({
 }))
 
 interface GetProcessStatusMessageApi
-  extends Pick<ProcessPageProps, 'processStatus'> {}
+  extends Pick<ProcessPageProps, 'graphicsRendererProcessStatus'> {}
 
 function getProcessStatusMessage(api: GetProcessStatusMessageApi) {
-  const { processStatus } = api
-  if (processStatus === 'processActive') {
+  const { graphicsRendererProcessStatus } = api
+  if (graphicsRendererProcessStatus === 'processActive') {
     return 'in progress...'
-  } else if (processStatus === 'processSuccessful') {
+  } else if (graphicsRendererProcessStatus === 'processSuccessful') {
     return 'success'
-  } else if (processStatus === 'processFailed') {
+  } else if (graphicsRendererProcessStatus === 'processFailed') {
     return 'error'
   } else {
     throw new Error('wtf? getProcessStatusMessage')

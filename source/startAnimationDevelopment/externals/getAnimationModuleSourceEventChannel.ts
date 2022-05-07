@@ -7,20 +7,20 @@ import {
 } from 'redux-saga'
 import { getAnimationModule } from '../../helpers/getAnimationModule'
 import { getAnimationModuleBundle } from '../../helpers/getAnimationModuleBundle'
-import { AnimationModuleSourceEvent } from '../models/AnimationModuleSourceEvent'
+import { AnimationModuleBundlerEvent } from '../models/AnimationModuleSourceEvent'
 import { InitialSagaApi } from '../sagas/initialSaga'
 
-export interface GetAnimationModuleSourceEventChannelApi
+export interface GetAnimationModuleBundlerEventChannelApi
   extends Pick<InitialSagaApi, 'animationModulePath'> {}
 
-export function getAnimationModuleSourceEventChannel(
-  api: GetAnimationModuleSourceEventChannelApi
+export function getAnimationModuleBundlerEventChannel(
+  api: GetAnimationModuleBundlerEventChannelApi
 ) {
   const { animationModulePath } = api
-  const animationModuleSourceEventChannel =
-    getEventChannel<AnimationModuleSourceEvent>(
+  const animationModuleBundlerEventChannel =
+    getEventChannel<AnimationModuleBundlerEvent>(
       (emitAnimationModuleSourceEvent) => {
-        let nextAnimationModuleSessionVersion = 0
+        let nextBundleSessionVersion = 0
         buildModule({
           platform: 'node',
           bundle: true,
@@ -32,26 +32,37 @@ export function getAnimationModuleSourceEventChannel(
           plugins: [getNodeExternalsPlugin()],
           watch: {
             onRebuild: async () => {
-              nextAnimationModuleSessionVersion =
-                nextAnimationModuleSessionVersion + 1
-              // todo handle bundle errors
-              const { animationModuleBundle } = await getAnimationModuleBundle({
-                animationModulePath,
-              })
-              const nextAnimationModule = await getAnimationModule({
-                animationModuleBundle,
-              })
-              emitAnimationModuleSourceEvent({
-                eventType: 'animationModuleSourceChanged',
-                eventPayload: {
-                  nextAnimationModule,
-                  nextAnimationModuleSessionVersion,
-                },
-              })
+              try {
+                const { animationModuleBundle } =
+                  await getAnimationModuleBundle({
+                    animationModulePath,
+                  })
+                const nextAnimationModule = await getAnimationModule({
+                  animationModuleBundle,
+                })
+                nextBundleSessionVersion = nextBundleSessionVersion + 1
+                emitAnimationModuleSourceEvent({
+                  eventType: 'animationModuleBundler_rebuildSucceeded',
+                  eventPayload: {
+                    nextBundleSessionVersion,
+                    nextAnimationModule,
+                  },
+                })
+              } catch (nextBundleError) {
+                emitAnimationModuleSourceEvent({
+                  eventType: 'animationModuleBundler_rebuildFailed',
+                  eventPayload: {
+                    nextBundleSessionVersion,
+                    nextBundleErrorMessage:
+                      nextBundleError instanceof Error
+                        ? nextBundleError.message
+                        : 'Invalid animation module',
+                  },
+                })
+              }
             },
           },
         }).then(async () => {
-          // todo handle bundle errors
           const { animationModuleBundle } = await getAnimationModuleBundle({
             animationModulePath,
           })
@@ -59,10 +70,10 @@ export function getAnimationModuleSourceEventChannel(
             animationModuleBundle,
           })
           emitAnimationModuleSourceEvent({
-            eventType: 'animationModuleSourceChanged',
+            eventType: 'animationModuleBundler_initialBuildSucceeded',
             eventPayload: {
+              nextBundleSessionVersion,
               nextAnimationModule,
-              nextAnimationModuleSessionVersion,
             },
           })
         })
@@ -70,5 +81,5 @@ export function getAnimationModuleSourceEventChannel(
       },
       SagaBuffers.sliding(1)
     )
-  return { animationModuleSourceEventChannel }
+  return { animationModuleBundlerEventChannel }
 }

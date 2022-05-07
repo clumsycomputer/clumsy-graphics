@@ -1,13 +1,34 @@
 import { AnimationModule } from '../../main'
 import { EventBase } from './common'
 
-export type AnimationModuleSourceEvent = AnimationModuleSourceChangedEvent
+export type AnimationModuleBundlerEvent =
+  | AnimationModuleBundlerInitialBuildSucceededEvent
+  | AnimationModuleBundlerRebuildSucceededEvent
+  | AnimationModuleBundlerRebuildFailedEvent
 
-export interface AnimationModuleSourceChangedEvent
+export interface AnimationModuleBundlerInitialBuildSucceededEvent
   extends EventBase<
-    'animationModuleSourceChanged',
+    'animationModuleBundler_initialBuildSucceeded',
     {
+      nextBundleSessionVersion: number
       nextAnimationModule: AnimationModule
-      nextAnimationModuleSessionVersion: number
+    }
+  > {}
+
+export interface AnimationModuleBundlerRebuildSucceededEvent
+  extends EventBase<
+    'animationModuleBundler_rebuildSucceeded',
+    {
+      nextBundleSessionVersion: number
+      nextAnimationModule: AnimationModule
+    }
+  > {}
+
+export interface AnimationModuleBundlerRebuildFailedEvent
+  extends EventBase<
+    'animationModuleBundler_rebuildFailed',
+    {
+      nextBundleSessionVersion: number
+      nextBundleErrorMessage: string
     }
   > {}

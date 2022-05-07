@@ -2,7 +2,7 @@ import { build as buildScript } from 'esbuild'
 import FileSystem from 'fs'
 import Path from 'path'
 import { buffers as SagaBuffers } from 'redux-saga'
-import { getAnimationModuleSourceEventChannel } from '../externals/getAnimationModuleSourceEventChannel'
+import { getAnimationModuleBundlerEventChannel } from '../externals/getAnimationModuleSourceEventChannel'
 import { getClientServerEventChannel } from '../externals/getClientServerEventChannel'
 import { actionChannel, call } from '../helpers/storeEffects'
 import { GraphicsRendererProcessManagerAction } from '../models/AnimationDevelopmentAction'
@@ -28,8 +28,8 @@ export function* animationDevelopmentSetupSaga(
   setupGeneratedAssetsDirectory({
     generatedAssetsDirectoryAbsolutePath,
   })
-  const { animationModuleSourceEventChannel } =
-    getAnimationModuleSourceEventChannel({
+  const { animationModuleBundlerEventChannel } =
+    getAnimationModuleBundlerEventChannel({
       animationModulePath,
     })
   const { clientServerEventChannel } = getClientServerEventChannel({
@@ -37,15 +37,22 @@ export function* animationDevelopmentSetupSaga(
   })
   const graphicsRendererProcessManagerActionChannel =
     yield* actionChannel<GraphicsRendererProcessManagerAction>(
-      ['animationModuleSourceChanged', 'spawnGraphicsRendererProcess'],
+      [
+        'animationModuleBundler_initialBuildSucceeded',
+        'animationModuleBundler_rebuildSucceeded',
+        'animationModuleBundler_rebuildFailed',
+        'spawnGraphicsRendererProcess',
+      ],
       SagaBuffers.expanding(3)
     )
   const { clientPageBundle } = yield* call(getClientPageBundle)
+  const { localStorageSessionCacheId } = getLocalStorageSessionCacheId()
   return {
-    animationModuleSourceEventChannel,
+    animationModuleBundlerEventChannel,
     clientServerEventChannel,
     graphicsRendererProcessManagerActionChannel,
     clientPageBundle,
+    localStorageSessionCacheId,
   }
 }
 
@@ -74,5 +81,11 @@ async function getClientPageBundle() {
   const clientPageBundle = clientPageBundleBuildResult.outputFiles[0]!.text!
   return {
     clientPageBundle,
+  }
+}
+
+function getLocalStorageSessionCacheId() {
+  return {
+    localStorageSessionCacheId: `${Math.random()}`,
   }
 }

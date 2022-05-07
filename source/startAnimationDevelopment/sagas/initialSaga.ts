@@ -1,7 +1,7 @@
 import { call, spawn } from '../helpers/storeEffects'
 import { StartAnimationDevelopmentApi } from '../startAnimationDevelopment'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
-import { animationModuleSourceEventHandlerSaga } from './animationModuleSourceEventHandlerSaga'
+import { animationModuleBundlerEventHandlerSaga } from './animationModuleSourceEventHandlerSaga'
 import { clientServerEventHandlerSaga } from './clientServerEventHandlerSaga'
 import { graphicsRendererProcessManagerSaga } from './graphicsRendererProcessManagerSaga'
 
@@ -22,17 +22,18 @@ export function* initialSaga(api: InitialSagaApi) {
     numberOfFrameRendererWorkers,
   } = api
   const {
-    animationModuleSourceEventChannel,
+    animationModuleBundlerEventChannel,
     clientServerEventChannel,
     clientPageBundle,
+    localStorageSessionCacheId,
     graphicsRendererProcessManagerActionChannel,
   } = yield* call(animationDevelopmentSetupSaga, {
     animationModulePath,
     generatedAssetsDirectoryPath,
     clientServerPort,
   })
-  yield* spawn(animationModuleSourceEventHandlerSaga, {
-    animationModuleSourceEventChannel,
+  yield* spawn(animationModuleBundlerEventHandlerSaga, {
+    animationModuleBundlerEventChannel,
   })
   yield* spawn(clientServerEventHandlerSaga, {
     animationModulePath,
@@ -40,6 +41,7 @@ export function* initialSaga(api: InitialSagaApi) {
     numberOfFrameRendererWorkers,
     clientServerEventChannel,
     clientPageBundle,
+    localStorageSessionCacheId,
   })
   yield* spawn(graphicsRendererProcessManagerSaga, {
     graphicsRendererProcessManagerActionChannel,

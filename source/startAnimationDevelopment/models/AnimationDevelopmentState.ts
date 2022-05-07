@@ -2,26 +2,41 @@ import { AnimationModule } from '../../models/AnimationModule'
 import { GraphicsRendererProcessState } from './GraphicsRendererProcessState'
 
 export interface AnimationDevelopmentState {
-  animationModuleSourceState: AnimationModuleSourceState
+  animationModuleBundlerState: AnimationModuleBundlerState
   availableAssetsFilePathMap: {
     [graphicAssetPathKey: string]: string
   }
 }
 
-export type AnimationModuleSourceState =
-  | AnimationModuleSourceInitializingState
-  | AnimationModuleSourceReadyState
+export type AnimationModuleBundlerState =
+  | AnimationModuleBundlerInitializingState
+  | AnimationModuleValidBundleState
+  | AnimationModuleInvalidBundleState
 
-export interface AnimationModuleSourceInitializingState
-  extends AnimationModuleSourceStateBase<'sourceInitializing'> {}
+export type AnimationModuleBundlerActiveState =
+  | AnimationModuleValidBundleState
+  | AnimationModuleInvalidBundleState
 
-export interface AnimationModuleSourceReadyState
-  extends AnimationModuleSourceStateBase<'sourceReady'> {
+export interface AnimationModuleBundlerInitializingState
+  extends AnimationModuleBundlerStateBase<'bundlerInitializing'> {}
+
+export interface AnimationModuleValidBundleState
+  extends AnimationModuleBundlerActiveStateBase<'bundleValid'> {
   animationModule: AnimationModule
-  animationModuleSessionVersion: number
+}
+
+export interface AnimationModuleInvalidBundleState
+  extends AnimationModuleBundlerActiveStateBase<'bundleInvalid'> {
+  bundleErrorMessage: string
+}
+
+interface AnimationModuleBundlerActiveStateBase<BundleStatus extends string>
+  extends AnimationModuleBundlerStateBase<'bundlerActive'> {
+  latestBundleStatus: BundleStatus
+  bundleSessionVersion: number
   graphicsRendererProcessStates: Record<string, GraphicsRendererProcessState>
 }
 
-interface AnimationModuleSourceStateBase<SourceStatus extends string> {
-  sourceStatus: SourceStatus
+interface AnimationModuleBundlerStateBase<BundlerStatus extends string> {
+  bundlerStatus: BundlerStatus
 }

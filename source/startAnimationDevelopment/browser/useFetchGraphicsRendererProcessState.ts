@@ -11,7 +11,7 @@ import { decodeData } from '../../helpers/decodeData'
 import {
   ClientGraphicsRendererProcessState,
   ClientGraphicsRendererProcessStateCodec,
-} from '../models/GraphicsRendererProcessState'
+} from '../models/ClientGraphicsRendererProcessState'
 
 export interface UseFetchGraphicsRendererProcessStateApi {
   graphicsRendererProcessKey: string
@@ -165,23 +165,20 @@ interface GetInitialFetchGraphicsRendererProcessStateApi
 function getInitialFetchGraphicsRendererProcessState(
   api: GetInitialFetchGraphicsRendererProcessStateApi
 ): FetchGraphicsRendererProcessState {
-  const { localStorageSessionCacheId, graphicsRendererProcessKey } = api
-  const maybeStoredFetchGraphicsRendererProcessStateDataString =
-    localStorage.getItem(cachedFetchGraphicsRendererProcessStateDataKey)
-  const maybeStoredFetchGraphicsRendererProcessStateData =
-    maybeStoredFetchGraphicsRendererProcessStateDataString
+  const { graphicsRendererProcessKey, localStorageSessionCacheId } = api
+  const maybeCachedFetchGraphicsRendererProcessStateDataString =
+    localStorage.getItem(graphicsRendererProcessKey)
+  const maybeCachedFetchGraphicsRendererProcessStateData =
+    maybeCachedFetchGraphicsRendererProcessStateDataString
       ? (JSON.parse(
-          maybeStoredFetchGraphicsRendererProcessStateDataString
+          maybeCachedFetchGraphicsRendererProcessStateDataString
         ) as unknown as CachedFetchGraphicsRendererProcessStateData | null)
       : null
   if (
-    maybeStoredFetchGraphicsRendererProcessStateData &&
     localStorageSessionCacheId ===
-      maybeStoredFetchGraphicsRendererProcessStateData.localStorageSessionCacheId &&
-    graphicsRendererProcessKey ===
-      maybeStoredFetchGraphicsRendererProcessStateData.graphicsRendererProcessKey
+    maybeCachedFetchGraphicsRendererProcessStateData?.localStorageSessionCacheId
   ) {
-    return maybeStoredFetchGraphicsRendererProcessStateData.fetchGraphicsRendererProcessState
+    return maybeCachedFetchGraphicsRendererProcessStateData.fetchGraphicsRendererProcessState
   } else {
     return {
       fetchStatus: 'serverInitializing',
@@ -224,13 +221,13 @@ function maybeSetFetchGraphicsRendererProcessState(
     currentFetchGraphicsRendererProcessState.fetchStatus ===
       'fetchSuccessful' &&
     (maybeNextFetchGraphicsRendererProcessState
-      .fetchedGraphicsRendererProcessState.animationModuleSessionVersion !==
+      .fetchedGraphicsRendererProcessState.bundleSessionVersion !==
       currentFetchGraphicsRendererProcessState
-        .fetchedGraphicsRendererProcessState.animationModuleSessionVersion ||
+        .fetchedGraphicsRendererProcessState.bundleSessionVersion ||
       maybeNextFetchGraphicsRendererProcessState
-        .fetchedGraphicsRendererProcessState.processStatus !==
+        .fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus !==
         currentFetchGraphicsRendererProcessState
-          .fetchedGraphicsRendererProcessState.processStatus ||
+          .fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus ||
       maybeNextFetchGraphicsRendererProcessState
         .fetchedGraphicsRendererProcessState.processStdoutLog !==
         currentFetchGraphicsRendererProcessState
@@ -249,13 +246,12 @@ function maybeSetFetchGraphicsRendererProcessState(
       maybeNextFetchGraphicsRendererProcessState
     const nextCachedFetchGraphicsRendererProcessStateData: CachedFetchGraphicsRendererProcessStateData =
       {
-        graphicsRendererProcessKey,
         localStorageSessionCacheId,
         fetchGraphicsRendererProcessState:
           maybeNextFetchGraphicsRendererProcessState,
       }
     localStorage.setItem(
-      cachedFetchGraphicsRendererProcessStateDataKey,
+      graphicsRendererProcessKey,
       JSON.stringify(nextCachedFetchGraphicsRendererProcessStateData)
     )
     setFetchGraphicsRendererProcessState(
@@ -264,11 +260,7 @@ function maybeSetFetchGraphicsRendererProcessState(
   }
 }
 
-const cachedFetchGraphicsRendererProcessStateDataKey =
-  'cachedFetchGraphicsRendererProcessStateData'
-
 interface CachedFetchGraphicsRendererProcessStateData {
-  graphicsRendererProcessKey: string
   localStorageSessionCacheId: string
   fetchGraphicsRendererProcessState: FetchGraphicsRendererProcessState
 }

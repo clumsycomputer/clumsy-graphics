@@ -1,6 +1,6 @@
 import { makeStyles } from '@material-ui/core'
 import React from 'react'
-import { ClientGraphicsRendererProcessState } from '../models/GraphicsRendererProcessState'
+import { ClientGraphicsRendererProcessState } from '../models/ClientGraphicsRendererProcessState'
 import { Page } from './Page'
 import {
   useFetchGraphicsRendererProcessState,
@@ -49,9 +49,9 @@ export function FetchGraphicsRendererProcessStatePage(
       />
     )
   } else if (fetchGraphicsRendererProcessState.fetchStatus === 'fetchError') {
-    return <div>todo</div>
+    return <div>todo fetchError</div>
   } else if (fetchGraphicsRendererProcessState.fetchStatus === 'serverError') {
-    return <div>todo</div>
+    return <div>todo serverError</div>
   } else {
     throw new Error('wtf? FetchGraphicsRendererProcessStatePage')
   }

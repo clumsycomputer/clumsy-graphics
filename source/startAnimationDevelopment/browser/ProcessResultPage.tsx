@@ -1,6 +1,6 @@
 import { makeStyles } from '@material-ui/core'
 import React, { useMemo } from 'react'
-import { ClientGraphicsRendererProcessSuccessfulState } from '../models/GraphicsRendererProcessState'
+import { ClientGraphicsRendererProcessSuccessfulState } from '../models/ClientGraphicsRendererProcessState'
 import { ProcessPage, ProcessPageProps } from './ProcessPage'
 import { FetchGraphicsRendererProcessSuccessState } from './useFetchGraphicsRendererProcessState'
 
@@ -9,9 +9,9 @@ export interface ProcessResultPageProps
       ProcessPageProps,
       | 'baseRoute'
       | 'animationName'
-      | 'animationModuleSessionVersion'
+      | 'bundleSessionVersion'
       | 'graphicsRendererProcessKey'
-      | 'renderStatus'
+      | 'graphicsRendererProcessStatus'
     >,
     Pick<
       FetchGraphicsRendererProcessSuccessState,
@@ -30,10 +30,26 @@ export function ProcessResultPage(props: ProcessResultPageProps) {
   } = props
   const styles = useStyles()
   const processResultContent = useMemo(() => {
-    if (fetchedGraphicsRendererProcessState.processStatus === 'processActive') {
+    if (
+      fetchedGraphicsRendererProcessState.latestBundleStatus === 'bundleInvalid'
+    ) {
+      return (
+        <div className={styles.errorMessageContainer}>
+          <div className={styles.processErrorMessage}>
+            {fetchedGraphicsRendererProcessState.bundleErrorMessage}
+          </div>
+        </div>
+      )
+    } else if (
+      fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus ===
+        'processInitializing' ||
+      fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus ===
+        'processActive'
+    ) {
       return <div className={styles.inProgressContainer}>in progress...</div>
     } else if (
-      fetchedGraphicsRendererProcessState.processStatus === 'processSuccessful'
+      fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus ===
+      'processSuccessful'
     ) {
       return (
         <div className={styles.assetContainer}>
@@ -45,7 +61,8 @@ export function ProcessResultPage(props: ProcessResultPageProps) {
         </div>
       )
     } else if (
-      fetchedGraphicsRendererProcessState.processStatus === 'processFailed'
+      fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus ===
+      'processFailed'
     ) {
       return (
         <div className={styles.errorMessageContainer}>

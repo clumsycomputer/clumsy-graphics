@@ -4,7 +4,7 @@ import { AnimationModule } from '../source/models/AnimationModule'
 const FooAnimationModule: AnimationModule = {
   animationName: 'Foo',
   frameSize: 512,
-  frameCount: 10,
+  frameCount: 50,
   animationSettings: {
     frameRate: 5,
     constantRateFactor: 1,

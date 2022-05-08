@@ -7,8 +7,9 @@ export type AnimationModuleBundlerEvent =
   | AnimationModuleBundlerRebuildFailedEvent
 
 export interface AnimationModuleBundlerInitialBuildSucceededEvent
-  extends EventBase<
+  extends AnimationModuleBundlerBaseEvent<
     'animationModuleBundler_initialBuildSucceeded',
+    'bundleValid',
     {
       nextBundleSessionVersion: number
       nextAnimationModule: AnimationModule
@@ -16,8 +17,9 @@ export interface AnimationModuleBundlerInitialBuildSucceededEvent
   > {}
 
 export interface AnimationModuleBundlerRebuildSucceededEvent
-  extends EventBase<
+  extends AnimationModuleBundlerBaseEvent<
     'animationModuleBundler_rebuildSucceeded',
+    'bundleValid',
     {
       nextBundleSessionVersion: number
       nextAnimationModule: AnimationModule
@@ -25,10 +27,22 @@ export interface AnimationModuleBundlerRebuildSucceededEvent
   > {}
 
 export interface AnimationModuleBundlerRebuildFailedEvent
-  extends EventBase<
+  extends AnimationModuleBundlerBaseEvent<
     'animationModuleBundler_rebuildFailed',
+    'bundleInvalid',
     {
       nextBundleSessionVersion: number
       nextBundleErrorMessage: string
     }
+  > {}
+
+interface AnimationModuleBundlerBaseEvent<
+  AnimationModuleBundlerBaseEventType extends string,
+  LatestBundleStatus extends string,
+  AnimationModuleBundlerBaseEventPayload extends object
+> extends EventBase<
+    AnimationModuleBundlerBaseEventType,
+    {
+      nextLatestBundleStatus: LatestBundleStatus
+    } & AnimationModuleBundlerBaseEventPayload
   > {}

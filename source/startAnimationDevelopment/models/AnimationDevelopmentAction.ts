@@ -56,7 +56,7 @@ export interface AnimationModuleBundlerRebuildFailedAction
 
 export interface AnimationModuleBundlerStateUpdatedAction
   extends ActionBase<
-    'animationModuleSourceUpdated',
+    'animationModuleBundlerStateUpdated',
     {
       nextAnimationModuleBundlerState: AnimationModuleBundlerState
     }

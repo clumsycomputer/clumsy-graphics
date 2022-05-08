@@ -36,6 +36,7 @@ function AnimationDevelopmentApp() {
         path={'/animation/logs'}
         element={
           <AnimationDevelopmentLogsPage
+            graphicsRendererProcessKey={'animation'}
             assetRoute={'/animation'}
             viewRoute={'/logs'}
           />
@@ -45,6 +46,7 @@ function AnimationDevelopmentApp() {
         path={'/animation/result'}
         element={
           <AnimationDevelopmentResultPage
+            graphicsRendererProcessKey={'animation'}
             assetRoute={'/animation'}
             viewRoute={'/result'}
             SomeAssetDisplay={({ graphicAssetUrl }) => {
@@ -70,6 +72,9 @@ function AnimationDevelopmentApp() {
         path={'/frame/:frameIndex/logs'}
         element={
           <AnimationDevelopmentLogsPage
+            graphicsRendererProcessKey={`frame/${
+              routeParams.frameIndex as unknown as number
+            }`}
             assetRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
             viewRoute={'/logs'}
           />
@@ -79,6 +84,9 @@ function AnimationDevelopmentApp() {
         path={'/frame/:frameIndex/result'}
         element={
           <AnimationDevelopmentResultPage
+            graphicsRendererProcessKey={`frame/${
+              routeParams.frameIndex as unknown as number
+            }`}
             assetRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
             viewRoute={'/result'}
             SomeAssetDisplay={({ graphicAssetUrl }) => {

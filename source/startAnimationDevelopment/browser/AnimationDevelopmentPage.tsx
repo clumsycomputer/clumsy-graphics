@@ -1,9 +1,22 @@
 import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
-import React, { Fragment, HTMLAttributes, ReactNode } from 'react'
+import React, {
+  Dispatch,
+  Fragment,
+  HTMLAttributes,
+  MutableRefObject,
+  ReactNode,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useNavigate } from 'react-router-dom'
+import { decodeData } from '../../helpers/decodeData'
 import {
   ClientGraphicsRendererProcessInvalidBundleState,
   ClientGraphicsRendererProcessState,
+  ClientGraphicsRendererProcessStateCodec,
   ClientGraphicsRendererProcessSuccessfulState,
   ClientGraphicsRendererProcessValidBundleState,
 } from '../models/ClientGraphicsRendererProcessState'
@@ -12,7 +25,7 @@ export interface AnimationDevelopmentResultPageProps<
   AssetRoute extends '/animation' | `/frame/${number}`
 > extends Pick<
     AnimationDevelopmentPageProps<AssetRoute, '/result'>,
-    'assetRoute' | 'viewRoute'
+    'graphicsRendererProcessKey' | 'assetRoute' | 'viewRoute'
   > {
   SomeAssetDisplay: (props: SomeAssetDisplayProps) => JSX.Element
 }
@@ -26,10 +39,16 @@ export interface SomeAssetDisplayProps
 export function AnimationDevelopmentResultPage<
   AssetRoute extends '/animation' | `/frame/${number}`
 >(props: AnimationDevelopmentResultPageProps<AssetRoute>) {
-  const { assetRoute, viewRoute, SomeAssetDisplay } = props
+  const {
+    graphicsRendererProcessKey,
+    assetRoute,
+    viewRoute,
+    SomeAssetDisplay,
+  } = props
   const styles = useAnimationDevelopmentResultPageStyles()
   return (
     <AnimationDevelopmentPage
+      graphicsRendererProcessKey={graphicsRendererProcessKey}
       assetRoute={assetRoute}
       viewRoute={viewRoute}
       SomeClientGraphicsRendererProcessPage={({
@@ -149,16 +168,17 @@ export interface AnimationDevelopmentLogsPageProps<
   AssetRoute extends '/animation' | `/frame/${number}`
 > extends Pick<
     AnimationDevelopmentPageProps<AssetRoute, '/logs'>,
-    'assetRoute' | 'viewRoute'
+    'graphicsRendererProcessKey' | 'assetRoute' | 'viewRoute'
   > {}
 
 export function AnimationDevelopmentLogsPage<
   AssetRoute extends '/animation' | `/frame/${number}`
 >(props: AnimationDevelopmentLogsPageProps<AssetRoute>) {
-  const { assetRoute, viewRoute } = props
+  const { graphicsRendererProcessKey, assetRoute, viewRoute } = props
   const styles = useAnimationDevelopmentLogsPageStyles()
   return (
     <AnimationDevelopmentPage
+      graphicsRendererProcessKey={graphicsRendererProcessKey}
       assetRoute={assetRoute}
       viewRoute={viewRoute}
       SomeClientGraphicsRendererProcessPage={({
@@ -219,6 +239,7 @@ interface AnimationDevelopmentPageProps<
 > {
   assetRoute: AssetRoute
   viewRoute: ViewRoute
+  graphicsRendererProcessKey: 'animation' | `frame/${number}`
   SomeClientGraphicsRendererProcessPage: (
     props: SomeClientGraphicsRendererProcessPageProps
   ) => JSX.Element
@@ -234,9 +255,13 @@ function AnimationDevelopmentPage<
   AssetRoute extends '/animation' | `/frame/${number}`,
   ViewRoute extends '/logs' | '/result'
 >(props: AnimationDevelopmentPageProps<AssetRoute, ViewRoute>) {
-  const { SomeClientGraphicsRendererProcessPage } = props
+  const { graphicsRendererProcessKey, SomeClientGraphicsRendererProcessPage } =
+    props
   const { pollClientGraphicsRendererProcessStateResponse } =
-    usePollClientGraphicsRendererProcessStateResponse()
+    usePollClientGraphicsRendererProcessStateResponse({
+      graphicsRendererProcessKey,
+      staticPollRate: 500,
+    })
   const styles = useAnimationDevelopmentPageStyles()
   switch (pollClientGraphicsRendererProcessStateResponse.responseStatus) {
     case 'serverInitializing':
@@ -258,7 +283,7 @@ function AnimationDevelopmentPage<
         <div
           className={`${styles.responseStatusDisplayContainer} ${styles.responseStatusError}`}
         >
-          {pollClientGraphicsRendererProcessStateResponse.fetchErrorMessage}
+          {pollClientGraphicsRendererProcessStateResponse.responseErrorMessage}
         </div>
       )
     case 'fetchSuccessful':
@@ -283,6 +308,14 @@ const useAnimationDevelopmentPageStyles = makeStyles((theme) => ({
   },
 }))
 
+interface UsePollClientGraphicsRendererProcessStateResponseApi
+  extends Pick<
+    AnimationDevelopmentPageProps<any, any>,
+    'graphicsRendererProcessKey'
+  > {
+  staticPollRate: number
+}
+
 type PollClientGraphicsRendererProcessStateResponse =
   | PollClientGraphicsRendererProcessStateServerInitializingResponse
   | PollClientGraphicsRendererProcessStateSuccessResponse
@@ -302,7 +335,7 @@ interface PollClientGraphicsRendererProcessStateSuccessResponse
 
 interface PollClientGraphicsRendererProcessStateClientErrorResponse
   extends PollClientGraphicsRendererProcessStateBase<'fetchError', 400> {
-  fetchErrorMessage: string
+  responseErrorMessage: string
 }
 
 interface PollClientGraphicsRendererProcessStateServerErrorResponse
@@ -316,10 +349,182 @@ interface PollClientGraphicsRendererProcessStateBase<
   responseStatusCode: ResponseStatusCode
 }
 
-function usePollClientGraphicsRendererProcessStateResponse(): {
+function usePollClientGraphicsRendererProcessStateResponse(
+  api: UsePollClientGraphicsRendererProcessStateResponseApi
+): {
   pollClientGraphicsRendererProcessStateResponse: PollClientGraphicsRendererProcessStateResponse
 } {
-  return null
+  const { graphicsRendererProcessKey, staticPollRate } = api
+  const localStorageSessionCacheId = useMemo(
+    () =>
+      document
+        .getElementById('client-page-bundle-script')
+        ?.getAttribute('data-local-storage-session-cache-id')!,
+    []
+  )
+  const [
+    pollClientGraphicsRendererProcessStateResponse,
+    setPollClientGraphicsRendererProcessStateResponse,
+  ] = useState<PollClientGraphicsRendererProcessStateResponse>(
+    getInitialPollClientGraphicsRendererProcessStateResponse({
+      graphicsRendererProcessKey,
+      localStorageSessionCacheId,
+    })
+  )
+  const pollClientGraphicsRendererProcessStateResponseRef =
+    useRef<PollClientGraphicsRendererProcessStateResponse>(
+      pollClientGraphicsRendererProcessStateResponse
+    )
+  useEffect(() => {
+    const pollClientGraphicsRendererProcessStateIntervalHandle = setInterval(
+      async () => {
+        const fetchClientGraphicsRendererProcessStateResponse = await fetch(
+          `/api/latestAnimationModule/graphicsRendererProcessState?graphicsRendererProcessKey=${graphicsRendererProcessKey}`
+        )
+        switch (fetchClientGraphicsRendererProcessStateResponse.status) {
+          case 204:
+            break
+          case 200:
+            const fetchClientGraphicsRendererProcessStateResponseData =
+              await fetchClientGraphicsRendererProcessStateResponse.json()
+            const maybeNextClientGraphicsRendererProcessState =
+              await decodeData<ClientGraphicsRendererProcessState>({
+                inputData: fetchClientGraphicsRendererProcessStateResponseData,
+                targetCodec: ClientGraphicsRendererProcessStateCodec,
+              })
+            maybeSetPollClientGraphicsRendererProcessStateResponse({
+              graphicsRendererProcessKey,
+              localStorageSessionCacheId,
+              setPollClientGraphicsRendererProcessStateResponse,
+              pollClientGraphicsRendererProcessStateResponseRef,
+              maybeNextPollClientGraphicsRendererProcessStateResponse: {
+                clientGraphicsRendererProcessState:
+                  maybeNextClientGraphicsRendererProcessState,
+                responseStatus: 'fetchSuccessful',
+                responseStatusCode: 200,
+              },
+            })
+            break
+          case 400:
+            const responseErrorMessage =
+              await fetchClientGraphicsRendererProcessStateResponse.text()
+            maybeSetPollClientGraphicsRendererProcessStateResponse({
+              graphicsRendererProcessKey,
+              localStorageSessionCacheId,
+              setPollClientGraphicsRendererProcessStateResponse,
+              pollClientGraphicsRendererProcessStateResponseRef,
+              maybeNextPollClientGraphicsRendererProcessStateResponse: {
+                responseErrorMessage,
+                responseStatus: 'fetchError',
+                responseStatusCode: 400,
+              },
+            })
+            break
+          case 500:
+            maybeSetPollClientGraphicsRendererProcessStateResponse({
+              graphicsRendererProcessKey,
+              localStorageSessionCacheId,
+              setPollClientGraphicsRendererProcessStateResponse,
+              pollClientGraphicsRendererProcessStateResponseRef,
+              maybeNextPollClientGraphicsRendererProcessStateResponse: {
+                responseStatus: 'serverError',
+                responseStatusCode: 500,
+              },
+            })
+            break
+          default:
+            break
+        }
+      },
+      staticPollRate
+    )
+    return () => {
+      clearInterval(pollClientGraphicsRendererProcessStateIntervalHandle)
+    }
+  }, [])
+  return { pollClientGraphicsRendererProcessStateResponse }
+}
+
+interface GetInitialPollClientGraphicsRendererProcessStateResponseApi
+  extends Pick<
+    UsePollClientGraphicsRendererProcessStateResponseApi,
+    'graphicsRendererProcessKey'
+  > {
+  localStorageSessionCacheId: string
+}
+
+function getInitialPollClientGraphicsRendererProcessStateResponse(
+  api: GetInitialPollClientGraphicsRendererProcessStateResponseApi
+): PollClientGraphicsRendererProcessStateResponse {
+  const { graphicsRendererProcessKey, localStorageSessionCacheId } = api
+  const maybeCachedFetchGraphicsRendererProcessStateDataString =
+    localStorage.getItem(graphicsRendererProcessKey)
+  const maybeCachedFetchGraphicsRendererProcessStateData =
+    maybeCachedFetchGraphicsRendererProcessStateDataString
+      ? (JSON.parse(
+          maybeCachedFetchGraphicsRendererProcessStateDataString
+        ) as unknown as CachedPollClientGraphicsRendererProcessStateResponseData | null)
+      : null
+  if (
+    localStorageSessionCacheId ===
+    maybeCachedFetchGraphicsRendererProcessStateData?.localStorageSessionCacheId
+  ) {
+    return maybeCachedFetchGraphicsRendererProcessStateData.pollClientGraphicsRendererProcessStateResponse
+  } else {
+    return {
+      responseStatus: 'serverInitializing',
+      responseStatusCode: 204,
+    }
+  }
+}
+
+interface CachedPollClientGraphicsRendererProcessStateResponseData {
+  localStorageSessionCacheId: string
+  pollClientGraphicsRendererProcessStateResponse: PollClientGraphicsRendererProcessStateResponse
+}
+
+interface MaybeSetPollClientGraphicsRendererProcessStateResponseApi
+  extends Pick<
+    UsePollClientGraphicsRendererProcessStateResponseApi,
+    'graphicsRendererProcessKey'
+  > {
+  localStorageSessionCacheId: string
+  maybeNextPollClientGraphicsRendererProcessStateResponse: PollClientGraphicsRendererProcessStateResponse
+  pollClientGraphicsRendererProcessStateResponseRef: MutableRefObject<PollClientGraphicsRendererProcessStateResponse>
+  setPollClientGraphicsRendererProcessStateResponse: Dispatch<
+    SetStateAction<PollClientGraphicsRendererProcessStateResponse>
+  >
+}
+
+function maybeSetPollClientGraphicsRendererProcessStateResponse(
+  api: MaybeSetPollClientGraphicsRendererProcessStateResponseApi
+) {
+  const {
+    pollClientGraphicsRendererProcessStateResponseRef,
+    localStorageSessionCacheId,
+    maybeNextPollClientGraphicsRendererProcessStateResponse,
+    graphicsRendererProcessKey,
+    setPollClientGraphicsRendererProcessStateResponse,
+  } = api
+  if (true) {
+    pollClientGraphicsRendererProcessStateResponseRef.current =
+      maybeNextPollClientGraphicsRendererProcessStateResponse
+    const nextCachedPollClientGraphicsRendererProcessStateResponseData: CachedPollClientGraphicsRendererProcessStateResponseData =
+      {
+        localStorageSessionCacheId,
+        pollClientGraphicsRendererProcessStateResponse:
+          maybeNextPollClientGraphicsRendererProcessStateResponse,
+      }
+    localStorage.setItem(
+      graphicsRendererProcessKey,
+      JSON.stringify(
+        nextCachedPollClientGraphicsRendererProcessStateResponseData
+      )
+    )
+    setPollClientGraphicsRendererProcessStateResponse(
+      maybeNextPollClientGraphicsRendererProcessStateResponse
+    )
+  }
 }
 
 interface InvalidBundleClientGraphicsRendererProcessPageProps<

@@ -13,6 +13,7 @@ import { GraphicsRendererProcessManagerAction } from '../models/AnimationDevelop
 import {
   AnimationModuleBundlerActiveState,
   AnimationModuleBundlerState,
+  AnimationModuleValidBundleState,
 } from '../models/AnimationDevelopmentState'
 import { SpawnedGraphicsRendererProcessEvent } from '../models/SpawnedGraphicsRendererProcessEvent'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
@@ -37,47 +38,64 @@ export function* graphicsRendererProcessManagerSaga(
         currentAnimationDevelopmentState.animationModuleBundlerState
     )
     if (
-      currentAnimationModuleBundlerState.bundlerStatus ===
-        'bundlerInitializing' &&
-      // (someGraphicsRendererProcessManagerAction.type ===
-      //   'animationModuleBundler_initialBuildSucceeded' ||
-      //   someGraphicsRendererProcessManagerAction.type ===
-      //     'animationModuleBundler_rebuildSucceeded' ||
-      //   someGraphicsRendererProcessManagerAction.type ===
-      //     'animationModuleBundler_rebuildFailed')
-    ) {
-      yield* put({
-        type: 'animationModuleSourceUpdated',
-        actionPayload: {
-          nextAnimationModuleBundlerState: {
-            bundlerStatus: 'bundlerActive',
-            graphicsRendererProcessStates: {},
-          },
-        },
-      })
-    } else if (
-      currentAnimationModuleBundlerState.bundlerStatus === 'bundlerActive' 
-      // && (someGraphicsRendererProcessManagerAction.type ===
-      //   'animationModuleBundler_rebuildSucceeded' ||
-      //   someGraphicsRendererProcessManagerAction.type ===
-      //     'animationModuleBundler_rebuildFailed')
+      someGraphicsRendererProcessManagerAction.type ===
+        'animationModuleBundler_initialBuildSucceeded' ||
+      someGraphicsRendererProcessManagerAction.type ===
+        'animationModuleBundler_rebuildSucceeded'
     ) {
       yield* call(function* () {
-        terminateActiveGraphicsRendererProcesses({
-          currentAnimationModuleBundlerState,
-        })
+        if (
+          currentAnimationModuleBundlerState.bundlerStatus === 'bundlerActive'
+        ) {
+          terminateActiveGraphicsRendererProcesses({
+            currentAnimationModuleBundlerState,
+          })
+        }
         yield* put({
-          type: 'animationModuleSourceUpdated',
+          type: 'animationModuleBundlerStateUpdated',
           actionPayload: {
             nextAnimationModuleBundlerState: {
-              // animationModule:
-              //   someGraphicsRendererProcessManagerAction.actionPayload
-              //     .nextAnimationModule,
-              // latestBundleStatus: someGraphicsRendererProcessManagerAction.actionPayload
+              bundlerStatus: 'bundlerActive',
               bundleSessionVersion:
                 someGraphicsRendererProcessManagerAction.actionPayload
                   .nextBundleSessionVersion,
+              latestBundleStatus:
+                someGraphicsRendererProcessManagerAction.actionPayload
+                  .nextLatestBundleStatus,
+              animationModule:
+                someGraphicsRendererProcessManagerAction.actionPayload
+                  .nextAnimationModule,
+              graphicsRendererProcessStates: {},
+            },
+          },
+        })
+      })
+    } else if (
+      someGraphicsRendererProcessManagerAction.type ===
+      'animationModuleBundler_rebuildFailed'
+    ) {
+      yield* call(function* () {
+        if (
+          currentAnimationModuleBundlerState.bundlerStatus === 'bundlerActive'
+        ) {
+          terminateActiveGraphicsRendererProcesses({
+            currentAnimationModuleBundlerState,
+          })
+        }
+        yield* put({
+          type: 'animationModuleBundlerStateUpdated',
+          actionPayload: {
+            nextAnimationModuleBundlerState: {
               bundlerStatus: 'bundlerActive',
+              bundleSessionVersion:
+                someGraphicsRendererProcessManagerAction.actionPayload
+                  .nextBundleSessionVersion,
+              latestBundleStatus:
+                someGraphicsRendererProcessManagerAction.actionPayload
+                  .nextLatestBundleStatus,
+              bundleErrorMessage:
+                someGraphicsRendererProcessManagerAction.actionPayload
+                  .nextBundleErrorMessage,
               graphicsRendererProcessStates: {},
             },
           },
@@ -233,7 +251,8 @@ export function spawnGraphicsRendererProcess(
   api: SpawnGraphicsRendererProcessApi
 ) {
   const { graphicsRendererProcessCommandString } = api
-  const graphicsRendererCommandTokens = graphicsRendererProcessCommandString.split(' ')
+  const graphicsRendererCommandTokens =
+    graphicsRendererProcessCommandString.split(' ')
   const [
     mainGraphicsRendererCommandToken,
     ...graphicsRendererCommandArgumentTokens

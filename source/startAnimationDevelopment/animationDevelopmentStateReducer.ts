@@ -1,6 +1,6 @@
 import {
   AnimationDevelopmentAction,
-  AnimationModuleSourceUpdatedAction,
+  AnimationModuleBundlerStateUpdatedAction,
   GraphicsRendererProcessActiveAction,
   GraphicsRendererProcessFailedAction,
   GraphicsRendererProcessProgressInfoUpdatedAction,
@@ -11,16 +11,16 @@ import { AnimationDevelopmentState } from './models/AnimationDevelopmentState'
 
 export function animationDevelopmentStateReducer(
   currentAnimationDevelopmentState: AnimationDevelopmentState = {
-    animationModuleSourceState: {
-      sourceStatus: 'sourceInitializing',
+    animationModuleBundlerState: {
+      bundlerStatus: 'bundlerInitializing',
     },
     availableAssetsFilePathMap: {},
   },
   someAnimationDevelopmentAction: AnimationDevelopmentAction
 ): AnimationDevelopmentState {
   switch (someAnimationDevelopmentAction.type) {
-    case 'animationModuleSourceUpdated':
-      return handleAnimationModuleSourceUpdated(
+    case 'animationModuleBundlerStateUpdated':
+      return handleAnimationModuleBundlerStateUpdated(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
@@ -49,15 +49,15 @@ export function animationDevelopmentStateReducer(
   }
 }
 
-function handleAnimationModuleSourceUpdated(
+function handleAnimationModuleBundlerStateUpdated(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
-  animationModuleSourceUpdatedActionPayload: AnimationModuleSourceUpdatedAction['actionPayload']
+  animationModuleBundlerStateUpdatedActionPayload: AnimationModuleBundlerStateUpdatedAction['actionPayload']
 ): AnimationDevelopmentState {
-  const { animationModuleSourceState } =
-    animationModuleSourceUpdatedActionPayload
+  const { nextAnimationModuleBundlerState } =
+    animationModuleBundlerStateUpdatedActionPayload
   return {
     ...currentAnimationDevelopmentState,
-    animationModuleSourceState,
+    animationModuleBundlerState: nextAnimationModuleBundlerState,
   }
 }
 
@@ -68,17 +68,17 @@ function handleGraphicsRendererProcessActive(
   const { newGraphicsRendererProcessKey, newGraphicsRendererProcessState } =
     graphicsRendererProcessActiveActionPayload
   if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceInitializing'
+    currentAnimationDevelopmentState.animationModuleBundlerState
+      .bundlerStatus === 'bundlerInitializing'
   ) {
     throw new Error('wtf? handleGraphicsRendererProcessActive')
   } else {
     return {
       ...currentAnimationDevelopmentState,
-      animationModuleSourceState: {
-        ...currentAnimationDevelopmentState.animationModuleSourceState,
+      animationModuleBundlerState: {
+        ...currentAnimationDevelopmentState.animationModuleBundlerState,
         graphicsRendererProcessStates: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState
+          ...currentAnimationDevelopmentState.animationModuleBundlerState
             .graphicsRendererProcessStates,
           [newGraphicsRendererProcessKey]: newGraphicsRendererProcessState,
         },
@@ -130,18 +130,18 @@ function handleGraphicsRendererProcessUpdated(
   graphicsRendererProcessFailedActionPayload: GraphicsRendererProcessUpdatedAction['actionPayload']
 ): AnimationDevelopmentState {
   const {
-    animationModuleSessionVersionStamp,
+    bundleSessionVersion,
     targetGraphicsRendererProcessKey,
     targetGraphicsRendererProcessStateUpdates,
   } = graphicsRendererProcessFailedActionPayload
   const currentAnimationModuleSourceState =
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-      'sourceReady' &&
-    currentAnimationDevelopmentState.animationModuleSourceState
+    currentAnimationDevelopmentState.animationModuleBundlerState
+      .bundlerStatus === 'bundlerActive' &&
+    currentAnimationDevelopmentState.animationModuleBundlerState
   const currentTargetGraphicRendererProcessState =
     currentAnimationModuleSourceState &&
-    currentAnimationModuleSourceState.animationModuleSessionVersion ===
-      animationModuleSessionVersionStamp &&
+    currentAnimationModuleSourceState.bundleSessionVersion ===
+      bundleSessionVersion &&
     currentAnimationModuleSourceState.graphicsRendererProcessStates[
       targetGraphicsRendererProcessKey
     ]
@@ -150,7 +150,7 @@ function handleGraphicsRendererProcessUpdated(
   } else if (currentTargetGraphicRendererProcessState) {
     return {
       ...currentAnimationDevelopmentState,
-      animationModuleSourceState: {
+      animationModuleBundlerState: {
         ...currentAnimationModuleSourceState,
         graphicsRendererProcessStates: {
           ...currentAnimationModuleSourceState.graphicsRendererProcessStates,

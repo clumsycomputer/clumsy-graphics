@@ -46,6 +46,7 @@ export function getAnimationModuleBundlerEventChannel(
                   eventPayload: {
                     nextBundleSessionVersion,
                     nextAnimationModule,
+                    nextLatestBundleStatus: 'bundleValid',
                   },
                 })
               } catch (nextBundleError) {
@@ -53,6 +54,7 @@ export function getAnimationModuleBundlerEventChannel(
                   eventType: 'animationModuleBundler_rebuildFailed',
                   eventPayload: {
                     nextBundleSessionVersion,
+                    nextLatestBundleStatus: 'bundleInvalid',
                     nextBundleErrorMessage:
                       nextBundleError instanceof Error
                         ? nextBundleError.message
@@ -74,6 +76,7 @@ export function getAnimationModuleBundlerEventChannel(
             eventPayload: {
               nextBundleSessionVersion,
               nextAnimationModule,
+              nextLatestBundleStatus: 'bundleValid',
             },
           })
         })

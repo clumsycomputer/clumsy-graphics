@@ -4,109 +4,282 @@ import { useNavigate } from 'react-router-dom'
 import {
   ClientGraphicsRendererProcessInvalidBundleState,
   ClientGraphicsRendererProcessState,
+  ClientGraphicsRendererProcessSuccessfulState,
   ClientGraphicsRendererProcessValidBundleState,
 } from '../models/ClientGraphicsRendererProcessState'
-import { Page } from './Page'
 
-export interface AnimationDevelopmentPageProps {
-  baseRoute: '/animation' | `/frame/${number}`
-  subRoute: '/logs' | '/result'
-  ValidBundleSubRouteContent: (
-    props: ValidBundleSubRouteContentProps
+export interface AnimationDevelopmentResultPageProps<
+  AssetRoute extends '/animation' | `/frame/${number}`
+> extends Pick<
+    AnimationDevelopmentPageProps<AssetRoute, '/result'>,
+    'assetRoute' | 'viewRoute'
+  > {
+  SomeAssetDisplay: (props: SomeAssetDisplayProps) => JSX.Element
+}
+
+export interface SomeAssetDisplayProps
+  extends Pick<
+    ClientGraphicsRendererProcessSuccessfulState,
+    'graphicAssetUrl'
+  > {}
+
+export function AnimationDevelopmentResultPage<
+  AssetRoute extends '/animation' | `/frame/${number}`
+>(props: AnimationDevelopmentResultPageProps<AssetRoute>) {
+  const { assetRoute, viewRoute, SomeAssetDisplay } = props
+  const styles = useAnimationDevelopmentResultPageStyles()
+  return (
+    <AnimationDevelopmentPage
+      assetRoute={assetRoute}
+      viewRoute={viewRoute}
+      SomeClientGraphicsRendererProcessPage={({
+        clientGraphicsRendererProcessState,
+      }) => {
+        switch (clientGraphicsRendererProcessState.latestBundleStatus) {
+          case 'bundleInvalid':
+            return (
+              <InvalidBundleClientGraphicsRendererProcessPage
+                assetRoute={assetRoute}
+                viewRoute={viewRoute}
+                clientGraphicsRendererProcessState={
+                  clientGraphicsRendererProcessState
+                }
+                viewRouteContent={
+                  <div className={styles.errorMessageContainer}>
+                    <div className={styles.processErrorMessage}>
+                      {clientGraphicsRendererProcessState.bundleErrorMessage}
+                    </div>
+                  </div>
+                }
+              />
+            )
+          case 'bundleValid':
+            switch (
+              clientGraphicsRendererProcessState.graphicsRendererProcessStatus
+            ) {
+              case 'processInitializing':
+              case 'processActive':
+                return (
+                  <ValidBundleClientGraphicsRendererProcessPage
+                    assetRoute={assetRoute}
+                    viewRoute={viewRoute}
+                    clientGraphicsRendererProcessState={
+                      clientGraphicsRendererProcessState
+                    }
+                    viewRouteContent={
+                      <div className={styles.inProgressContainer}>
+                        in progress...
+                      </div>
+                    }
+                  />
+                )
+              case 'processSuccessful':
+                return (
+                  <ValidBundleClientGraphicsRendererProcessPage
+                    assetRoute={assetRoute}
+                    viewRoute={viewRoute}
+                    clientGraphicsRendererProcessState={
+                      clientGraphicsRendererProcessState
+                    }
+                    viewRouteContent={
+                      <div className={styles.assetContainer}>
+                        <SomeAssetDisplay
+                          graphicAssetUrl={
+                            clientGraphicsRendererProcessState.graphicAssetUrl
+                          }
+                        />
+                      </div>
+                    }
+                  />
+                )
+              case 'processFailed':
+                return (
+                  <ValidBundleClientGraphicsRendererProcessPage
+                    assetRoute={assetRoute}
+                    viewRoute={viewRoute}
+                    clientGraphicsRendererProcessState={
+                      clientGraphicsRendererProcessState
+                    }
+                    viewRouteContent={
+                      <div className={styles.errorMessageContainer}>
+                        <div className={styles.processErrorMessage}>
+                          {
+                            clientGraphicsRendererProcessState.processErrorMessage
+                          }
+                        </div>
+                      </div>
+                    }
+                  />
+                )
+            }
+        }
+      }}
+    />
+  )
+}
+
+const useAnimationDevelopmentResultPageStyles = makeStyles((theme) => ({
+  inProgressContainer: {
+    padding: theme.spacing(1),
+  },
+  assetContainer: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: 0,
+    padding: theme.spacing(1),
+  },
+  errorMessageContainer: {
+    flexShrink: 1,
+    flexGrow: 1,
+    overflow: 'scroll',
+    padding: theme.spacing(1),
+  },
+  processErrorMessage: {
+    backgroundColor: theme.palette.error.main,
+    maxWidth: 600,
+    padding: theme.spacing(1),
+    whiteSpace: 'pre-wrap',
+    color: theme.palette.getContrastText(theme.palette.error.main),
+    fontSize: 14,
+  },
+}))
+
+export interface AnimationDevelopmentLogsPageProps<
+  AssetRoute extends '/animation' | `/frame/${number}`
+> extends Pick<
+    AnimationDevelopmentPageProps<AssetRoute, '/logs'>,
+    'assetRoute' | 'viewRoute'
+  > {}
+
+export function AnimationDevelopmentLogsPage<
+  AssetRoute extends '/animation' | `/frame/${number}`
+>(props: AnimationDevelopmentLogsPageProps<AssetRoute>) {
+  const { assetRoute, viewRoute } = props
+  const styles = useAnimationDevelopmentLogsPageStyles()
+  return (
+    <AnimationDevelopmentPage
+      assetRoute={assetRoute}
+      viewRoute={viewRoute}
+      SomeClientGraphicsRendererProcessPage={({
+        clientGraphicsRendererProcessState,
+      }) => {
+        switch (clientGraphicsRendererProcessState.latestBundleStatus) {
+          case 'bundleInvalid':
+            return (
+              <InvalidBundleClientGraphicsRendererProcessPage
+                assetRoute={assetRoute}
+                viewRoute={viewRoute}
+                clientGraphicsRendererProcessState={
+                  clientGraphicsRendererProcessState
+                }
+                viewRouteContent={
+                  <div className={styles.logsDisplayContainer}>
+                    todo invalid bundle
+                  </div>
+                }
+              />
+            )
+          case 'bundleValid':
+            return (
+              <ValidBundleClientGraphicsRendererProcessPage
+                assetRoute={assetRoute}
+                viewRoute={viewRoute}
+                clientGraphicsRendererProcessState={
+                  clientGraphicsRendererProcessState
+                }
+                viewRouteContent={
+                  <div className={styles.logsDisplayContainer}>
+                    {clientGraphicsRendererProcessState.processStdoutLog}
+                  </div>
+                }
+              />
+            )
+        }
+      }}
+    />
+  )
+}
+
+const useAnimationDevelopmentLogsPageStyles = makeStyles((theme) => ({
+  logsDisplayContainer: {
+    flexShrink: 1,
+    flexGrow: 1,
+    padding: theme.spacing(1),
+    overflow: 'scroll',
+    lineHeight: '1.25rem',
+    whiteSpace: 'pre-wrap',
+    fontSize: 12,
+  },
+}))
+
+interface AnimationDevelopmentPageProps<
+  AssetRoute extends '/animation' | `/frame/${number}`,
+  ViewRoute extends '/logs' | '/result'
+> {
+  assetRoute: AssetRoute
+  viewRoute: ViewRoute
+  SomeClientGraphicsRendererProcessPage: (
+    props: SomeClientGraphicsRendererProcessPageProps
   ) => JSX.Element
 }
 
-export interface ValidBundleSubRouteContentProps {
-  clientGraphicsRendererProcessState: ClientGraphicsRendererProcessValidBundleState
-}
+interface SomeClientGraphicsRendererProcessPageProps
+  extends Pick<
+    PollClientGraphicsRendererProcessStateSuccessResponse,
+    'clientGraphicsRendererProcessState'
+  > {}
 
-export function AnimationDevelopmentPage(props: AnimationDevelopmentPageProps) {
-  const { baseRoute, subRoute, ValidBundleSubRouteContent } = props
+function AnimationDevelopmentPage<
+  AssetRoute extends '/animation' | `/frame/${number}`,
+  ViewRoute extends '/logs' | '/result'
+>(props: AnimationDevelopmentPageProps<AssetRoute, ViewRoute>) {
+  const { SomeClientGraphicsRendererProcessPage } = props
   const { pollClientGraphicsRendererProcessStateResponse } =
     usePollClientGraphicsRendererProcessStateResponse()
   const styles = useAnimationDevelopmentPageStyles()
   switch (pollClientGraphicsRendererProcessStateResponse.responseStatus) {
     case 'serverInitializing':
       return (
-        <Page
-          pageBody={
-            <div className={styles.initializingContainer}>initializing...</div>
-          }
-        />
+        <div className={styles.responseStatusDisplayContainer}>
+          initializing...
+        </div>
+      )
+    case 'serverError':
+      return (
+        <div
+          className={`${styles.responseStatusDisplayContainer} ${styles.responseStatusError}`}
+        >
+          wtf? server
+        </div>
       )
     case 'fetchError':
       return (
-        <Page
-          pageBody={
-            <div>
-              {pollClientGraphicsRendererProcessStateResponse.fetchErrorMessage}
-            </div>
-          }
-        />
+        <div
+          className={`${styles.responseStatusDisplayContainer} ${styles.responseStatusError}`}
+        >
+          {pollClientGraphicsRendererProcessStateResponse.fetchErrorMessage}
+        </div>
       )
-    case 'serverError':
-      return <Page pageBody={<div>wtf? server</div>} />
     case 'fetchSuccessful':
       const { clientGraphicsRendererProcessState } =
         pollClientGraphicsRendererProcessStateResponse
-      switch (clientGraphicsRendererProcessState.latestBundleStatus) {
-        case 'bundleInvalid':
-          switch (subRoute) {
-            case '/logs':
-              return (
-                <ClientGraphicsRendererProcessInvalidBundlePage
-                  baseRoute={baseRoute}
-                  subRoute={subRoute}
-                  clientGraphicsRendererProcessState={
-                    clientGraphicsRendererProcessState
-                  }
-                  InvalidBundleSubRouteContent={todo}
-                />
-              )
-            case '/result':
-              return (
-                <ClientGraphicsRendererProcessInvalidBundlePage
-                  baseRoute={baseRoute}
-                  subRoute={subRoute}
-                  clientGraphicsRendererProcessState={
-                    clientGraphicsRendererProcessState
-                  }
-                  InvalidBundleSubRouteContent={todo}
-                />
-              )
+      return (
+        <SomeClientGraphicsRendererProcessPage
+          clientGraphicsRendererProcessState={
+            clientGraphicsRendererProcessState
           }
-        case 'bundleValid':
-          return (
-            <ClientGraphicsRendererProcessPage
-              moduleStatusDisplayValue={'module valid'}
-              baseRoute={baseRoute}
-              subRoute={subRoute}
-              subRouteContent={
-                <ValidBundleSubRouteContent
-                  clientGraphicsRendererProcessState={
-                    clientGraphicsRendererProcessState
-                  }
-                />
-              }
-              moduleSessionVersionDisplayValue={`${clientGraphicsRendererProcessState.bundleSessionVersion}`}
-              animationNameDisplayValue={
-                clientGraphicsRendererProcessState.animationModule.animationName
-              }
-              processKeyDisplayValue={
-                clientGraphicsRendererProcessState.graphicsRendererProcessKey
-              }
-              processStatusDisplayValue={
-                clientGraphicsRendererProcessState.graphicsRendererProcessStatus
-              }
-            />
-          )
-      }
+        />
+      )
   }
 }
 
 const useAnimationDevelopmentPageStyles = makeStyles((theme) => ({
-  initializingContainer: {
+  responseStatusDisplayContainer: {
     padding: theme.spacing(1),
+  },
+  responseStatusError: {
+    color: theme.palette.error.main,
   },
 }))
 
@@ -149,71 +322,118 @@ function usePollClientGraphicsRendererProcessStateResponse(): {
   return null
 }
 
-interface ClientGraphicsRendererProcessInvalidBundlePageProps
-  extends Pick<AnimationDevelopmentPageProps, 'baseRoute' | 'subRoute'> {
+interface InvalidBundleClientGraphicsRendererProcessPageProps<
+  AssetRoute extends '/animation' | `/frame/${number}`,
+  ViewRoute extends '/logs' | '/result'
+> extends Pick<
+    ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>,
+    'assetRoute' | 'viewRoute' | 'viewRouteContent'
+  > {
   clientGraphicsRendererProcessState: ClientGraphicsRendererProcessInvalidBundleState
-  InvalidBundleSubRouteContent: (
-    props: InvalidBundleSubRouteContentProps
-  ) => JSX.Element
 }
 
-interface InvalidBundleSubRouteContentProps
-  extends Pick<
-    ClientGraphicsRendererProcessInvalidBundlePageProps,
-    'clientGraphicsRendererProcessState'
-  > {}
-
-function ClientGraphicsRendererProcessInvalidBundlePage(
-  props: ClientGraphicsRendererProcessInvalidBundlePageProps
+function InvalidBundleClientGraphicsRendererProcessPage<
+  AssetRoute extends '/animation' | `/frame/${number}`,
+  ViewRoute extends '/logs' | '/result'
+>(
+  props: InvalidBundleClientGraphicsRendererProcessPageProps<
+    AssetRoute,
+    ViewRoute
+  >
 ) {
   const {
-    baseRoute,
-    subRoute,
-    InvalidBundleSubRouteContent,
+    assetRoute,
+    viewRoute,
+    viewRouteContent,
     clientGraphicsRendererProcessState,
   } = props
   return (
     <ClientGraphicsRendererProcessPage
+      assetRoute={assetRoute}
+      viewRoute={viewRoute}
+      viewRouteContent={viewRouteContent}
       moduleStatusDisplayValue={'module invalid'}
       animationNameDisplayValue={'-'}
       processKeyDisplayValue={'-'}
       processStatusDisplayValue={'-'}
-      baseRoute={baseRoute}
-      subRoute={subRoute}
-      subRouteContent={
-        <InvalidBundleSubRouteContent
-          clientGraphicsRendererProcessState={
-            clientGraphicsRendererProcessState
-          }
-        />
-      }
       moduleSessionVersionDisplayValue={`${clientGraphicsRendererProcessState.bundleSessionVersion}`}
     />
   )
 }
 
-interface ClientGraphicsRendererProcessPageProps
-  extends Pick<AnimationDevelopmentPageProps, 'baseRoute' | 'subRoute'> {
+interface ValidBundleClientGraphicsRendererProcessPageProps<
+  AssetRoute extends '/animation' | `/frame/${number}`,
+  ViewRoute extends '/logs' | '/result'
+> extends Pick<
+    ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>,
+    'assetRoute' | 'viewRoute' | 'viewRouteContent'
+  > {
+  clientGraphicsRendererProcessState: ClientGraphicsRendererProcessValidBundleState
+}
+
+function ValidBundleClientGraphicsRendererProcessPage<
+  AssetRoute extends '/animation' | `/frame/${number}`,
+  ViewRoute extends '/logs' | '/result'
+>(
+  props: ValidBundleClientGraphicsRendererProcessPageProps<
+    AssetRoute,
+    ViewRoute
+  >
+) {
+  const {
+    assetRoute,
+    viewRoute,
+    viewRouteContent,
+    clientGraphicsRendererProcessState,
+  } = props
+  return (
+    <ClientGraphicsRendererProcessPage
+      assetRoute={assetRoute}
+      viewRoute={viewRoute}
+      viewRouteContent={viewRouteContent}
+      animationNameDisplayValue={
+        clientGraphicsRendererProcessState.animationModule.animationName
+      }
+      processKeyDisplayValue={
+        clientGraphicsRendererProcessState.graphicsRendererProcessKey
+      }
+      processStatusDisplayValue={
+        clientGraphicsRendererProcessState.graphicsRendererProcessStatus
+      }
+      moduleStatusDisplayValue={'module valid'}
+      moduleSessionVersionDisplayValue={`${clientGraphicsRendererProcessState.bundleSessionVersion}`}
+    />
+  )
+}
+
+interface ClientGraphicsRendererProcessPageProps<
+  AssetRoute extends '/animation' | `/frame/${number}`,
+  ViewRoute extends '/logs' | '/result'
+> extends Pick<
+    AnimationDevelopmentPageProps<AssetRoute, ViewRoute>,
+    'assetRoute' | 'viewRoute'
+  > {
   moduleSessionVersionDisplayValue: string
   moduleStatusDisplayValue: string
   animationNameDisplayValue: string
   processKeyDisplayValue: string
   processStatusDisplayValue: string
-  subRouteContent: ReactNode
+  viewRouteContent: ReactNode
 }
 
-function ClientGraphicsRendererProcessPage(
-  props: ClientGraphicsRendererProcessPageProps
-) {
+function ClientGraphicsRendererProcessPage<
+  AssetRoute extends '/animation' | `/frame/${number}`,
+  ViewRoute extends '/logs' | '/result'
+>(props: ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>) {
   const {
-    subRoute,
-    baseRoute,
+    viewRoute,
+    assetRoute,
     moduleSessionVersionDisplayValue,
     moduleStatusDisplayValue,
     animationNameDisplayValue,
     processKeyDisplayValue,
     processStatusDisplayValue,
-    subRouteContent,
+    viewRouteContent,
   } = props
   const navigateToRoute = useNavigate()
   const styles = useClientGraphicsRendererProcessPageStyles()
@@ -225,16 +445,16 @@ function ClientGraphicsRendererProcessPage(
             <div className={styles.pageNavigationContainer}>
               <OptionField
                 optionLabel={'logs'}
-                optionSelected={subRoute === '/logs'}
+                optionSelected={viewRoute === '/logs'}
                 onClick={() => {
-                  navigateToRoute(`${baseRoute}/logs`)
+                  navigateToRoute(`${assetRoute}/logs`)
                 }}
               />
               <OptionField
                 optionLabel={'result'}
-                optionSelected={subRoute === '/result'}
+                optionSelected={viewRoute === '/result'}
                 onClick={() => {
-                  navigateToRoute(`${baseRoute}/result`)
+                  navigateToRoute(`${assetRoute}/result`)
                 }}
               />
             </div>
@@ -261,7 +481,7 @@ function ClientGraphicsRendererProcessPage(
               />
             </div>
           </div>
-          {subRouteContent}
+          {viewRouteContent}
         </Fragment>
       }
     />
@@ -372,5 +592,50 @@ const useFieldDisplayStyles = makeStyles((theme) => ({
     fontWeight: 500,
     fontSize: 14,
     marginLeft: theme.spacing(1),
+  },
+}))
+
+export interface PageProps {
+  pageBody: ReactNode
+}
+
+export function Page(props: PageProps) {
+  const { pageBody } = props
+  const styles = usePageStyles()
+  return (
+    <div className={styles.pageContainer}>
+      <div className={styles.pageHeader}>
+        <div className={styles.pageTitle}>graphics-renderer</div>
+      </div>
+      {pageBody}
+    </div>
+  )
+}
+
+export const usePageStyles = makeStyles((theme) => ({
+  '@global': {
+    body: {
+      fontFamily: theme.typography.fontFamily,
+    },
+  },
+  pageContainer: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  pageHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    backgroundColor: theme.palette.primary.main,
+    padding: theme.spacing(1.5),
+  },
+  pageTitle: {
+    fontWeight: 600,
+    fontSize: 18,
+    color: theme.palette.common.white,
   },
 }))

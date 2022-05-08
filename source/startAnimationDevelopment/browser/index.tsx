@@ -1,8 +1,16 @@
 import { createTheme, ThemeProvider } from '@material-ui/core'
 import React from 'react'
 import ReactDom from 'react-dom'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import { AnimationDevelopmentPage } from './AnimationDevelopmentPage'
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useParams as useRouteParams,
+} from 'react-router-dom'
+import {
+  AnimationDevelopmentLogsPage,
+  AnimationDevelopmentResultPage,
+} from './AnimationDevelopmentPage'
 
 const appContainer = document.createElement('div')
 document.body.append(appContainer)
@@ -21,32 +29,39 @@ ReactDom.render(
 )
 
 function AnimationDevelopmentApp() {
+  const routeParams = useRouteParams()
   return (
     <Routes>
       <Route
         path={'/animation/logs'}
         element={
-          <AnimationDevelopmentPage
-            baseRoute={'/animation'}
-            subRoute={'/logs'}
-            ValidBundleSubRouteContent={({
-              clientGraphicsRendererProcessState,
-            }) => {
-              return <div>{todo}</div>
-            }}
+          <AnimationDevelopmentLogsPage
+            assetRoute={'/animation'}
+            viewRoute={'/logs'}
           />
         }
       />
       <Route
         path={'/animation/result'}
         element={
-          <AnimationDevelopmentPage
-            baseRoute={'/animation'}
-            subRoute={'/result'}
-            ValidBundleSubRouteContent={({
-              clientGraphicsRendererProcessState,
-            }) => {
-              return <div>{todo}</div>
+          <AnimationDevelopmentResultPage
+            assetRoute={'/animation'}
+            viewRoute={'/result'}
+            SomeAssetDisplay={({ graphicAssetUrl }) => {
+              return (
+                <video
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                  }}
+                  controls={true}
+                  loop={true}
+                  autoPlay={true}
+                >
+                  <source type={'video/mp4'} src={graphicAssetUrl} />
+                </video>
+              )
             }}
           />
         }
@@ -54,27 +69,29 @@ function AnimationDevelopmentApp() {
       <Route
         path={'/frame/:frameIndex/logs'}
         element={
-          <AnimationDevelopmentPage
-            baseRoute={`/frame/${todo}`}
-            subRoute={'/logs'}
-            ValidBundleSubRouteContent={({
-              clientGraphicsRendererProcessState,
-            }) => {
-              return <div>{todo}</div>
-            }}
+          <AnimationDevelopmentLogsPage
+            assetRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
+            viewRoute={'/logs'}
           />
         }
       />
       <Route
         path={'/frame/:frameIndex/result'}
         element={
-          <AnimationDevelopmentPage
-            baseRoute={`/frame/${todo}`}
-            subRoute={'/result'}
-            ValidBundleSubRouteContent={({
-              clientGraphicsRendererProcessState,
-            }) => {
-              return <div>{todo}</div>
+          <AnimationDevelopmentResultPage
+            assetRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
+            viewRoute={'/result'}
+            SomeAssetDisplay={({ graphicAssetUrl }) => {
+              return (
+                <img
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                  }}
+                  src={graphicAssetUrl}
+                />
+              )
             }}
           />
         }
@@ -82,161 +99,3 @@ function AnimationDevelopmentApp() {
     </Routes>
   )
 }
-
-// function AnimationProcessLogsPage() {
-//   return (
-//     <FetchGraphicsRendererProcessStatePage
-//       graphicsRendererProcessKey={'animation'}
-//       GraphicsRendererProcessStateFetchedPage={({
-//         fetchedGraphicsRendererProcessState,
-//       }) => {
-//         return (
-//           <ProcessLogsPage
-//             baseRoute={'/animation'}
-//             animationName={
-//               fetchedGraphicsRendererProcessState.animationModule.animationName
-//             }
-//             bundleSessionVersion={
-//               fetchedGraphicsRendererProcessState.bundleSessionVersion
-//             }
-//             graphicsRendererProcessKey={
-//               fetchedGraphicsRendererProcessState.graphicsRendererProcessKey
-//             }
-//             graphicsRendererProcessStatus={
-//               fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus
-//             }
-//             processStdoutLog={
-//               fetchedGraphicsRendererProcessState.processStdoutLog
-//             }
-//           />
-//         )
-//       }}
-//     />
-//   )
-// }
-
-// function AnimationProcessResultPage() {
-//   return (
-//     <FetchGraphicsRendererProcessStatePage
-//       graphicsRendererProcessKey={'animation'}
-//       GraphicsRendererProcessStateFetchedPage={({
-//         fetchedGraphicsRendererProcessState,
-//       }) => {
-//         return (
-//           <ProcessResultPage
-//             baseRoute={'/animation'}
-//             fetchedGraphicsRendererProcessState={
-//               fetchedGraphicsRendererProcessState
-//             }
-//             animationName={
-//               fetchedGraphicsRendererProcessState.animationModule.animationName
-//             }
-//             bundleSessionVersion={
-//               fetchedGraphicsRendererProcessState.bundleSessionVersion
-//             }
-//             graphicsRendererProcessKey={
-//               fetchedGraphicsRendererProcessState.graphicsRendererProcessKey
-//             }
-//             graphicsRendererProcessStatus={
-//               fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus
-//             }
-//             AssetDisplay={({ graphicAssetUrl }) => (
-//               <video
-//                 style={{
-//                   maxWidth: '100%',
-//                   maxHeight: '100%',
-//                   objectFit: 'contain',
-//                 }}
-//                 controls={true}
-//                 loop={true}
-//                 autoPlay={true}
-//               >
-//                 <source type={'video/mp4'} src={graphicAssetUrl} />
-//               </video>
-//             )}
-//           />
-//         )
-//       }}
-//     />
-//   )
-// }
-
-// function FrameProcessLogsPage() {
-//   const routeParams = useParams()
-//   return (
-//     <FetchGraphicsRendererProcessStatePage
-//       graphicsRendererProcessKey={`frame/${
-//         routeParams.frameIndex as unknown as number
-//       }`}
-//       GraphicsRendererProcessStateFetchedPage={({
-//         fetchedGraphicsRendererProcessState,
-//       }) => {
-//         return (
-//           <ProcessLogsPage
-//             baseRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
-//             animationName={
-//               fetchedGraphicsRendererProcessState.animationModule.animationName
-//             }
-//             bundleSessionVersion={
-//               fetchedGraphicsRendererProcessState.bundleSessionVersion
-//             }
-//             graphicsRendererProcessKey={
-//               fetchedGraphicsRendererProcessState.graphicsRendererProcessKey
-//             }
-//             graphicsRendererProcessStatus={
-//               fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus
-//             }
-//             processStdoutLog={
-//               fetchedGraphicsRendererProcessState.processStdoutLog
-//             }
-//           />
-//         )
-//       }}
-//     />
-//   )
-// }
-
-// function FrameProcessResultPage() {
-//   const routeParams = useParams()
-//   return (
-//     <FetchGraphicsRendererProcessStatePage
-//       graphicsRendererProcessKey={`frame/${
-//         routeParams.frameIndex as unknown as number
-//       }`}
-//       GraphicsRendererProcessStateFetchedPage={({
-//         fetchedGraphicsRendererProcessState,
-//       }) => {
-//         return (
-//           <ProcessResultPage
-//             baseRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
-//             fetchedGraphicsRendererProcessState={
-//               fetchedGraphicsRendererProcessState
-//             }
-//             animationName={
-//               fetchedGraphicsRendererProcessState.animationModule.animationName
-//             }
-//             bundleSessionVersion={
-//               fetchedGraphicsRendererProcessState.bundleSessionVersion
-//             }
-//             graphicsRendererProcessKey={
-//               fetchedGraphicsRendererProcessState.graphicsRendererProcessKey
-//             }
-//             graphicsRendererProcessStatus={
-//               fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus
-//             }
-//             AssetDisplay={({ graphicAssetUrl }) => (
-//               <img
-//                 style={{
-//                   maxWidth: '100%',
-//                   maxHeight: '100%',
-//                   objectFit: 'contain',
-//                 }}
-//                 src={graphicAssetUrl}
-//               />
-//             )}
-//           />
-//         )
-//       }}
-//     />
-//   )
-// }

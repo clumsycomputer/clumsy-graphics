@@ -76,6 +76,7 @@ export function* graphicsRendererProcessManagerSaga(
     ) {
       yield* call(function* () {
         if (
+          // ??? dont think this check is necessary with better types
           currentAnimationModuleBundlerState.bundlerStatus === 'bundlerActive'
         ) {
           terminateActiveGraphicsRendererProcesses({

@@ -602,13 +602,36 @@ function ValidBundleClientGraphicsRendererProcessPage<
       processKeyDisplayValue={
         clientGraphicsRendererProcessState.graphicsRendererProcessKey
       }
-      processStatusDisplayValue={
-        clientGraphicsRendererProcessState.graphicsRendererProcessStatus
-      }
+      processStatusDisplayValue={getProcessStatusDisplayValue({
+        graphicsRendererProcessStatus:
+          clientGraphicsRendererProcessState.graphicsRendererProcessStatus,
+      })}
       moduleStatusDisplayValue={'module valid'}
       moduleSessionVersionDisplayValue={`${clientGraphicsRendererProcessState.bundleSessionVersion}`}
     />
   )
+}
+
+interface GetProcessStatusDisplayValueApi
+  extends Pick<
+    ValidBundleClientGraphicsRendererProcessPageProps<
+      any,
+      any
+    >['clientGraphicsRendererProcessState'],
+    'graphicsRendererProcessStatus'
+  > {}
+
+function getProcessStatusDisplayValue(api: GetProcessStatusDisplayValueApi) {
+  const { graphicsRendererProcessStatus } = api
+  switch (graphicsRendererProcessStatus) {
+    case 'processInitializing':
+    case 'processActive':
+      return 'in progress...'
+    case 'processSuccessful':
+      return 'success'
+    case 'processFailed':
+      return 'error'
+  }
 }
 
 interface ClientGraphicsRendererProcessPageProps<

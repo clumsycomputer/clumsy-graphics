@@ -29,7 +29,6 @@ ReactDom.render(
 )
 
 function AnimationDevelopmentApp() {
-  const routeParams = useRouteParams()
   return (
     <Routes>
       <Route
@@ -70,40 +69,50 @@ function AnimationDevelopmentApp() {
       />
       <Route
         path={'/frame/:frameIndex/logs'}
-        element={
-          <AnimationDevelopmentLogsPage
-            graphicsRendererProcessKey={`frame/${
-              routeParams.frameIndex as unknown as number
-            }`}
-            assetRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
-            viewRoute={'/logs'}
-          />
-        }
+        element={<AnimationDevelopmentFrameLogsPage />}
       />
       <Route
         path={'/frame/:frameIndex/result'}
-        element={
-          <AnimationDevelopmentResultPage
-            graphicsRendererProcessKey={`frame/${
-              routeParams.frameIndex as unknown as number
-            }`}
-            assetRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
-            viewRoute={'/result'}
-            SomeAssetDisplay={({ graphicAssetUrl }) => {
-              return (
-                <img
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    objectFit: 'contain',
-                  }}
-                  src={graphicAssetUrl}
-                />
-              )
-            }}
-          />
-        }
+        element={<AnimationDevelopmentFrameResultPage />}
       />
     </Routes>
+  )
+}
+
+function AnimationDevelopmentFrameLogsPage() {
+  const routeParams = useRouteParams()
+  return (
+    <AnimationDevelopmentLogsPage
+      graphicsRendererProcessKey={`frame/${
+        routeParams.frameIndex as unknown as number
+      }`}
+      assetRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
+      viewRoute={'/logs'}
+    />
+  )
+}
+
+function AnimationDevelopmentFrameResultPage() {
+  const routeParams = useRouteParams()
+  return (
+    <AnimationDevelopmentResultPage
+      graphicsRendererProcessKey={`frame/${
+        routeParams.frameIndex as unknown as number
+      }`}
+      assetRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
+      viewRoute={'/result'}
+      SomeAssetDisplay={({ graphicAssetUrl }) => {
+        return (
+          <img
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain',
+            }}
+            src={graphicAssetUrl}
+          />
+        )
+      }}
+    />
   )
 }

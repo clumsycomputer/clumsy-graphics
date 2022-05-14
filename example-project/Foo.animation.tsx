@@ -25,6 +25,7 @@ interface GetFooFrameDescriptionApi {
 async function getFooFrameDescription(api: GetFooFrameDescriptionApi) {
   const { frameCount, frameIndex } = api
   const centerAngle = ((2 * Math.PI) / frameCount) * frameIndex
+  throw 2
   return (
     <svg viewBox={`0 0 100 100`}>
       <rect x={0} y={0} width={100} height={100} fill={'black'} />

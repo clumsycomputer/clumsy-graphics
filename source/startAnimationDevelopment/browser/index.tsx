@@ -20,19 +20,19 @@ const appTheme = createTheme({
   },
   palette: {
     primary: {
-      main: '#827717',
-      light: '#b4a647',
-      dark: '#524c00',
+      main: '#f44336',
+      light: '#ff7961',
+      dark: '#ba000d',
     },
     secondary: {
-      main: '#172282',
-      light: '#524ab2',
-      dark: '#000054',
+      main: '#673ab7',
+      light: '#9a67ea',
+      dark: '#320b86',
     },
     error: {
-      main: '#c62828',
-      light: '#ff5f52',
-      dark: '#8e0000',
+      main: '#1976d2',
+      light: '#63a4ff',
+      dark: '#004ba0',
     },
   },
 })

@@ -1107,6 +1107,6 @@ export const usePageStyles = makeStyles((theme) => ({
   pageTitle: {
     fontWeight: 600,
     fontSize: 18,
-    color: theme.palette.common.white,
+    color: theme.palette.getContrastText(theme.palette.primary.main),
   },
 }))

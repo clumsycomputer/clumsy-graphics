@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["es2020"],
+    "lib": ["es2020", "DOM"],
     "module": "commonjs",
     "target": "es2020",
     "strict": true,
@@ -10,7 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "jsx": "react",
     "noUncheckedIndexedAccess": true,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
   },
   "exclude": ["node_modules"]
 }

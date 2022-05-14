@@ -221,17 +221,17 @@
 //     currentFetchGraphicsRendererProcessState.fetchStatus ===
 //       'fetchSuccessful' &&
 //     (maybeNextFetchGraphicsRendererProcessState
-//       .fetchedGraphicsRendererProcessState.bundleSessionVersion !==
+//       .fetchedGraphicsRendererProcessState.buildVersion !==
 //       currentFetchGraphicsRendererProcessState
-//         .fetchedGraphicsRendererProcessState.bundleSessionVersion ||
+//         .fetchedGraphicsRendererProcessState.buildVersion ||
 //       maybeNextFetchGraphicsRendererProcessState
 //         .fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus !==
 //         currentFetchGraphicsRendererProcessState
 //           .fetchedGraphicsRendererProcessState.graphicsRendererProcessStatus ||
 //       maybeNextFetchGraphicsRendererProcessState
-//         .fetchedGraphicsRendererProcessState.processStdoutLog !==
+//         .fetchedGraphicsRendererProcessState.graphicsRendererProcessStdoutLog !==
 //         currentFetchGraphicsRendererProcessState
-//           .fetchedGraphicsRendererProcessState.processStdoutLog)
+//           .fetchedGraphicsRendererProcessState.graphicsRendererProcessStdoutLog)
 //   const fetchErrorMessageDifferent =
 //     maybeNextFetchGraphicsRendererProcessState.fetchStatus === 'fetchError' &&
 //     currentFetchGraphicsRendererProcessState.fetchStatus === 'fetchError' &&

@@ -130,7 +130,7 @@ function handleGraphicsRendererProcessUpdated(
   graphicsRendererProcessFailedActionPayload: GraphicsRendererProcessUpdatedAction['actionPayload']
 ): AnimationDevelopmentState {
   const {
-    bundleSessionVersion,
+    buildVersion,
     targetGraphicsRendererProcessKey,
     targetGraphicsRendererProcessStateUpdates,
   } = graphicsRendererProcessFailedActionPayload
@@ -140,8 +140,7 @@ function handleGraphicsRendererProcessUpdated(
     currentAnimationDevelopmentState.animationModuleBundlerState
   const currentTargetGraphicRendererProcessState =
     currentAnimationModuleSourceState &&
-    currentAnimationModuleSourceState.bundleSessionVersion ===
-      bundleSessionVersion &&
+    currentAnimationModuleSourceState.buildVersion === buildVersion &&
     currentAnimationModuleSourceState.graphicsRendererProcessStates[
       targetGraphicsRendererProcessKey
     ]

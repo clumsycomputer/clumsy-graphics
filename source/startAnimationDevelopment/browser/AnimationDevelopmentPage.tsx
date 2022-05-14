@@ -1,3 +1,4 @@
+import Link, { LinkProps } from '@material-ui/core/Link'
 import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
 import React, {
   Dispatch,
@@ -14,11 +15,11 @@ import React, {
 import { useNavigate } from 'react-router-dom'
 import { decodeData } from '../../helpers/decodeData'
 import {
-  ClientGraphicsRendererProcessInvalidBundleState,
+  ClientGraphicsRendererProcessInvalidBuildState,
   ClientGraphicsRendererProcessState,
   ClientGraphicsRendererProcessStateCodec,
   ClientGraphicsRendererProcessSuccessfulState,
-  ClientGraphicsRendererProcessValidBundleState,
+  ClientGraphicsRendererProcessValidBuildState,
 } from '../models/ClientGraphicsRendererProcessState'
 
 export interface AnimationDevelopmentResultPageProps<
@@ -54,32 +55,32 @@ export function AnimationDevelopmentResultPage<
       SomeClientGraphicsRendererProcessPage={({
         clientGraphicsRendererProcessState,
       }) => {
-        switch (clientGraphicsRendererProcessState.latestBundleStatus) {
-          case 'bundleInvalid':
+        switch (clientGraphicsRendererProcessState.buildStatus) {
+          case 'invalidBuild':
             return (
-              <InvalidBundleClientGraphicsRendererProcessPage
+              <InvalidBuildClientGraphicsRendererProcessPage
                 assetRoute={assetRoute}
                 viewRoute={viewRoute}
                 clientGraphicsRendererProcessState={
                   clientGraphicsRendererProcessState
                 }
                 viewRouteContent={
-                  <div className={styles.errorMessageContainer}>
-                    <div className={styles.processErrorMessage}>
-                      {clientGraphicsRendererProcessState.bundleErrorMessage}
-                    </div>
-                  </div>
+                  <AnimationDevelopmentErrorDisplay
+                    errorMessage={
+                      clientGraphicsRendererProcessState.buildErrorMessage
+                    }
+                  />
                 }
               />
             )
-          case 'bundleValid':
+          case 'validBuild':
             switch (
               clientGraphicsRendererProcessState.graphicsRendererProcessStatus
             ) {
               case 'processInitializing':
               case 'processActive':
                 return (
-                  <ValidBundleClientGraphicsRendererProcessPage
+                  <ValidBuildClientGraphicsRendererProcessPage
                     assetRoute={assetRoute}
                     viewRoute={viewRoute}
                     clientGraphicsRendererProcessState={
@@ -94,7 +95,7 @@ export function AnimationDevelopmentResultPage<
                 )
               case 'processSuccessful':
                 return (
-                  <ValidBundleClientGraphicsRendererProcessPage
+                  <ValidBuildClientGraphicsRendererProcessPage
                     assetRoute={assetRoute}
                     viewRoute={viewRoute}
                     clientGraphicsRendererProcessState={
@@ -113,20 +114,18 @@ export function AnimationDevelopmentResultPage<
                 )
               case 'processFailed':
                 return (
-                  <ValidBundleClientGraphicsRendererProcessPage
+                  <ValidBuildClientGraphicsRendererProcessPage
                     assetRoute={assetRoute}
                     viewRoute={viewRoute}
                     clientGraphicsRendererProcessState={
                       clientGraphicsRendererProcessState
                     }
                     viewRouteContent={
-                      <div className={styles.errorMessageContainer}>
-                        <div className={styles.processErrorMessage}>
-                          {
-                            clientGraphicsRendererProcessState.processErrorMessage
-                          }
-                        </div>
-                      </div>
+                      <AnimationDevelopmentErrorDisplay
+                        errorMessage={
+                          clientGraphicsRendererProcessState.graphicsRendererProcessErrorMessage
+                        }
+                      />
                     }
                   />
                 )
@@ -148,13 +147,34 @@ const useAnimationDevelopmentResultPageStyles = makeStyles((theme) => ({
     minHeight: 0,
     padding: theme.spacing(1),
   },
+}))
+
+interface AnimationDevelopmentErrorDisplayProps {
+  errorMessage: string
+}
+
+function AnimationDevelopmentErrorDisplay(
+  props: AnimationDevelopmentErrorDisplayProps
+) {
+  const { errorMessage } = props
+  const styles = useAnimationDevelopmentErrorDisplayStyles()
+  return (
+    <div className={styles.errorMessageContainer}>
+      <div className={styles.graphicsRendererProcessErrorMessage}>
+        {errorMessage}
+      </div>
+    </div>
+  )
+}
+
+const useAnimationDevelopmentErrorDisplayStyles = makeStyles((theme) => ({
   errorMessageContainer: {
     flexShrink: 1,
     flexGrow: 1,
     overflow: 'scroll',
     padding: theme.spacing(1),
   },
-  processErrorMessage: {
+  graphicsRendererProcessErrorMessage: {
     backgroundColor: theme.palette.error.main,
     maxWidth: 600,
     padding: theme.spacing(1),
@@ -175,7 +195,7 @@ export function AnimationDevelopmentLogsPage<
   AssetRoute extends '/animation' | `/frame/${number}`
 >(props: AnimationDevelopmentLogsPageProps<AssetRoute>) {
   const { graphicsRendererProcessKey, assetRoute, viewRoute } = props
-  const styles = useAnimationDevelopmentLogsPageStyles()
+  const theme = useTheme()
   return (
     <AnimationDevelopmentPage
       graphicsRendererProcessKey={graphicsRendererProcessKey}
@@ -184,34 +204,69 @@ export function AnimationDevelopmentLogsPage<
       SomeClientGraphicsRendererProcessPage={({
         clientGraphicsRendererProcessState,
       }) => {
-        switch (clientGraphicsRendererProcessState.latestBundleStatus) {
-          case 'bundleInvalid':
+        switch (clientGraphicsRendererProcessState.buildStatus) {
+          case 'invalidBuild':
             return (
-              <InvalidBundleClientGraphicsRendererProcessPage
+              <InvalidBuildClientGraphicsRendererProcessPage
                 assetRoute={assetRoute}
                 viewRoute={viewRoute}
                 clientGraphicsRendererProcessState={
                   clientGraphicsRendererProcessState
                 }
                 viewRouteContent={
-                  <div className={styles.logsDisplayContainer}>
-                    todo invalid bundle
-                  </div>
+                  <AnimationDevelopmentLogsDisplay
+                    buildVersion={
+                      clientGraphicsRendererProcessState.buildVersion
+                    }
+                    graphicsRendererProcessStdoutLog={''}
+                    resultLink={
+                      clientGraphicsRendererProcessState.buildStatus ===
+                      'invalidBuild' ? (
+                        <ViewResultLinkButton
+                          assetRoute={assetRoute}
+                          linkColor={'error'}
+                          linkLabel={'view build error'}
+                        />
+                      ) : null
+                    }
+                  />
                 }
               />
             )
-          case 'bundleValid':
+          case 'validBuild':
             return (
-              <ValidBundleClientGraphicsRendererProcessPage
+              <ValidBuildClientGraphicsRendererProcessPage
                 assetRoute={assetRoute}
                 viewRoute={viewRoute}
                 clientGraphicsRendererProcessState={
                   clientGraphicsRendererProcessState
                 }
                 viewRouteContent={
-                  <div className={styles.logsDisplayContainer}>
-                    {clientGraphicsRendererProcessState.processStdoutLog}
-                  </div>
+                  <AnimationDevelopmentLogsDisplay
+                    buildVersion={
+                      clientGraphicsRendererProcessState.buildVersion
+                    }
+                    graphicsRendererProcessStdoutLog={
+                      clientGraphicsRendererProcessState.graphicsRendererProcessStdoutLog
+                    }
+                    resultLink={
+                      clientGraphicsRendererProcessState.graphicsRendererProcessStatus ===
+                      'processSuccessful' ? (
+                        <ViewResultLinkButton
+                          assetRoute={assetRoute}
+                          linkColor={'secondary'}
+                          linkLabel={'view rendered asset'}
+                        />
+                      ) : clientGraphicsRendererProcessState.graphicsRendererProcessStatus ===
+                        'processFailed' ? (
+                        <ViewResultLinkButton
+                          assetRoute={assetRoute}
+                          linkColor={'error'}
+                          linkLabel={'view render error'}
+                        />
+                      ) : null
+                    }
+                  />
                 }
               />
             )
@@ -221,17 +276,179 @@ export function AnimationDevelopmentLogsPage<
   )
 }
 
-const useAnimationDevelopmentLogsPageStyles = makeStyles((theme) => ({
+interface AnimationDevelopmentLogsDisplayProps
+  extends Pick<
+    ClientGraphicsRendererProcessValidBuildState,
+    'buildVersion' | 'graphicsRendererProcessStdoutLog'
+  > {
+  resultLink: ReactNode
+}
+
+function AnimationDevelopmentLogsDisplay(
+  props: AnimationDevelopmentLogsDisplayProps
+) {
+  const { buildVersion, graphicsRendererProcessStdoutLog, resultLink } = props
+  const { managedScrollContainerRef } = useManagedScrollContainerRef({
+    buildVersion,
+    graphicsRendererProcessStdoutLog,
+    resultLink,
+    localStorageKey: 'animation-development-logs-display',
+  })
+  const styles = useAnimationDevelopmentLogsDisplayStyles()
+  return (
+    <div
+      ref={managedScrollContainerRef}
+      className={styles.logsDisplayContainer}
+    >
+      {graphicsRendererProcessStdoutLog}
+      {resultLink}
+    </div>
+  )
+}
+
+const useAnimationDevelopmentLogsDisplayStyles = makeStyles((theme) => ({
   logsDisplayContainer: {
     flexShrink: 1,
     flexGrow: 1,
     padding: theme.spacing(1),
-    overflow: 'scroll',
+    overflow: 'auto',
     lineHeight: '1.25rem',
     whiteSpace: 'pre-wrap',
     fontSize: 12,
   },
 }))
+
+interface UseManagedScrollContainerRefApi
+  extends Pick<
+    AnimationDevelopmentLogsDisplayProps,
+    'buildVersion' | 'graphicsRendererProcessStdoutLog' | 'resultLink'
+  > {
+  localStorageKey: string
+}
+
+function useManagedScrollContainerRef(api: UseManagedScrollContainerRefApi) {
+  const {
+    buildVersion,
+    localStorageKey,
+    graphicsRendererProcessStdoutLog,
+    resultLink,
+  } = api
+  const managedScrollContainerRef = useRef<HTMLDivElement>(null)
+  const managedScrollStateRef = useRef<ManagedScrollState>({
+    buildVersion,
+    automatedScrollEnabled: true,
+    previousContainerScrollTop: null,
+  })
+  const scrollEventHandlerRef = useRef(() => {
+    const currentManagedScrollState = managedScrollStateRef.current
+    const currentManagedScrollContainer = managedScrollContainerRef.current
+    if (currentManagedScrollContainer) {
+      const userScrolledUp =
+        currentManagedScrollState.previousContainerScrollTop !== null &&
+        currentManagedScrollContainer.scrollTop <
+          currentManagedScrollState.previousContainerScrollTop
+      const currentScrollContainerScrollBottom =
+        currentManagedScrollContainer.scrollTop +
+        (currentManagedScrollContainer.getBoundingClientRect().height /
+          currentManagedScrollContainer.scrollHeight) *
+          currentManagedScrollContainer.scrollHeight
+      const userScrolledToBottomOfContainer =
+        currentScrollContainerScrollBottom /
+          currentManagedScrollContainer.scrollHeight >
+        0.975
+      if (userScrolledUp) {
+        currentManagedScrollState.automatedScrollEnabled = false
+        currentManagedScrollState.previousContainerScrollTop =
+          currentManagedScrollContainer.scrollTop
+      } else if (userScrolledToBottomOfContainer) {
+        currentManagedScrollState.automatedScrollEnabled = true
+        currentManagedScrollState.previousContainerScrollTop = null
+      } else {
+        currentManagedScrollState.previousContainerScrollTop =
+          currentManagedScrollContainer.scrollTop
+      }
+      localStorage.setItem(
+        localStorageKey,
+        JSON.stringify(currentManagedScrollState)
+      )
+    }
+  })
+  useEffect(() => {
+    const currentManagedScrollContainer = managedScrollContainerRef.current
+    if (currentManagedScrollContainer) {
+      currentManagedScrollContainer.addEventListener(
+        'scroll',
+        scrollEventHandlerRef.current
+      )
+      const cachedManagedScrollStateJson = localStorage.getItem(localStorageKey)
+      const cachedManagedScrollState = cachedManagedScrollStateJson
+        ? (JSON.parse(
+            cachedManagedScrollStateJson
+          ) as unknown as ManagedScrollState) || null
+        : null
+      if (buildVersion === cachedManagedScrollState?.buildVersion) {
+        currentManagedScrollContainer.scroll({
+          top: cachedManagedScrollState.previousContainerScrollTop || 0,
+        })
+        managedScrollStateRef.current = cachedManagedScrollState
+      }
+      return () => {
+        currentManagedScrollContainer.removeEventListener(
+          'scroll',
+          scrollEventHandlerRef.current
+        )
+      }
+    }
+  }, [])
+  useEffect(() => {
+    const currentManagedScrollState = managedScrollStateRef.current
+    if (buildVersion !== currentManagedScrollState.buildVersion) {
+      currentManagedScrollState.buildVersion = buildVersion
+      currentManagedScrollState.automatedScrollEnabled = true
+      currentManagedScrollState.previousContainerScrollTop = null
+    }
+    const currentManagedScrollContainer = managedScrollContainerRef.current
+    if (
+      currentManagedScrollContainer &&
+      currentManagedScrollState.automatedScrollEnabled
+    ) {
+      currentManagedScrollContainer.scroll({
+        top: currentManagedScrollContainer.scrollHeight,
+      })
+    }
+  }, [buildVersion, graphicsRendererProcessStdoutLog, resultLink])
+  return { managedScrollContainerRef }
+}
+
+interface ManagedScrollState
+  extends Pick<UseManagedScrollContainerRefApi, 'buildVersion'> {
+  automatedScrollEnabled: boolean
+  previousContainerScrollTop: number | null
+}
+
+interface ViewResultLinkButtonProps<
+  AssetRoute extends '/animation' | `/frame/${number}`
+> extends Pick<AnimationDevelopmentLogsPageProps<AssetRoute>, 'assetRoute'> {
+  linkLabel: string
+  linkColor: LinkProps['color']
+}
+
+function ViewResultLinkButton<
+  AssetRoute extends '/animation' | `/frame/${number}`
+>(props: ViewResultLinkButtonProps<AssetRoute>) {
+  const { assetRoute, linkColor, linkLabel } = props
+  return (
+    <Link
+      color={linkColor}
+      href={`${assetRoute}/result`}
+      style={{
+        fontWeight: 700,
+      }}
+    >
+      {`${linkLabel} >`}
+    </Link>
+  )
+}
 
 interface AnimationDevelopmentPageProps<
   AssetRoute extends '/animation' | `/frame/${number}`,
@@ -266,25 +483,39 @@ function AnimationDevelopmentPage<
   switch (pollClientGraphicsRendererProcessStateResponse.responseStatus) {
     case 'serverInitializing':
       return (
-        <div className={styles.responseStatusDisplayContainer}>
-          initializing...
-        </div>
+        <Page
+          pageBody={
+            <div className={styles.responseStatusDisplayContainer}>
+              initializing...
+            </div>
+          }
+        />
       )
     case 'serverError':
       return (
-        <div
-          className={`${styles.responseStatusDisplayContainer} ${styles.responseStatusError}`}
-        >
-          wtf? server
-        </div>
+        <Page
+          pageBody={
+            <div
+              className={`${styles.responseStatusDisplayContainer} ${styles.responseStatusError}`}
+            >
+              wtf? server
+            </div>
+          }
+        />
       )
     case 'fetchError':
       return (
-        <div
-          className={`${styles.responseStatusDisplayContainer} ${styles.responseStatusError}`}
-        >
-          {pollClientGraphicsRendererProcessStateResponse.responseErrorMessage}
-        </div>
+        <Page
+          pageBody={
+            <div
+              className={`${styles.responseStatusDisplayContainer} ${styles.responseStatusError}`}
+            >
+              {
+                pollClientGraphicsRendererProcessStateResponse.responseErrorMessage
+              }
+            </div>
+          }
+        />
       )
     case 'fetchSuccessful':
       const { clientGraphicsRendererProcessState } =
@@ -506,6 +737,7 @@ function maybeSetPollClientGraphicsRendererProcessStateResponse(
     graphicsRendererProcessKey,
     setPollClientGraphicsRendererProcessStateResponse,
   } = api
+  // todo calc shouldUpdateDiff
   if (true) {
     pollClientGraphicsRendererProcessStateResponseRef.current =
       maybeNextPollClientGraphicsRendererProcessStateResponse
@@ -527,21 +759,21 @@ function maybeSetPollClientGraphicsRendererProcessStateResponse(
   }
 }
 
-interface InvalidBundleClientGraphicsRendererProcessPageProps<
+interface InvalidBuildClientGraphicsRendererProcessPageProps<
   AssetRoute extends '/animation' | `/frame/${number}`,
   ViewRoute extends '/logs' | '/result'
 > extends Pick<
     ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>,
     'assetRoute' | 'viewRoute' | 'viewRouteContent'
   > {
-  clientGraphicsRendererProcessState: ClientGraphicsRendererProcessInvalidBundleState
+  clientGraphicsRendererProcessState: ClientGraphicsRendererProcessInvalidBuildState
 }
 
-function InvalidBundleClientGraphicsRendererProcessPage<
+function InvalidBuildClientGraphicsRendererProcessPage<
   AssetRoute extends '/animation' | `/frame/${number}`,
   ViewRoute extends '/logs' | '/result'
 >(
-  props: InvalidBundleClientGraphicsRendererProcessPageProps<
+  props: InvalidBuildClientGraphicsRendererProcessPageProps<
     AssetRoute,
     ViewRoute
   >
@@ -557,33 +789,30 @@ function InvalidBundleClientGraphicsRendererProcessPage<
       assetRoute={assetRoute}
       viewRoute={viewRoute}
       viewRouteContent={viewRouteContent}
-      moduleStatusDisplayValue={'module invalid'}
-      animationNameDisplayValue={'-'}
-      processKeyDisplayValue={'-'}
-      processStatusDisplayValue={'-'}
-      moduleSessionVersionDisplayValue={`${clientGraphicsRendererProcessState.bundleSessionVersion}`}
+      buildStatusDisplayValue={'invalid'}
+      moduleNameDisplayValue={'-'}
+      targetAssetDisplayValue={'-'}
+      renderStatusDisplayValue={'-'}
+      buildVersionDisplayValue={`${clientGraphicsRendererProcessState.buildVersion}`}
     />
   )
 }
 
-interface ValidBundleClientGraphicsRendererProcessPageProps<
+interface ValidBuildClientGraphicsRendererProcessPageProps<
   AssetRoute extends '/animation' | `/frame/${number}`,
   ViewRoute extends '/logs' | '/result'
 > extends Pick<
     ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>,
     'assetRoute' | 'viewRoute' | 'viewRouteContent'
   > {
-  clientGraphicsRendererProcessState: ClientGraphicsRendererProcessValidBundleState
+  clientGraphicsRendererProcessState: ClientGraphicsRendererProcessValidBuildState
 }
 
-function ValidBundleClientGraphicsRendererProcessPage<
+function ValidBuildClientGraphicsRendererProcessPage<
   AssetRoute extends '/animation' | `/frame/${number}`,
   ViewRoute extends '/logs' | '/result'
 >(
-  props: ValidBundleClientGraphicsRendererProcessPageProps<
-    AssetRoute,
-    ViewRoute
-  >
+  props: ValidBuildClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>
 ) {
   const {
     assetRoute,
@@ -596,25 +825,25 @@ function ValidBundleClientGraphicsRendererProcessPage<
       assetRoute={assetRoute}
       viewRoute={viewRoute}
       viewRouteContent={viewRouteContent}
-      animationNameDisplayValue={
-        clientGraphicsRendererProcessState.animationModule.animationName
+      moduleNameDisplayValue={
+        clientGraphicsRendererProcessState.animationModule.moduleName
       }
-      processKeyDisplayValue={
+      targetAssetDisplayValue={
         clientGraphicsRendererProcessState.graphicsRendererProcessKey
       }
-      processStatusDisplayValue={getProcessStatusDisplayValue({
+      buildStatusDisplayValue={'valid'}
+      buildVersionDisplayValue={`${clientGraphicsRendererProcessState.buildVersion}`}
+      renderStatusDisplayValue={getProcessStatusDisplayValue({
         graphicsRendererProcessStatus:
           clientGraphicsRendererProcessState.graphicsRendererProcessStatus,
       })}
-      moduleStatusDisplayValue={'module valid'}
-      moduleSessionVersionDisplayValue={`${clientGraphicsRendererProcessState.bundleSessionVersion}`}
     />
   )
 }
 
 interface GetProcessStatusDisplayValueApi
   extends Pick<
-    ValidBundleClientGraphicsRendererProcessPageProps<
+    ValidBuildClientGraphicsRendererProcessPageProps<
       any,
       any
     >['clientGraphicsRendererProcessState'],
@@ -641,11 +870,11 @@ interface ClientGraphicsRendererProcessPageProps<
     AnimationDevelopmentPageProps<AssetRoute, ViewRoute>,
     'assetRoute' | 'viewRoute'
   > {
-  moduleSessionVersionDisplayValue: string
-  moduleStatusDisplayValue: string
-  animationNameDisplayValue: string
-  processKeyDisplayValue: string
-  processStatusDisplayValue: string
+  buildVersionDisplayValue: string
+  buildStatusDisplayValue: string
+  moduleNameDisplayValue: string
+  targetAssetDisplayValue: string
+  renderStatusDisplayValue: string
   viewRouteContent: ReactNode
 }
 
@@ -656,11 +885,11 @@ function ClientGraphicsRendererProcessPage<
   const {
     viewRoute,
     assetRoute,
-    moduleSessionVersionDisplayValue,
-    moduleStatusDisplayValue,
-    animationNameDisplayValue,
-    processKeyDisplayValue,
-    processStatusDisplayValue,
+    buildVersionDisplayValue,
+    buildStatusDisplayValue,
+    moduleNameDisplayValue,
+    targetAssetDisplayValue,
+    renderStatusDisplayValue,
     viewRouteContent,
   } = props
   const navigateToRoute = useNavigate()
@@ -688,24 +917,24 @@ function ClientGraphicsRendererProcessPage<
             </div>
             <div className={styles.pageDetailsContainer}>
               <FieldDisplay
-                fieldLabel={'module session version'}
-                fieldValue={moduleSessionVersionDisplayValue}
+                fieldLabel={'build version'}
+                fieldValue={buildVersionDisplayValue}
               />
               <FieldDisplay
-                fieldLabel={'module status'}
-                fieldValue={moduleStatusDisplayValue}
+                fieldLabel={'build status'}
+                fieldValue={buildStatusDisplayValue}
               />
               <FieldDisplay
-                fieldLabel={'animation name'}
-                fieldValue={animationNameDisplayValue}
+                fieldLabel={'module name'}
+                fieldValue={moduleNameDisplayValue}
               />
               <FieldDisplay
-                fieldLabel={'process key'}
-                fieldValue={processKeyDisplayValue}
+                fieldLabel={'target asset'}
+                fieldValue={targetAssetDisplayValue}
               />
               <FieldDisplay
-                fieldLabel={'process status'}
-                fieldValue={processStatusDisplayValue}
+                fieldLabel={'render status'}
+                fieldValue={renderStatusDisplayValue}
               />
             </div>
           </div>
@@ -732,11 +961,12 @@ const useClientGraphicsRendererProcessPageStyles = makeStyles((theme) => ({
     display: 'flex',
     flexDirection: 'column',
   },
-  pageDetailsContainer: {},
+  pageDetailsContainer: {
+    paddingLeft: theme.spacing(3),
+  },
 }))
 
-interface OptionFieldProps
-  extends Pick<HTMLAttributes<HTMLDivElement>, 'onClick'> {
+interface OptionFieldProps extends Pick<HTMLAttributes<SVGElement>, 'onClick'> {
   optionLabel: string
   optionSelected: boolean
 }
@@ -748,17 +978,33 @@ function OptionField(props: OptionFieldProps) {
   return (
     <div className={styles.fieldContainer}>
       <div className={styles.optionInputContainer}>
-        <div className={styles.optionInput} onClick={onClick}>
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              backgroundColor: optionSelected
-                ? theme.palette.primary.main
-                : theme.palette.common.white,
-            }}
+        <svg
+          viewBox={`0 0 1 1`}
+          className={styles.optionInput}
+          onClick={onClick}
+        >
+          <rect
+            fill={theme.palette.secondary.main}
+            x={0}
+            y={0}
+            width={1}
+            height={1}
           />
-        </div>
+          <rect
+            fill={theme.palette.common.white}
+            x={0.05}
+            y={0.05}
+            width={0.9}
+            height={0.9}
+          />
+          <rect
+            fill={optionSelected ? theme.palette.secondary.main : 'transparent'}
+            x={0.2}
+            y={0.2}
+            width={0.6}
+            height={0.6}
+          />
+        </svg>
       </div>
       <div className={styles.optionLabel}>{optionLabel}</div>
     </div>
@@ -767,6 +1013,7 @@ function OptionField(props: OptionFieldProps) {
 
 const useOptionFieldStyles = makeStyles<Theme, OptionFieldProps>((theme) => ({
   fieldContainer: {
+    marginBottom: theme.spacing(0.25),
     display: 'flex',
     flexDirection: 'row',
   },
@@ -777,14 +1024,8 @@ const useOptionFieldStyles = makeStyles<Theme, OptionFieldProps>((theme) => ({
     paddingRight: theme.spacing(1),
   },
   optionInput: {
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderColor: ({ optionSelected }) =>
-      optionSelected ? theme.palette.primary.main : theme.palette.primary.light,
-    backgroundColor: theme.palette.common.white,
-    width: theme.spacing(1.25),
-    height: theme.spacing(1.25),
-    padding: 2,
+    width: theme.spacing(2),
+    height: theme.spacing(2),
   },
   optionLabel: {
     fontWeight: 600,
@@ -809,6 +1050,7 @@ function FieldDisplay(props: FieldDisplayProps) {
 
 const useFieldDisplayStyles = makeStyles((theme) => ({
   displayContainer: {
+    marginBottom: theme.spacing(0.25),
     display: 'flex',
     flexDirection: 'row',
   },
@@ -847,6 +1089,7 @@ export const usePageStyles = makeStyles((theme) => ({
     },
   },
   pageContainer: {
+    border: 'none',
     position: 'absolute',
     left: 0,
     top: 0,

@@ -16,9 +16,9 @@ interface AnimationModuleBundlerBuildSucceededEventBase<
   AnimationModuleBundlerBuildSucceededEventType extends string
 > extends AnimationModuleBundlerEventBase<
     AnimationModuleBundlerBuildSucceededEventType,
-    'bundleValid',
+    'validBuild',
     {
-      nextBundleSessionVersion: number
+      nextBuildSessionVersion: number
       nextAnimationModule: AnimationModule
     }
   > {}
@@ -26,20 +26,20 @@ interface AnimationModuleBundlerBuildSucceededEventBase<
 export interface AnimationModuleBundlerRebuildFailedEvent
   extends AnimationModuleBundlerEventBase<
     'animationModuleBundler_rebuildFailed',
-    'bundleInvalid',
+    'invalidBuild',
     {
-      nextBundleSessionVersion: number
-      nextBundleErrorMessage: string
+      nextBuildSessionVersion: number
+      nextBuildErrorMessage: string
     }
   > {}
 
 interface AnimationModuleBundlerEventBase<
   AnimationModuleBundlerEventType extends string,
-  LatestBundleStatus extends string,
+  BuildStatus extends string,
   AnimationModuleBundlerBaseEventPayload extends object
 > extends EventBase<
     AnimationModuleBundlerEventType,
     {
-      nextLatestBundleStatus: LatestBundleStatus
+      nextBuildStatus: BuildStatus
     } & AnimationModuleBundlerBaseEventPayload
   > {}

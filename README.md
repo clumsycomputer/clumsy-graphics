@@ -11,14 +11,14 @@ import React from 'react'
 import { AnimationModule } from '@clumsycomputer/graphics-renderer'
 
 const FooAnimationModule: AnimationModule = {
-  animationName: 'Foo',
+  moduleName: 'Foo',
   frameSize: 1024,
   frameCount: 10,
   animationSettings: {
     frameRate: 5,
     constantRateFactor: 1,
   },
-  FrameDescriptor: FooFrame,
+  getFrameDescription: FooFrame,
 }
 
 export default FooAnimationModule

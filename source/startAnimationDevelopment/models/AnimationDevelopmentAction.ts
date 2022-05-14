@@ -3,7 +3,7 @@ import {
   AnimationModuleBundlerInitialBuildSucceededEvent,
   AnimationModuleBundlerRebuildFailedEvent,
   AnimationModuleBundlerRebuildSucceededEvent,
-} from './AnimationModuleSourceEvent'
+} from './AnimationModuleBundlerEvent'
 import { ActionBase } from './common'
 import {
   GraphicsRendererProcessActiveState,
@@ -66,7 +66,7 @@ export interface SpawnGraphicsRendererProcessAction
   extends ActionBase<
     'spawnGraphicsRendererProcess',
     {
-      bundleSessionVersion: number
+      buildVersion: number
       graphicsRendererProcessKey: string
       graphicsRendererProcessCommandString: string
       graphicAssetPathKey: string
@@ -87,7 +87,7 @@ export interface GraphicsRendererProcessActiveAction
 export interface GraphicsRendererProcessProgressInfoUpdatedAction
   extends GraphicsRendererProcessUpdatedActionBase<
     'graphicsRendererProcessStdoutLogUpdated',
-    Pick<GraphicsRendererProcessState, 'processStdoutLog'>
+    Pick<GraphicsRendererProcessState, 'graphicsRendererProcessStdoutLog'>
   > {}
 
 export interface GraphicsRendererProcessSuccessfulAction
@@ -103,7 +103,10 @@ export interface GraphicsRendererProcessSuccessfulAction
 export interface GraphicsRendererProcessFailedAction
   extends GraphicsRendererProcessUpdatedActionBase<
     'graphicsRendererProcessFailed',
-    Pick<GraphicsRendererProcessFailedState, 'processErrorMessage'>
+    Pick<
+      GraphicsRendererProcessFailedState,
+      'graphicsRendererProcessErrorMessage'
+    >
   > {}
 
 interface GraphicsRendererProcessUpdatedActionBase<
@@ -113,7 +116,7 @@ interface GraphicsRendererProcessUpdatedActionBase<
 > extends ActionBase<
     GraphicsRendererProcessActionType,
     {
-      bundleSessionVersion: number
+      buildVersion: number
       targetGraphicsRendererProcessKey: string
       targetGraphicsRendererProcessStateUpdates: TargetGraphicsRendererProcessStateUpdates
     } & GraphicsRendererProcessStateUpdaterActionPayload

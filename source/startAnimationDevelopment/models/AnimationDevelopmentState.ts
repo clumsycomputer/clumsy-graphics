@@ -10,30 +10,30 @@ export interface AnimationDevelopmentState {
 
 export type AnimationModuleBundlerState =
   | AnimationModuleBundlerInitializingState
-  | AnimationModuleValidBundleState
-  | AnimationModuleInvalidBundleState
+  | AnimationModuleValidBuildState
+  | AnimationModuleInvalidBuildState
 
 export type AnimationModuleBundlerActiveState =
-  | AnimationModuleValidBundleState
-  | AnimationModuleInvalidBundleState
+  | AnimationModuleValidBuildState
+  | AnimationModuleInvalidBuildState
 
 export interface AnimationModuleBundlerInitializingState
   extends AnimationModuleBundlerStateBase<'bundlerInitializing'> {}
 
-export interface AnimationModuleValidBundleState
-  extends AnimationModuleBundlerActiveStateBase<'bundleValid'> {
+export interface AnimationModuleValidBuildState
+  extends AnimationModuleBundlerActiveStateBase<'validBuild'> {
   animationModule: AnimationModule
 }
 
-export interface AnimationModuleInvalidBundleState
-  extends AnimationModuleBundlerActiveStateBase<'bundleInvalid'> {
-  bundleErrorMessage: string
+export interface AnimationModuleInvalidBuildState
+  extends AnimationModuleBundlerActiveStateBase<'invalidBuild'> {
+  buildErrorMessage: string
 }
 
-interface AnimationModuleBundlerActiveStateBase<BundleStatus extends string>
+interface AnimationModuleBundlerActiveStateBase<BuildStatus extends string>
   extends AnimationModuleBundlerStateBase<'bundlerActive'> {
-  latestBundleStatus: BundleStatus
-  bundleSessionVersion: number
+  buildStatus: BuildStatus
+  buildVersion: number
   graphicsRendererProcessStates: Record<string, GraphicsRendererProcessState>
 }
 

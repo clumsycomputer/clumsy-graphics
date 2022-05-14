@@ -1,21 +1,23 @@
 import * as IO from 'io-ts'
-import { ReactElement } from 'react'
 
 export interface AnimationModuleContainer
   extends EsModuleDefault<AnimationModule> {}
 
 export interface AnimationModule {
-  animationName: string
+  moduleName: string
   frameCount: number
-  frameSize: number
-  FrameDescriptor: (props: {
-    frameCount: number
-    frameIndex: number
-  }) => ReactElement
+  frameSize: {
+    width: number
+    height: number
+  }
   animationSettings: {
     frameRate: number
     constantRateFactor: number
   }
+  getFrameDescription: (props: {
+    frameCount: number
+    frameIndex: number
+  }) => Promise<JSX.Element>
 }
 
 export interface EsModuleDefault<SomeDefaultExport extends object> {
@@ -24,10 +26,15 @@ export interface EsModuleDefault<SomeDefaultExport extends object> {
 
 export const AnimationModuleCodec = IO.exact(
   IO.type({
-    animationName: IO.string,
-    FrameDescriptor: IO.any,
+    moduleName: IO.string,
+    getFrameDescription: IO.any,
     frameCount: IO.number,
-    frameSize: IO.number,
+    frameSize: IO.exact(
+      IO.type({
+        width: IO.number,
+        height: IO.number,
+      })
+    ),
     animationSettings: IO.exact(
       IO.type({
         frameRate: IO.number,
@@ -39,9 +46,14 @@ export const AnimationModuleCodec = IO.exact(
 
 export const ClientAnimationModuleCodec = IO.exact(
   IO.type({
-    animationName: IO.string,
+    moduleName: IO.string,
     frameCount: IO.number,
-    frameSize: IO.number,
+    frameSize: IO.exact(
+      IO.type({
+        width: IO.number,
+        height: IO.number,
+      })
+    ),
     animationSettings: IO.exact(
       IO.type({
         frameRate: IO.number,

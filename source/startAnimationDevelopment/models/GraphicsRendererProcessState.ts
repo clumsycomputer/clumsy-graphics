@@ -15,12 +15,12 @@ export interface GraphicsRendererProcessSuccessfulState
 
 export interface GraphicsRendererProcessFailedState
   extends GraphicsRendererProcessStateBase<'processFailed'> {
-  processErrorMessage: string
+  graphicsRendererProcessErrorMessage: string
 }
 
 interface GraphicsRendererProcessStateBase<ProcessStatus extends string> {
   graphicsRendererProcessStatus: ProcessStatus
   graphicsRendererProcessKey: string
-  spawnedProcess: SpawnedNodeProcess
-  processStdoutLog: string
+  spawnedGraphicsRendererProcess: SpawnedNodeProcess
+  graphicsRendererProcessStdoutLog: string
 }

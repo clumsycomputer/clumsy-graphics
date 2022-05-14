@@ -13,7 +13,7 @@ import { GraphicsRendererProcessManagerAction } from '../models/AnimationDevelop
 import {
   AnimationModuleBundlerActiveState,
   AnimationModuleBundlerState,
-  AnimationModuleValidBundleState,
+  AnimationModuleValidBuildState,
 } from '../models/AnimationDevelopmentState'
 import { SpawnedGraphicsRendererProcessEvent } from '../models/SpawnedGraphicsRendererProcessEvent'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
@@ -56,12 +56,12 @@ export function* graphicsRendererProcessManagerSaga(
           actionPayload: {
             nextAnimationModuleBundlerState: {
               bundlerStatus: 'bundlerActive',
-              bundleSessionVersion:
+              buildVersion:
                 someGraphicsRendererProcessManagerAction.actionPayload
-                  .nextBundleSessionVersion,
-              latestBundleStatus:
+                  .nextBuildSessionVersion,
+              buildStatus:
                 someGraphicsRendererProcessManagerAction.actionPayload
-                  .nextLatestBundleStatus,
+                  .nextBuildStatus,
               animationModule:
                 someGraphicsRendererProcessManagerAction.actionPayload
                   .nextAnimationModule,
@@ -88,15 +88,15 @@ export function* graphicsRendererProcessManagerSaga(
           actionPayload: {
             nextAnimationModuleBundlerState: {
               bundlerStatus: 'bundlerActive',
-              bundleSessionVersion:
+              buildVersion:
                 someGraphicsRendererProcessManagerAction.actionPayload
-                  .nextBundleSessionVersion,
-              latestBundleStatus:
+                  .nextBuildSessionVersion,
+              buildStatus:
                 someGraphicsRendererProcessManagerAction.actionPayload
-                  .nextLatestBundleStatus,
-              bundleErrorMessage:
+                  .nextBuildStatus,
+              buildErrorMessage:
                 someGraphicsRendererProcessManagerAction.actionPayload
-                  .nextBundleErrorMessage,
+                  .nextBuildErrorMessage,
               graphicsRendererProcessStates: {},
             },
           },
@@ -106,9 +106,8 @@ export function* graphicsRendererProcessManagerSaga(
       currentAnimationModuleBundlerState.bundlerStatus === 'bundlerActive' &&
       someGraphicsRendererProcessManagerAction.type ===
         'spawnGraphicsRendererProcess' &&
-      currentAnimationModuleBundlerState.bundleSessionVersion ===
-        someGraphicsRendererProcessManagerAction.actionPayload
-          .bundleSessionVersion &&
+      currentAnimationModuleBundlerState.buildVersion ===
+        someGraphicsRendererProcessManagerAction.actionPayload.buildVersion &&
       currentAnimationModuleBundlerState.graphicsRendererProcessStates[
         someGraphicsRendererProcessManagerAction.actionPayload
           .graphicsRendererProcessKey
@@ -136,9 +135,9 @@ export function* graphicsRendererProcessManagerSaga(
               graphicsRendererProcessKey:
                 someGraphicsRendererProcessManagerAction.actionPayload
                   .graphicsRendererProcessKey,
-              spawnedProcess: spawnedGraphicsRendererProcess,
+              spawnedGraphicsRendererProcess: spawnedGraphicsRendererProcess,
               graphicsRendererProcessStatus: 'processActive',
-              processStdoutLog: '',
+              graphicsRendererProcessStdoutLog: '',
             },
           },
         })
@@ -157,10 +156,10 @@ export function* graphicsRendererProcessManagerSaga(
                     targetGraphicsRendererProcessKey:
                       someGraphicsRendererProcessManagerAction.actionPayload
                         .graphicsRendererProcessKey,
-                    bundleSessionVersion:
-                      currentAnimationModuleBundlerState.bundleSessionVersion,
+                    buildVersion:
+                      currentAnimationModuleBundlerState.buildVersion,
                     targetGraphicsRendererProcessStateUpdates: {
-                      processStdoutLog:
+                      graphicsRendererProcessStdoutLog:
                         someSpawnedGraphicsRendererProcessEvent.eventPayload
                           .updatedGraphicsRendererProcessStdoutLog,
                     },
@@ -180,8 +179,8 @@ export function* graphicsRendererProcessManagerSaga(
                     targetGraphicsRendererProcessKey:
                       someGraphicsRendererProcessManagerAction.actionPayload
                         .graphicsRendererProcessKey,
-                    bundleSessionVersion:
-                      currentAnimationModuleBundlerState.bundleSessionVersion,
+                    buildVersion:
+                      currentAnimationModuleBundlerState.buildVersion,
                     targetGraphicsRendererProcessStateUpdates: {
                       graphicAssetUrl:
                         someGraphicsRendererProcessManagerAction.actionPayload
@@ -198,10 +197,10 @@ export function* graphicsRendererProcessManagerSaga(
                     targetGraphicsRendererProcessKey:
                       someGraphicsRendererProcessManagerAction.actionPayload
                         .graphicsRendererProcessKey,
-                    bundleSessionVersion:
-                      currentAnimationModuleBundlerState.bundleSessionVersion,
+                    buildVersion:
+                      currentAnimationModuleBundlerState.buildVersion,
                     targetGraphicsRendererProcessStateUpdates: {
-                      processErrorMessage:
+                      graphicsRendererProcessErrorMessage:
                         someSpawnedGraphicsRendererProcessEvent.eventPayload
                           .graphicsRendererProcessErrorMessage,
                       graphicsRendererProcessStatus: 'processFailed',
@@ -240,7 +239,9 @@ function terminateActiveGraphicsRendererProcesses(
   Object.values(
     currentAnimationModuleBundlerState.graphicsRendererProcessStates
   ).forEach((someGraphicsRendererProcessState) => {
-    someGraphicsRendererProcessState.spawnedProcess.kill('SIGINT')
+    someGraphicsRendererProcessState.spawnedGraphicsRendererProcess.kill(
+      'SIGINT'
+    )
   })
 }
 

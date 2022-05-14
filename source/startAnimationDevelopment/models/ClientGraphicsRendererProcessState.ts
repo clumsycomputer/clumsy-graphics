@@ -1,7 +1,7 @@
 import {
   AnimationModuleBundlerActiveState,
-  AnimationModuleInvalidBundleState,
-  AnimationModuleValidBundleState,
+  AnimationModuleInvalidBuildState,
+  AnimationModuleValidBuildState,
 } from './AnimationDevelopmentState'
 import {
   GraphicsRendererProcessFailedState,
@@ -11,114 +11,117 @@ import {
 import * as IO from 'io-ts'
 import { ClientAnimationModuleCodec } from '../../models/AnimationModule'
 
-export type ClientGraphicsRendererProcessValidBundleState =
+export type ClientGraphicsRendererProcessValidBuildState =
   | ClientGraphicsRendererProcessInitializingState
   | ClientGraphicsRendererProcessActiveState
   | ClientGraphicsRendererProcessSuccessfulState
   | ClientGraphicsRendererProcessFailedState
 
 export interface ClientGraphicsRendererProcessInitializingState
-  extends ClientGraphicsRendererProcessValidBundleStateBase<'processInitializing'> {}
+  extends ClientGraphicsRendererProcessValidBuildStateBase<'processInitializing'> {}
 
 const ClientGraphicsRendererProcessInitializingStateCodec = IO.exact(
   IO.type({
-    bundleSessionVersion: IO.number,
-    latestBundleStatus: IO.literal('bundleValid'),
+    buildVersion: IO.number,
+    buildStatus: IO.literal('validBuild'),
     graphicsRendererProcessStatus: IO.literal('processInitializing'),
     graphicsRendererProcessKey: IO.string,
-    processStdoutLog: IO.string,
+    graphicsRendererProcessStdoutLog: IO.string,
     animationModule: ClientAnimationModuleCodec,
   })
 )
 
 export interface ClientGraphicsRendererProcessActiveState
-  extends ClientGraphicsRendererProcessValidBundleStateBase<'processActive'> {}
+  extends ClientGraphicsRendererProcessValidBuildStateBase<'processActive'> {}
 
 const ClientGraphicsRendererProcessActiveStateCodec = IO.exact(
   IO.type({
-    bundleSessionVersion: IO.number,
-    latestBundleStatus: IO.literal('bundleValid'),
+    buildVersion: IO.number,
+    buildStatus: IO.literal('validBuild'),
     graphicsRendererProcessStatus: IO.literal('processActive'),
     graphicsRendererProcessKey: IO.string,
-    processStdoutLog: IO.string,
+    graphicsRendererProcessStdoutLog: IO.string,
     animationModule: ClientAnimationModuleCodec,
   })
 )
 
 export interface ClientGraphicsRendererProcessSuccessfulState
-  extends ClientGraphicsRendererProcessValidBundleStateBase<'processSuccessful'>,
+  extends ClientGraphicsRendererProcessValidBuildStateBase<'processSuccessful'>,
     Pick<GraphicsRendererProcessSuccessfulState, 'graphicAssetUrl'> {}
 
 const ClientGraphicsRendererProcessSuccessfulStateCodec = IO.exact(
   IO.type({
-    bundleSessionVersion: IO.number,
-    latestBundleStatus: IO.literal('bundleValid'),
+    buildVersion: IO.number,
+    buildStatus: IO.literal('validBuild'),
     graphicsRendererProcessStatus: IO.literal('processSuccessful'),
     graphicsRendererProcessKey: IO.string,
-    processStdoutLog: IO.string,
+    graphicsRendererProcessStdoutLog: IO.string,
     animationModule: ClientAnimationModuleCodec,
     graphicAssetUrl: IO.string,
   })
 )
 
 export interface ClientGraphicsRendererProcessFailedState
-  extends ClientGraphicsRendererProcessValidBundleStateBase<'processFailed'>,
-    Pick<GraphicsRendererProcessFailedState, 'processErrorMessage'> {}
+  extends ClientGraphicsRendererProcessValidBuildStateBase<'processFailed'>,
+    Pick<
+      GraphicsRendererProcessFailedState,
+      'graphicsRendererProcessErrorMessage'
+    > {}
 
 const ClientGraphicsRendererProcessFailedStateCodec = IO.exact(
   IO.type({
-    bundleSessionVersion: IO.number,
-    latestBundleStatus: IO.literal('bundleValid'),
+    buildVersion: IO.number,
+    buildStatus: IO.literal('validBuild'),
     graphicsRendererProcessStatus: IO.literal('processFailed'),
     graphicsRendererProcessKey: IO.string,
-    processStdoutLog: IO.string,
+    graphicsRendererProcessStdoutLog: IO.string,
     animationModule: ClientAnimationModuleCodec,
-    processErrorMessage: IO.string,
+    graphicsRendererProcessErrorMessage: IO.string,
   })
 )
 
-interface ClientGraphicsRendererProcessValidBundleStateBase<
+interface ClientGraphicsRendererProcessValidBuildStateBase<
   GraphicsRendererProcessStatus extends
     | 'processInitializing'
     | GraphicsRendererProcessState['graphicsRendererProcessStatus']
-> extends ClientGraphicsRendererProcessStateBase<'bundleValid'>,
+> extends ClientGraphicsRendererProcessStateBase<'validBuild'>,
     Pick<
       GraphicsRendererProcessState,
-      'graphicsRendererProcessKey' | 'processStdoutLog'
+      'graphicsRendererProcessKey' | 'graphicsRendererProcessStdoutLog'
     > {
   animationModule: Omit<
-    AnimationModuleValidBundleState['animationModule'],
-    'FrameDescriptor'
+    AnimationModuleValidBuildState['animationModule'],
+    'getFrameDescription'
   >
   graphicsRendererProcessStatus: GraphicsRendererProcessStatus
 }
 
-export interface ClientGraphicsRendererProcessInvalidBundleState
-  extends ClientGraphicsRendererProcessStateBase<'bundleInvalid'>,
-    Pick<AnimationModuleInvalidBundleState, 'bundleErrorMessage'> {}
+export interface ClientGraphicsRendererProcessInvalidBuildState
+  extends ClientGraphicsRendererProcessStateBase<'invalidBuild'>,
+    Pick<AnimationModuleInvalidBuildState, 'buildErrorMessage'> {}
 
-const ClientGraphicsRendererProcessInvalidBundleStateCodec = IO.exact(
+const ClientGraphicsRendererProcessInvalidBuildStateCodec = IO.exact(
   IO.type({
-    bundleSessionVersion: IO.number,
-    latestBundleStatus: IO.literal('bundleInvalid'),
-    bundleErrorMessage: IO.string,
+    buildVersion: IO.number,
+    buildStatus: IO.literal('invalidBuild'),
+    buildErrorMessage: IO.string,
   })
 )
 
 interface ClientGraphicsRendererProcessStateBase<
-  LatestBundleStatus extends AnimationModuleBundlerActiveState['latestBundleStatus']
-> extends Pick<AnimationModuleBundlerActiveState, 'bundleSessionVersion'> {
-  latestBundleStatus: LatestBundleStatus
+  BuildStatus extends AnimationModuleBundlerActiveState['buildStatus']
+> extends Pick<AnimationModuleBundlerActiveState, 'buildVersion'> {
+  buildStatus: BuildStatus
 }
 
 export type ClientGraphicsRendererProcessState =
-  | ClientGraphicsRendererProcessValidBundleState
-  | ClientGraphicsRendererProcessInvalidBundleState
+  | ClientGraphicsRendererProcessValidBuildState
+  | ClientGraphicsRendererProcessInvalidBuildState
 
 export const ClientGraphicsRendererProcessStateCodec = IO.union([
   ClientGraphicsRendererProcessInitializingStateCodec,
   ClientGraphicsRendererProcessActiveStateCodec,
   ClientGraphicsRendererProcessSuccessfulStateCodec,
   ClientGraphicsRendererProcessFailedStateCodec,
-  ClientGraphicsRendererProcessInvalidBundleStateCodec,
+  ClientGraphicsRendererProcessInvalidBuildStateCodec,
 ])

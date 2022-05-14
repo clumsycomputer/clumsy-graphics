@@ -18,13 +18,30 @@ const appTheme = createTheme({
   typography: {
     fontFamily: "'IBM Plex Mono', 'monospace'",
   },
+  palette: {
+    primary: {
+      main: '#827717',
+      light: '#b4a647',
+      dark: '#524c00',
+    },
+    secondary: {
+      main: '#172282',
+      light: '#524ab2',
+      dark: '#000054',
+    },
+    error: {
+      main: '#c62828',
+      light: '#ff5f52',
+      dark: '#8e0000',
+    },
+  },
 })
 ReactDom.render(
-  <ThemeProvider theme={appTheme}>
-    <BrowserRouter>
+  <BrowserRouter>
+    <ThemeProvider theme={appTheme}>
       <AnimationDevelopmentApp />
-    </BrowserRouter>
-  </ThemeProvider>,
+    </ThemeProvider>
+  </BrowserRouter>,
   appContainer
 )
 

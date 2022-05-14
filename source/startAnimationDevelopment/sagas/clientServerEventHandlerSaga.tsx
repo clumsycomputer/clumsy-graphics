@@ -126,8 +126,8 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
           JSON.stringify(specifiedClientGraphicsRendererProcessState)
         )
         if (
-          specifiedClientGraphicsRendererProcessState.latestBundleStatus ===
-            'bundleValid' &&
+          specifiedClientGraphicsRendererProcessState.buildStatus ===
+            'validBuild' &&
           specifiedClientGraphicsRendererProcessState.graphicsRendererProcessStatus ===
             'processInitializing'
         ) {
@@ -142,7 +142,7 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
             numberOfFrameRendererWorkers,
             graphicsRendererProcessStateRequestQueryParams,
             currentBundleSessionVersion:
-              currentAnimationModuleBundlerState.bundleSessionVersion,
+              currentAnimationModuleBundlerState.buildVersion,
           })
           yield* put({
             type: 'spawnGraphicsRendererProcess',
@@ -151,8 +151,7 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
               graphicAssetPathKey,
               graphicAssetPath,
               graphicAssetUrlResult,
-              bundleSessionVersion:
-                currentAnimationModuleBundlerState.bundleSessionVersion,
+              buildVersion: currentAnimationModuleBundlerState.buildVersion,
               graphicsRendererProcessKey:
                 graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey,
             },
@@ -197,7 +196,7 @@ interface GetPartialSpawnGraphicsRendererProcessActionPayloadApi
       typeof getGraphicsRendererProcessStateRequestQueryParams,
       'graphicsRendererProcessStateRequestQueryParams'
     > {
-  currentBundleSessionVersion: AnimationModuleBundlerActiveState['bundleSessionVersion']
+  currentBundleSessionVersion: AnimationModuleBundlerActiveState['buildVersion']
 }
 
 function getPartialSpawnGraphicsRendererProcessActionPayload(
@@ -279,55 +278,48 @@ function getSpecifiedClientGraphicsRendererProcessState(
       graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey
     ]
   if (
-    currentAnimationModuleBundlerState.latestBundleStatus === 'bundleValid' &&
+    currentAnimationModuleBundlerState.buildStatus === 'validBuild' &&
     !specifiedGraphicsRendererProcessState
   ) {
-    const { FrameDescriptor, ...clientAnimationModule } =
+    const { getFrameDescription, ...clientAnimationModule } =
       currentAnimationModuleBundlerState.animationModule
     return {
       specifiedClientGraphicsRendererProcessState: {
-        bundleSessionVersion:
-          currentAnimationModuleBundlerState.bundleSessionVersion,
-        latestBundleStatus:
-          currentAnimationModuleBundlerState.latestBundleStatus,
+        buildVersion: currentAnimationModuleBundlerState.buildVersion,
+        buildStatus: currentAnimationModuleBundlerState.buildStatus,
         graphicsRendererProcessKey:
           graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey,
         animationModule: clientAnimationModule,
         graphicsRendererProcessStatus: 'processInitializing',
-        processStdoutLog: '',
+        graphicsRendererProcessStdoutLog: '',
       },
     }
   } else if (
-    currentAnimationModuleBundlerState.latestBundleStatus === 'bundleValid' &&
+    currentAnimationModuleBundlerState.buildStatus === 'validBuild' &&
     specifiedGraphicsRendererProcessState
   ) {
     const {
-      spawnedProcess,
+      spawnedGraphicsRendererProcess,
       ...someSpecifiedClientGraphicsRendererProcessState
     } = specifiedGraphicsRendererProcessState
-    const { FrameDescriptor, ...clientAnimationModule } =
+    const { getFrameDescription, ...clientAnimationModule } =
       currentAnimationModuleBundlerState.animationModule
     return {
       specifiedClientGraphicsRendererProcessState: {
         ...someSpecifiedClientGraphicsRendererProcessState,
-        bundleSessionVersion:
-          currentAnimationModuleBundlerState.bundleSessionVersion,
-        latestBundleStatus:
-          currentAnimationModuleBundlerState.latestBundleStatus,
+        buildVersion: currentAnimationModuleBundlerState.buildVersion,
+        buildStatus: currentAnimationModuleBundlerState.buildStatus,
         animationModule: clientAnimationModule,
       },
     }
   } else if (
-    currentAnimationModuleBundlerState.latestBundleStatus === 'bundleInvalid'
+    currentAnimationModuleBundlerState.buildStatus === 'invalidBuild'
   ) {
     return {
       specifiedClientGraphicsRendererProcessState: {
-        bundleSessionVersion:
-          currentAnimationModuleBundlerState.bundleSessionVersion,
-        latestBundleStatus:
-          currentAnimationModuleBundlerState.latestBundleStatus,
-        bundleErrorMessage:
-          currentAnimationModuleBundlerState.bundleErrorMessage,
+        buildVersion: currentAnimationModuleBundlerState.buildVersion,
+        buildStatus: currentAnimationModuleBundlerState.buildStatus,
+        buildErrorMessage: currentAnimationModuleBundlerState.buildErrorMessage,
       },
     }
   } else {
@@ -409,7 +401,7 @@ function* clientRequestsPageHandler(api: ClientRequestsPageHandlerApi) {
       <html lang={'en'}>
         <head>
           <meta charSet={'utf-8'} />
-          <meta name="viewport" content="initial-scale=1, width=device-width" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" />
           <link

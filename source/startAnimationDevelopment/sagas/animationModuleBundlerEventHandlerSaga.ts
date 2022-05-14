@@ -1,6 +1,6 @@
 import { SagaReturnType } from '@redux-saga/core/effects'
 import { put, takeEvent } from '../helpers/storeEffects'
-import { AnimationModuleBundlerEvent } from '../models/AnimationModuleSourceEvent'
+import { AnimationModuleBundlerEvent } from '../models/AnimationModuleBundlerEvent'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
 
 export interface AnimationModuleBundlerEventHandlerSagaApi

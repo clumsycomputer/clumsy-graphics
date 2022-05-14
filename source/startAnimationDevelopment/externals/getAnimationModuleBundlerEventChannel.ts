@@ -7,7 +7,7 @@ import {
 } from 'redux-saga'
 import { getAnimationModule } from '../../helpers/getAnimationModule'
 import { getAnimationModuleBundle } from '../../helpers/getAnimationModuleBundle'
-import { AnimationModuleBundlerEvent } from '../models/AnimationModuleSourceEvent'
+import { AnimationModuleBundlerEvent } from '../models/AnimationModuleBundlerEvent'
 import { InitialSagaApi } from '../sagas/initialSaga'
 
 export interface GetAnimationModuleBundlerEventChannelApi
@@ -20,7 +20,7 @@ export function getAnimationModuleBundlerEventChannel(
   const animationModuleBundlerEventChannel =
     getEventChannel<AnimationModuleBundlerEvent>(
       (emitAnimationModuleSourceEvent) => {
-        let nextBundleSessionVersion = 0
+        let nextBuildSessionVersion = 0
         buildModule({
           platform: 'node',
           bundle: true,
@@ -40,22 +40,22 @@ export function getAnimationModuleBundlerEventChannel(
                 const nextAnimationModule = await getAnimationModule({
                   animationModuleBundle,
                 })
-                nextBundleSessionVersion = nextBundleSessionVersion + 1
+                nextBuildSessionVersion = nextBuildSessionVersion + 1
                 emitAnimationModuleSourceEvent({
                   eventType: 'animationModuleBundler_rebuildSucceeded',
                   eventPayload: {
-                    nextBundleSessionVersion,
+                    nextBuildSessionVersion,
                     nextAnimationModule,
-                    nextLatestBundleStatus: 'bundleValid',
+                    nextBuildStatus: 'validBuild',
                   },
                 })
               } catch (nextBundleError) {
                 emitAnimationModuleSourceEvent({
                   eventType: 'animationModuleBundler_rebuildFailed',
                   eventPayload: {
-                    nextBundleSessionVersion,
-                    nextLatestBundleStatus: 'bundleInvalid',
-                    nextBundleErrorMessage:
+                    nextBuildSessionVersion,
+                    nextBuildStatus: 'invalidBuild',
+                    nextBuildErrorMessage:
                       nextBundleError instanceof Error
                         ? nextBundleError.message
                         : 'Invalid animation module',
@@ -74,9 +74,9 @@ export function getAnimationModuleBundlerEventChannel(
           emitAnimationModuleSourceEvent({
             eventType: 'animationModuleBundler_initialBuildSucceeded',
             eventPayload: {
-              nextBundleSessionVersion,
+              nextBuildSessionVersion,
               nextAnimationModule,
-              nextLatestBundleStatus: 'bundleValid',
+              nextBuildStatus: 'validBuild',
             },
           })
         })

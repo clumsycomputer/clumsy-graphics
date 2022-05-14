@@ -51,7 +51,7 @@ export async function renderAnimationModule(api: RenderAnimationModuleApi) {
       animationMp4OutputPath,
       frameRate: animationModule.animationSettings.frameRate,
       constantRateFactor: animationModule.animationSettings.constantRateFactor,
-      framePathPattern: `${tempFramesDirectoryPath}/${animationModule.animationName}_%d.png`,
+      framePathPattern: `${tempFramesDirectoryPath}/${animationModule.moduleName}_%d.png`,
     })
   } finally {
     cleanupTempFramesDirectory({
@@ -68,9 +68,7 @@ function getTempFramesDirectoryPath(api: GetTempFramesDirectoryPathApi) {
   const { animationModule } = api
   const tempFramesDirectoryPath = Path.resolve(
     __dirname,
-    `./${animationModule.animationName}-frames_${Math.ceil(
-      Math.random() * 10000
-    )}`
+    `./${animationModule.moduleName}-frames_${Math.ceil(Math.random() * 10000)}`
   )
   return { tempFramesDirectoryPath }
 }
@@ -140,7 +138,7 @@ async function renderAnimationFrames(api: RenderAnimationFramesApi) {
                         frameIndex: nextFrameIndex,
                         framePngOutputPath: Path.join(
                           tempFramesDirectoryPath,
-                          `./${animationModule.animationName}_${nextFrameIndex}.png`
+                          `./${animationModule.moduleName}_${nextFrameIndex}.png`
                         ),
                       },
                     }

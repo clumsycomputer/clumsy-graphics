@@ -1,7 +1,7 @@
 import { call, spawn } from '../helpers/storeEffects'
 import { StartAnimationDevelopmentApi } from '../startAnimationDevelopment'
 import { animationDevelopmentSetupSaga } from './animationDevelopmentSetupSaga'
-import { animationModuleBundlerEventHandlerSaga } from './animationModuleSourceEventHandlerSaga'
+import { animationModuleBundlerEventHandlerSaga } from './animationModuleBundlerEventHandlerSaga'
 import { clientServerEventHandlerSaga } from './clientServerEventHandlerSaga'
 import { graphicsRendererProcessManagerSaga } from './graphicsRendererProcessManagerSaga'
 

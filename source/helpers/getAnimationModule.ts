@@ -1,9 +1,10 @@
 import VirtualMachine from 'vm'
+import { decodeData } from '../helpers/decodeData'
 import {
   AnimationModuleContainer,
   AnimationModuleContainerCodec,
 } from '../models/AnimationModule'
-import { decodeData } from '../helpers/decodeData'
+import 'isomorphic-fetch'
 
 export interface GetAnimationModuleApi {
   animationModuleBundle: string
@@ -12,6 +13,7 @@ export interface GetAnimationModuleApi {
 export async function getAnimationModule(api: GetAnimationModuleApi) {
   const { animationModuleBundle } = api
   const evaluationContext = VirtualMachine.createContext({
+    ...globalThis,
     console,
     process: {
       env: {

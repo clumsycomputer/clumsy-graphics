@@ -1,5 +1,9 @@
-import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
-import { AnimationModuleSourceChangedEvent } from './AnimationModuleSourceEvent'
+import { AnimationModuleBundlerState } from './AnimationDevelopmentState'
+import {
+  AnimationModuleBundlerInitialBuildSucceededEvent,
+  AnimationModuleBundlerRebuildFailedEvent,
+  AnimationModuleBundlerRebuildSucceededEvent,
+} from './AnimationModuleBundlerEvent'
 import { ActionBase } from './common'
 import {
   GraphicsRendererProcessActiveState,
@@ -9,28 +13,52 @@ import {
 } from './GraphicsRendererProcessState'
 
 export type AnimationDevelopmentAction =
-  | AnimationModuleSourceChangedAction
-  | AnimationModuleSourceUpdatedAction
+  | AnimationModuleBundlerInitialBuildSucceededAction
+  | AnimationModuleBundlerRebuildSucceededAction
+  | AnimationModuleBundlerRebuildFailedAction
+  | AnimationModuleBundlerStateUpdatedAction
   | SpawnGraphicsRendererProcessAction
   | GraphicsRendererProcessActiveAction
+  | GraphicsRendererProcessUpdatedAction
+
+// export type AnimationModuleBundlerBuildSucceededAction =
+//   | AnimationModuleBundlerInitialBuildSucceededAction
+//   | AnimationModuleBundlerRebuildSucceededAction
+
+export type GraphicsRendererProcessManagerAction =
+  | AnimationModuleBundlerInitialBuildSucceededAction
+  | AnimationModuleBundlerRebuildSucceededAction
+  | AnimationModuleBundlerRebuildFailedAction
+  | SpawnGraphicsRendererProcessAction
+
+export type GraphicsRendererProcessUpdatedAction =
   | GraphicsRendererProcessProgressInfoUpdatedAction
   | GraphicsRendererProcessSuccessfulAction
   | GraphicsRendererProcessFailedAction
 
-export interface AnimationModuleSourceChangedAction
+export interface AnimationModuleBundlerInitialBuildSucceededAction
   extends ActionBase<
-    'animationModuleSourceChanged',
-    Pick<
-      AnimationModuleSourceChangedEvent['eventPayload'],
-      'nextAnimationModuleSessionVersion'
-    >
+    'animationModuleBundler_initialBuildSucceeded',
+    AnimationModuleBundlerInitialBuildSucceededEvent['eventPayload']
   > {}
 
-export interface AnimationModuleSourceUpdatedAction
+export interface AnimationModuleBundlerRebuildSucceededAction
   extends ActionBase<
-    'animationModuleSourceUpdated',
+    'animationModuleBundler_rebuildSucceeded',
+    AnimationModuleBundlerRebuildSucceededEvent['eventPayload']
+  > {}
+
+export interface AnimationModuleBundlerRebuildFailedAction
+  extends ActionBase<
+    'animationModuleBundler_rebuildFailed',
+    AnimationModuleBundlerRebuildFailedEvent['eventPayload']
+  > {}
+
+export interface AnimationModuleBundlerStateUpdatedAction
+  extends ActionBase<
+    'animationModuleBundlerStateUpdated',
     {
-      animationModuleSourceState: AnimationModuleSourceReadyState
+      nextAnimationModuleBundlerState: AnimationModuleBundlerState
     }
   > {}
 
@@ -38,10 +66,9 @@ export interface SpawnGraphicsRendererProcessAction
   extends ActionBase<
     'spawnGraphicsRendererProcess',
     {
-      animationModuleSessionVersionStamp: number
+      buildVersion: number
       graphicsRendererProcessKey: string
       graphicsRendererProcessCommandString: string
-      initialProcessProgressInfo: string
       graphicAssetPathKey: string
       graphicAssetPath: string
       graphicAssetUrlResult: string
@@ -49,21 +76,24 @@ export interface SpawnGraphicsRendererProcessAction
   > {}
 
 export interface GraphicsRendererProcessActiveAction
-  extends GraphicsRendererProcessActionBase<
+  extends ActionBase<
     'graphicsRendererProcessActive',
-    GraphicsRendererProcessActiveState
+    {
+      newGraphicsRendererProcessKey: string
+      newGraphicsRendererProcessState: GraphicsRendererProcessActiveState
+    }
   > {}
 
 export interface GraphicsRendererProcessProgressInfoUpdatedAction
-  extends GraphicsRendererProcessStateUpdaterAction<
-    'graphicsRendererProcessProgressInfoUpdated',
-    GraphicsRendererProcessActiveState
+  extends GraphicsRendererProcessUpdatedActionBase<
+    'graphicsRendererProcessStdoutLogUpdated',
+    Pick<GraphicsRendererProcessState, 'graphicsRendererProcessStdoutLog'>
   > {}
 
 export interface GraphicsRendererProcessSuccessfulAction
-  extends GraphicsRendererProcessStateUpdaterAction<
+  extends GraphicsRendererProcessUpdatedActionBase<
     'graphicsRendererProcessSuccessful',
-    GraphicsRendererProcessSuccessfulState,
+    Pick<GraphicsRendererProcessSuccessfulState, 'graphicAssetUrl'>,
     {
       targetGraphicAssetKey: string
       targetGraphicAssetPath: string
@@ -71,35 +101,23 @@ export interface GraphicsRendererProcessSuccessfulAction
   > {}
 
 export interface GraphicsRendererProcessFailedAction
-  extends GraphicsRendererProcessStateUpdaterAction<
+  extends GraphicsRendererProcessUpdatedActionBase<
     'graphicsRendererProcessFailed',
-    GraphicsRendererProcessFailedState
+    Pick<
+      GraphicsRendererProcessFailedState,
+      'graphicsRendererProcessErrorMessage'
+    >
   > {}
 
-interface GraphicsRendererProcessStateUpdaterAction<
+interface GraphicsRendererProcessUpdatedActionBase<
   GraphicsRendererProcessActionType extends string,
-  TargetGraphicsRendererProcessState extends GraphicsRendererProcessState,
-  GraphicsRendererProcessStateUpdaterAction extends object = {}
-> extends GraphicsRendererProcessActionBase<
-    GraphicsRendererProcessActionType,
-    TargetGraphicsRendererProcessState,
-    {
-      animationModuleSessionVersionStamp: number
-    } & GraphicsRendererProcessStateUpdaterAction
-  > {}
-
-interface GraphicsRendererProcessActionBase<
-  GraphicsRendererProcessActionType extends string,
-  TargetGraphicsRendererProcessState extends GraphicsRendererProcessState,
-  GraphicsRendererProcessActionPayload extends object = {}
+  TargetGraphicsRendererProcessStateUpdates extends Partial<GraphicsRendererProcessState>,
+  GraphicsRendererProcessStateUpdaterActionPayload extends object = {}
 > extends ActionBase<
     GraphicsRendererProcessActionType,
     {
+      buildVersion: number
       targetGraphicsRendererProcessKey: string
-      targetGraphicsRendererProcessState: TargetGraphicsRendererProcessState
-    } & GraphicsRendererProcessActionPayload
+      targetGraphicsRendererProcessStateUpdates: TargetGraphicsRendererProcessStateUpdates
+    } & GraphicsRendererProcessStateUpdaterActionPayload
   > {}
-
-export type GraphicsRendererProcessManagerAction =
-  | AnimationModuleSourceChangedAction
-  | SpawnGraphicsRendererProcessAction

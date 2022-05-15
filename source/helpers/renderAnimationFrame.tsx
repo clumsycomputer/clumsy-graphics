@@ -9,7 +9,6 @@ import { AnimationModule } from '../models/AnimationModule'
 import { FunctionResult } from '../models/common'
 import { decodeData } from './decodeData'
 import { getAnimationModule } from './getAnimationModule'
-import { writeProcessProgressInfoToStdout } from './writeProcessProgressInfo'
 
 export interface RenderAnimationFrameApi {
   animationModule: FunctionResult<typeof getAnimationModule>
@@ -19,16 +18,14 @@ export interface RenderAnimationFrameApi {
 
 export async function renderAnimationFrame(api: RenderAnimationFrameApi) {
   const { animationModule, frameIndex, frameFileOutputPath } = api
-  const { FrameDescriptor, frameCount } = animationModule
-  writeProcessProgressInfoToStdout({
-    processProgressInfo: `rendering frame: ${frameIndex}`,
+  const { getFrameDescription, frameCount } = animationModule
+  console.log(`[${frameIndex}]: rendering svg markup...`)
+  const frameDescription = await getFrameDescription({
+    frameIndex,
+    frameCount,
   })
-  const frameSvgMarkup = ReactDomServer.renderToStaticMarkup(
-    <FrameDescriptor frameCount={frameCount} frameIndex={frameIndex} />
-  )
-  writeProcessProgressInfoToStdout({
-    processProgressInfo: 'encoding svg markup to image file...',
-  })
+  const frameSvgMarkup = ReactDomServer.renderToStaticMarkup(frameDescription)
+  console.log(`[${frameIndex}]: encoding svg markup to image file...`)
   await writeSvgMarkupToImageFile({
     frameFileOutputPath,
     frameSvgMarkup,
@@ -55,7 +52,8 @@ async function writeSvgMarkupToImageFile(api: WriteSvgMarkupToImageFileApi) {
   })
   const svgToPngStream = new Inkscape([
     `--export-type=${frameFileOutputType}`,
-    `--export-width=${frameSize}`,
+    `--export-width=${frameSize.width}`,
+    `--export-height=${frameSize.height}`,
   ])
   const framePngWriteStream = FileSystem.createWriteStream(frameFileOutputPath)
   return Stream.pipeline(frameSvgStream, svgToPngStream, framePngWriteStream)

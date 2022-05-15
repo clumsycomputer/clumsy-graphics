@@ -16,7 +16,6 @@ export function getClientServerEventChannel(
   const clientServerEventChannel = getEventChannel<ClientServerEvent>(
     (emitClientServerEvent) => {
       const clientServer = getExpressServer()
-
       clientServer.get(
         '/api/latestAnimationModule/graphicsRendererProcessState',
         (someClientRequest, someServerResponse) => {
@@ -41,7 +40,7 @@ export function getClientServerEventChannel(
           })
         }
       )
-      clientServer.get('/', (someClientRequest, someServerResponse) => {
+      clientServer.get('*', (someClientRequest, someServerResponse) => {
         emitClientServerEvent({
           eventType: 'clientRequestsPage',
           eventPayload: {

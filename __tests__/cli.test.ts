@@ -91,7 +91,7 @@ test.describe('graphics-renderer', () => {
     test('startAnimationDevelopment renders and serves initial animation asset', async ({
       page,
     }) => {
-      await page.goto('localhost:3000/?assetType=mp4')
+      await page.goto('localhost:3000/animation/result')
       const assetResponse = await page.waitForResponse('**/asset/0.mp4')
       expect(await assetResponse.headerValues('Content-Type')).toEqual([
         'video/mp4',
@@ -100,7 +100,7 @@ test.describe('graphics-renderer', () => {
     test('startAnimationDevelopment renders and serves initial frame asset', async ({
       page,
     }) => {
-      await page.goto('localhost:3000/?assetType=png&frameIndex=0')
+      await page.goto('localhost:3000/frame/0/result')
       const assetResponse = await page.waitForResponse('**/asset/0_0.png')
       expect(await assetResponse.headerValues('Content-Type')).toEqual([
         'image/png',

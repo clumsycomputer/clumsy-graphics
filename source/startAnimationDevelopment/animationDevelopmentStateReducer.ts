@@ -1,25 +1,26 @@
 import {
   AnimationDevelopmentAction,
-  AnimationModuleSourceUpdatedAction,
+  AnimationModuleBundlerStateUpdatedAction,
   GraphicsRendererProcessActiveAction,
   GraphicsRendererProcessFailedAction,
   GraphicsRendererProcessProgressInfoUpdatedAction,
   GraphicsRendererProcessSuccessfulAction,
+  GraphicsRendererProcessUpdatedAction,
 } from './models/AnimationDevelopmentAction'
 import { AnimationDevelopmentState } from './models/AnimationDevelopmentState'
 
 export function animationDevelopmentStateReducer(
   currentAnimationDevelopmentState: AnimationDevelopmentState = {
-    animationModuleSourceState: {
-      sourceStatus: 'sourceInitializing',
+    animationModuleBundlerState: {
+      bundlerStatus: 'bundlerInitializing',
     },
     availableAssetsFilePathMap: {},
   },
   someAnimationDevelopmentAction: AnimationDevelopmentAction
 ): AnimationDevelopmentState {
   switch (someAnimationDevelopmentAction.type) {
-    case 'animationModuleSourceUpdated':
-      return handleAnimationModuleSourceUpdated(
+    case 'animationModuleBundlerStateUpdated':
+      return handleAnimationModuleBundlerStateUpdated(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
@@ -28,8 +29,8 @@ export function animationDevelopmentStateReducer(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
-    case 'graphicsRendererProcessProgressInfoUpdated':
-      return handleGraphicsRendererProcessProgessInfoUpdated(
+    case 'graphicsRendererProcessStdoutLogUpdated':
+      return handleGraphicsRendererProcessStdoutLogUpdated(
         currentAnimationDevelopmentState,
         someAnimationDevelopmentAction.actionPayload
       )
@@ -48,15 +49,15 @@ export function animationDevelopmentStateReducer(
   }
 }
 
-function handleAnimationModuleSourceUpdated(
+function handleAnimationModuleBundlerStateUpdated(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
-  animationModuleSourceUpdatedActionPayload: AnimationModuleSourceUpdatedAction['actionPayload']
+  animationModuleBundlerStateUpdatedActionPayload: AnimationModuleBundlerStateUpdatedAction['actionPayload']
 ): AnimationDevelopmentState {
-  const { animationModuleSourceState } =
-    animationModuleSourceUpdatedActionPayload
+  const { nextAnimationModuleBundlerState } =
+    animationModuleBundlerStateUpdatedActionPayload
   return {
     ...currentAnimationDevelopmentState,
-    animationModuleSourceState,
+    animationModuleBundlerState: nextAnimationModuleBundlerState,
   }
 }
 
@@ -64,111 +65,53 @@ function handleGraphicsRendererProcessActive(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   graphicsRendererProcessActiveActionPayload: GraphicsRendererProcessActiveAction['actionPayload']
 ): AnimationDevelopmentState {
-  const {
-    targetGraphicsRendererProcessKey,
-    targetGraphicsRendererProcessState,
-  } = graphicsRendererProcessActiveActionPayload
+  const { newGraphicsRendererProcessKey, newGraphicsRendererProcessState } =
+    graphicsRendererProcessActiveActionPayload
   if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceInitializing'
+    currentAnimationDevelopmentState.animationModuleBundlerState
+      .bundlerStatus === 'bundlerInitializing'
   ) {
     throw new Error('wtf? handleGraphicsRendererProcessActive')
   } else {
     return {
       ...currentAnimationDevelopmentState,
-      animationModuleSourceState: {
-        ...currentAnimationDevelopmentState.animationModuleSourceState,
+      animationModuleBundlerState: {
+        ...currentAnimationDevelopmentState.animationModuleBundlerState,
         graphicsRendererProcessStates: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState
+          ...currentAnimationDevelopmentState.animationModuleBundlerState
             .graphicsRendererProcessStates,
-          [targetGraphicsRendererProcessKey]:
-            targetGraphicsRendererProcessState,
+          [newGraphicsRendererProcessKey]: newGraphicsRendererProcessState,
         },
       },
     }
   }
 }
 
-function handleGraphicsRendererProcessProgessInfoUpdated(
+function handleGraphicsRendererProcessStdoutLogUpdated(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   graphicsRendererProcessUpdateActionPayload: GraphicsRendererProcessProgressInfoUpdatedAction['actionPayload']
 ): AnimationDevelopmentState {
-  const {
-    animationModuleSessionVersionStamp,
-    targetGraphicsRendererProcessKey,
-    targetGraphicsRendererProcessState,
-  } = graphicsRendererProcessUpdateActionPayload
-  if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceInitializing'
-  ) {
-    throw new Error('wtf? handleGraphicsRendererProcessProgessInfoUpdated')
-  } else if (
-    currentAnimationDevelopmentState.animationModuleSourceState
-      .animationModuleSessionVersion === animationModuleSessionVersionStamp &&
-    currentAnimationDevelopmentState.animationModuleSourceState
-      .graphicsRendererProcessStates[targetGraphicsRendererProcessKey]
-      ?.processStatus === 'processActive'
-  ) {
-    return {
-      ...currentAnimationDevelopmentState,
-      animationModuleSourceState: {
-        ...currentAnimationDevelopmentState.animationModuleSourceState,
-        graphicsRendererProcessStates: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState
-            .graphicsRendererProcessStates,
-          [targetGraphicsRendererProcessKey]:
-            targetGraphicsRendererProcessState,
-        },
-      },
-    }
-  } else {
-    return currentAnimationDevelopmentState
-  }
+  return handleGraphicsRendererProcessUpdated(
+    currentAnimationDevelopmentState,
+    graphicsRendererProcessUpdateActionPayload
+  )
 }
 
 function handleGraphicsRendererProcessSuccessful(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   graphicsRendererProcessSuccessfulActionPayload: GraphicsRendererProcessSuccessfulAction['actionPayload']
 ): AnimationDevelopmentState {
-  const {
-    animationModuleSessionVersionStamp,
-    targetGraphicsRendererProcessKey,
-    targetGraphicsRendererProcessState,
-    targetGraphicAssetKey,
-    targetGraphicAssetPath,
-  } = graphicsRendererProcessSuccessfulActionPayload
-  const availableAssetsFilePathMap = {
-    ...currentAnimationDevelopmentState.availableAssetsFilePathMap,
-    [targetGraphicAssetKey]: targetGraphicAssetPath,
-  }
-  if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceInitializing'
-  ) {
-    throw new Error('wtf? handleGraphicsRendererProcessSuccessful')
-  } else if (
-    currentAnimationDevelopmentState.animationModuleSourceState
-      .animationModuleSessionVersion === animationModuleSessionVersionStamp
-  ) {
-    return {
-      ...currentAnimationDevelopmentState,
-      availableAssetsFilePathMap,
-      animationModuleSourceState: {
-        ...currentAnimationDevelopmentState.animationModuleSourceState,
-        graphicsRendererProcessStates: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState
-            .graphicsRendererProcessStates,
-          [targetGraphicsRendererProcessKey]:
-            targetGraphicsRendererProcessState,
-        },
-      },
-    }
-  } else {
-    return {
-      ...currentAnimationDevelopmentState,
-      availableAssetsFilePathMap,
-    }
+  const { targetGraphicAssetKey, targetGraphicAssetPath } =
+    graphicsRendererProcessSuccessfulActionPayload
+  return {
+    ...handleGraphicsRendererProcessUpdated(
+      currentAnimationDevelopmentState,
+      graphicsRendererProcessSuccessfulActionPayload
+    ),
+    availableAssetsFilePathMap: {
+      ...currentAnimationDevelopmentState.availableAssetsFilePathMap,
+      [targetGraphicAssetKey]: targetGraphicAssetPath,
+    },
   }
 }
 
@@ -176,29 +119,44 @@ function handleGraphicsRendererProcessFailed(
   currentAnimationDevelopmentState: AnimationDevelopmentState,
   graphicsRendererProcessFailedActionPayload: GraphicsRendererProcessFailedAction['actionPayload']
 ): AnimationDevelopmentState {
+  return handleGraphicsRendererProcessUpdated(
+    currentAnimationDevelopmentState,
+    graphicsRendererProcessFailedActionPayload
+  )
+}
+
+function handleGraphicsRendererProcessUpdated(
+  currentAnimationDevelopmentState: AnimationDevelopmentState,
+  graphicsRendererProcessFailedActionPayload: GraphicsRendererProcessUpdatedAction['actionPayload']
+): AnimationDevelopmentState {
   const {
-    animationModuleSessionVersionStamp,
+    buildVersion,
     targetGraphicsRendererProcessKey,
-    targetGraphicsRendererProcessState,
+    targetGraphicsRendererProcessStateUpdates,
   } = graphicsRendererProcessFailedActionPayload
-  if (
-    currentAnimationDevelopmentState.animationModuleSourceState.sourceStatus ===
-    'sourceInitializing'
-  ) {
+  const currentAnimationModuleSourceState =
+    currentAnimationDevelopmentState.animationModuleBundlerState
+      .bundlerStatus === 'bundlerActive' &&
+    currentAnimationDevelopmentState.animationModuleBundlerState
+  const currentTargetGraphicRendererProcessState =
+    currentAnimationModuleSourceState &&
+    currentAnimationModuleSourceState.buildVersion === buildVersion &&
+    currentAnimationModuleSourceState.graphicsRendererProcessStates[
+      targetGraphicsRendererProcessKey
+    ]
+  if (!currentAnimationModuleSourceState) {
     throw new Error('wtf? handleGraphicsRendererProcessFailed')
-  } else if (
-    currentAnimationDevelopmentState.animationModuleSourceState
-      .animationModuleSessionVersion === animationModuleSessionVersionStamp
-  ) {
+  } else if (currentTargetGraphicRendererProcessState) {
     return {
       ...currentAnimationDevelopmentState,
-      animationModuleSourceState: {
-        ...currentAnimationDevelopmentState.animationModuleSourceState,
+      animationModuleBundlerState: {
+        ...currentAnimationModuleSourceState,
         graphicsRendererProcessStates: {
-          ...currentAnimationDevelopmentState.animationModuleSourceState
-            .graphicsRendererProcessStates,
-          [targetGraphicsRendererProcessKey]:
-            targetGraphicsRendererProcessState,
+          ...currentAnimationModuleSourceState.graphicsRendererProcessStates,
+          [targetGraphicsRendererProcessKey]: {
+            ...currentTargetGraphicRendererProcessState,
+            ...targetGraphicsRendererProcessStateUpdates,
+          },
         },
       },
     }

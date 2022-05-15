@@ -1,25 +1,42 @@
+import { AnimationModule } from '../../models/AnimationModule'
 import { GraphicsRendererProcessState } from './GraphicsRendererProcessState'
 
 export interface AnimationDevelopmentState {
-  animationModuleSourceState: AnimationModuleSourceState
+  animationModuleBundlerState: AnimationModuleBundlerState
   availableAssetsFilePathMap: {
     [graphicAssetPathKey: string]: string
   }
 }
 
-export type AnimationModuleSourceState =
-  | AnimationModuleSourceInitializingState
-  | AnimationModuleSourceReadyState
+export type AnimationModuleBundlerState =
+  | AnimationModuleBundlerInitializingState
+  | AnimationModuleValidBuildState
+  | AnimationModuleInvalidBuildState
 
-export interface AnimationModuleSourceInitializingState
-  extends AnimationModuleSourceStateBase<'sourceInitializing'> {}
+export type AnimationModuleBundlerActiveState =
+  | AnimationModuleValidBuildState
+  | AnimationModuleInvalidBuildState
 
-export interface AnimationModuleSourceReadyState
-  extends AnimationModuleSourceStateBase<'sourceReady'> {
-  animationModuleSessionVersion: number
+export interface AnimationModuleBundlerInitializingState
+  extends AnimationModuleBundlerStateBase<'bundlerInitializing'> {}
+
+export interface AnimationModuleValidBuildState
+  extends AnimationModuleBundlerActiveStateBase<'validBuild'> {
+  animationModule: AnimationModule
+}
+
+export interface AnimationModuleInvalidBuildState
+  extends AnimationModuleBundlerActiveStateBase<'invalidBuild'> {
+  buildErrorMessage: string
+}
+
+interface AnimationModuleBundlerActiveStateBase<BuildStatus extends string>
+  extends AnimationModuleBundlerStateBase<'bundlerActive'> {
+  buildStatus: BuildStatus
+  buildVersion: number
   graphicsRendererProcessStates: Record<string, GraphicsRendererProcessState>
 }
 
-interface AnimationModuleSourceStateBase<SourceStatus extends string> {
-  sourceStatus: SourceStatus
+interface AnimationModuleBundlerStateBase<BundlerStatus extends string> {
+  bundlerStatus: BundlerStatus
 }

@@ -3,18 +3,15 @@ import Path from 'path'
 import ReactDomServer from 'react-dom/server'
 import { SagaReturnType } from 'redux-saga/effects'
 import { decodeData } from '../../helpers/decodeData'
-import { DistributiveOmit, FunctionBrand } from '../../models/common'
+import { FunctionBrand } from '../../models/common'
 import { call, put, select, spawn, takeEvent } from '../helpers/storeEffects'
-import { AnimationModuleSourceReadyState } from '../models/AnimationDevelopmentState'
+import { AnimationModuleBundlerActiveState } from '../models/AnimationDevelopmentState'
+import { ClientGraphicsRendererProcessState } from '../models/ClientGraphicsRendererProcessState'
 import {
   ClientRequestsGraphicAssetEvent,
   ClientRequestsPageEvent,
   ClientServerEvent,
 } from '../models/ClientServerEvent'
-import {
-  ClientGraphicsRendererProcessState,
-  GraphicsRendererProcessState,
-} from '../models/GraphicsRendererProcessState'
 import {
   GraphicsRendererProcessStateRequestQueryParams,
   GraphicsRendererProcessStateRequestQueryParamsCodec,
@@ -31,7 +28,9 @@ export interface ClientServerEventHandlerSagaApi
     >,
     Pick<
       SagaReturnType<typeof animationDevelopmentSetupSaga>,
-      'clientServerEventChannel' | 'clientPageBundle'
+      | 'clientServerEventChannel'
+      | 'clientPageBundle'
+      | 'localStorageSessionCacheId'
     > {}
 
 export function* clientServerEventHandlerSaga(
@@ -43,6 +42,7 @@ export function* clientServerEventHandlerSaga(
     animationModulePath,
     numberOfFrameRendererWorkers,
     clientPageBundle,
+    localStorageSessionCacheId,
   } = api
   while (true) {
     const someClientServerEvent = yield* takeEvent<ClientServerEvent>(
@@ -69,6 +69,7 @@ export function* clientServerEventHandlerSaga(
       case 'clientRequestsPage':
         yield* spawn(clientRequestsPageHandler, {
           clientPageBundle,
+          localStorageSessionCacheId,
           serverResponse: someClientServerEvent.eventPayload.serverResponse,
         })
         break
@@ -98,74 +99,64 @@ function* clientRequestsGraphicsRendererProcessStateHandler(
     animationModulePath,
     numberOfFrameRendererWorkers,
   } = api
-  const currentAnimationModuleSourceState = yield* select(
+  const currentAnimationModuleBundlerState = yield* select(
     (currentAnimationDevelopmentState) =>
-      currentAnimationDevelopmentState.animationModuleSourceState
+      currentAnimationDevelopmentState.animationModuleBundlerState
   )
   try {
-    const { graphicsRendererProcessStateRequestQueryParams } = yield* call(
-      getGraphicsRendererProcessStateRequestQueryParams,
-      {
-        clientRequestQueryData: clientRequest.query,
-      }
-    )
-    switch (currentAnimationModuleSourceState.sourceStatus) {
-      case 'sourceInitializing':
+    switch (currentAnimationModuleBundlerState.bundlerStatus) {
+      case 'bundlerInitializing':
         serverResponse.sendStatus(204)
         break
-      case 'sourceReady':
-        const { specifiedGraphicsRendererProcessKey } =
-          getSpecifiedGraphicsRendererProcessKey({
-            graphicsRendererProcessStateRequestQueryParams,
-          })
-        const specifiedGraphicsRendererProcessState =
-          currentAnimationModuleSourceState.graphicsRendererProcessStates[
-            specifiedGraphicsRendererProcessKey
-          ]
-        const {
-          graphicsRendererProcessCommandString,
-          initialProcessProgressInfo,
-          graphicAssetPathKey,
-          graphicAssetPath,
-          graphicAssetUrlResult,
-        } = getPartialSpawnGraphicsRendererProcessActionPayload({
-          generatedAssetsDirectoryPath,
-          animationModulePath,
-          numberOfFrameRendererWorkers,
-          graphicsRendererProcessStateRequestQueryParams,
-          currentAnimationModuleSessionVersion:
-            currentAnimationModuleSourceState.animationModuleSessionVersion,
-        })
-        if (specifiedGraphicsRendererProcessState === undefined) {
-          yield* put({
-            type: 'spawnGraphicsRendererProcess',
-            actionPayload: {
-              graphicsRendererProcessCommandString,
-              initialProcessProgressInfo,
-              graphicAssetPathKey,
-              graphicAssetPath,
-              graphicAssetUrlResult,
-              animationModuleSessionVersionStamp:
-                currentAnimationModuleSourceState.animationModuleSessionVersion,
-              graphicsRendererProcessKey: specifiedGraphicsRendererProcessKey,
-            },
-          })
-        }
+      case 'bundlerActive':
+        const { graphicsRendererProcessStateRequestQueryParams } = yield* call(
+          getGraphicsRendererProcessStateRequestQueryParams,
+          {
+            clientRequestQueryData: clientRequest.query,
+          }
+        )
         const { specifiedClientGraphicsRendererProcessState } =
           getSpecifiedClientGraphicsRendererProcessState({
-            currentPartialGraphicsRendererProcessState:
-              specifiedGraphicsRendererProcessState || {
-                processProgressInfo: initialProcessProgressInfo,
-                processStatus: 'processActive',
-              },
-            currentAnimationModuleSessionVersion:
-              currentAnimationModuleSourceState.animationModuleSessionVersion,
+            currentAnimationModuleBundlerState,
+            graphicsRendererProcessStateRequestQueryParams,
           })
         serverResponse.statusCode = 200
         serverResponse.setHeader('Content-Type', 'application/json')
         serverResponse.send(
           JSON.stringify(specifiedClientGraphicsRendererProcessState)
         )
+        if (
+          specifiedClientGraphicsRendererProcessState.buildStatus ===
+            'validBuild' &&
+          specifiedClientGraphicsRendererProcessState.graphicsRendererProcessStatus ===
+            'processInitializing'
+        ) {
+          const {
+            graphicsRendererProcessCommandString,
+            graphicAssetPathKey,
+            graphicAssetPath,
+            graphicAssetUrlResult,
+          } = getPartialSpawnGraphicsRendererProcessActionPayload({
+            generatedAssetsDirectoryPath,
+            animationModulePath,
+            numberOfFrameRendererWorkers,
+            graphicsRendererProcessStateRequestQueryParams,
+            currentBundleSessionVersion:
+              currentAnimationModuleBundlerState.buildVersion,
+          })
+          yield* put({
+            type: 'spawnGraphicsRendererProcess',
+            actionPayload: {
+              graphicsRendererProcessCommandString,
+              graphicAssetPathKey,
+              graphicAssetPath,
+              graphicAssetUrlResult,
+              buildVersion: currentAnimationModuleBundlerState.buildVersion,
+              graphicsRendererProcessKey:
+                graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey,
+            },
+          })
+        }
         break
     }
   } catch (queryParamsError) {
@@ -194,30 +185,6 @@ async function getGraphicsRendererProcessStateRequestQueryParams(
   return { graphicsRendererProcessStateRequestQueryParams }
 }
 
-interface GetSpecifiedGraphicsRendererProcessKeyApi
-  extends FunctionBrand<
-    typeof getGraphicsRendererProcessStateRequestQueryParams,
-    'graphicsRendererProcessStateRequestQueryParams'
-  > {}
-
-function getSpecifiedGraphicsRendererProcessKey(
-  api: GetSpecifiedGraphicsRendererProcessKeyApi
-) {
-  const { graphicsRendererProcessStateRequestQueryParams } = api
-  switch (graphicsRendererProcessStateRequestQueryParams.assetType) {
-    case 'mp4':
-      return {
-        specifiedGraphicsRendererProcessKey: 'animation',
-      }
-    case 'png':
-      return {
-        specifiedGraphicsRendererProcessKey: `${graphicsRendererProcessStateRequestQueryParams.frameIndex}`,
-      }
-    default:
-      throw new Error('wtf? getSpecifiedGraphicsRendererProcessKey')
-  }
-}
-
 interface GetPartialSpawnGraphicsRendererProcessActionPayloadApi
   extends Pick<
       ClientRequestsGraphicsRendererProcessStateHandlerApi,
@@ -229,7 +196,7 @@ interface GetPartialSpawnGraphicsRendererProcessActionPayloadApi
       typeof getGraphicsRendererProcessStateRequestQueryParams,
       'graphicsRendererProcessStateRequestQueryParams'
     > {
-  currentAnimationModuleSessionVersion: AnimationModuleSourceReadyState['animationModuleSessionVersion']
+  currentBundleSessionVersion: AnimationModuleBundlerActiveState['buildVersion']
 }
 
 function getPartialSpawnGraphicsRendererProcessActionPayload(
@@ -239,53 +206,62 @@ function getPartialSpawnGraphicsRendererProcessActionPayload(
     generatedAssetsDirectoryPath,
     animationModulePath,
     graphicsRendererProcessStateRequestQueryParams,
-    currentAnimationModuleSessionVersion,
+    currentBundleSessionVersion,
     numberOfFrameRendererWorkers,
   } = api
   const generatedAssetsDirectoryAbsolutePath = Path.resolve(
     generatedAssetsDirectoryPath
   )
   const animationModuleAbsolutePath = Path.resolve(animationModulePath)
-  switch (graphicsRendererProcessStateRequestQueryParams.assetType) {
-    case 'mp4':
-      const animationAssetFilename = `${currentAnimationModuleSessionVersion}.mp4`
-      const animationMp4OutputPath = Path.join(
-        generatedAssetsDirectoryAbsolutePath,
-        animationAssetFilename
-      )
-      return {
-        graphicAssetPathKey: animationAssetFilename,
-        graphicAssetPath: animationMp4OutputPath,
-        graphicAssetUrlResult: `/asset/${animationAssetFilename}`,
-        graphicsRendererProcessCommandString: `graphics-renderer renderAnimation --animationModulePath=${animationModuleAbsolutePath} --animationMp4OutputPath=${animationMp4OutputPath} --numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
-        initialProcessProgressInfo: 'starting animation rendering...',
-      }
-    case 'png':
-      const frameAssetFilename = `${currentAnimationModuleSessionVersion}_${graphicsRendererProcessStateRequestQueryParams.frameIndex}.png`
-      const frameFileOutputPath = Path.join(
-        generatedAssetsDirectoryAbsolutePath,
-        frameAssetFilename
-      )
-      return {
-        graphicAssetPathKey: frameAssetFilename,
-        graphicAssetPath: frameFileOutputPath,
-        graphicsRendererProcessCommandString: `graphics-renderer renderAnimationFrame --animationModulePath=${animationModuleAbsolutePath} --frameIndex=${graphicsRendererProcessStateRequestQueryParams.frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
-        graphicAssetUrlResult: `/asset/${frameAssetFilename}`,
-        initialProcessProgressInfo: 'starting frame rendering...',
-      }
-    default:
-      throw new Error(
-        'wtf? getPartialSpawnGraphicsRendererProcessActionPayload'
-      )
+  if (
+    graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey.startsWith(
+      'animation'
+    )
+  ) {
+    const animationAssetFilename = `${currentBundleSessionVersion}.mp4`
+    const animationMp4OutputPath = Path.join(
+      generatedAssetsDirectoryAbsolutePath,
+      animationAssetFilename
+    )
+    return {
+      graphicAssetPathKey: animationAssetFilename,
+      graphicAssetPath: animationMp4OutputPath,
+      graphicAssetUrlResult: `/asset/${animationAssetFilename}`,
+      graphicsRendererProcessCommandString: `graphics-renderer renderAnimation --animationModulePath=${animationModuleAbsolutePath} --animationMp4OutputPath=${animationMp4OutputPath} --numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
+    }
+  } else if (
+    graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey.startsWith(
+      'frame'
+    )
+  ) {
+    const frameIndex = Number(
+      graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey.replace(
+        'frame/',
+        ''
+      )!
+    )
+    const frameAssetFilename = `${currentBundleSessionVersion}_${frameIndex}.png`
+    const frameFileOutputPath = Path.join(
+      generatedAssetsDirectoryAbsolutePath,
+      frameAssetFilename
+    )
+    return {
+      graphicAssetPathKey: frameAssetFilename,
+      graphicAssetPath: frameFileOutputPath,
+      graphicsRendererProcessCommandString: `graphics-renderer renderAnimationFrame --animationModulePath=${animationModuleAbsolutePath} --frameIndex=${frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
+      graphicAssetUrlResult: `/asset/${frameAssetFilename}`,
+    }
+  } else {
+    throw new Error('wtf? getPartialSpawnGraphicsRendererProcessActionPayload')
   }
 }
 
-interface GetSpecifiedClientGraphicsRendererProcessStateApi {
-  currentPartialGraphicsRendererProcessState: DistributiveOmit<
-    GraphicsRendererProcessState,
-    'spawnedProcess'
-  >
-  currentAnimationModuleSessionVersion: AnimationModuleSourceReadyState['animationModuleSessionVersion']
+interface GetSpecifiedClientGraphicsRendererProcessStateApi
+  extends FunctionBrand<
+    typeof getGraphicsRendererProcessStateRequestQueryParams,
+    'graphicsRendererProcessStateRequestQueryParams'
+  > {
+  currentAnimationModuleBundlerState: AnimationModuleBundlerActiveState
 }
 
 function getSpecifiedClientGraphicsRendererProcessState(
@@ -294,14 +270,60 @@ function getSpecifiedClientGraphicsRendererProcessState(
   specifiedClientGraphicsRendererProcessState: ClientGraphicsRendererProcessState
 } {
   const {
-    currentPartialGraphicsRendererProcessState,
-    currentAnimationModuleSessionVersion,
+    graphicsRendererProcessStateRequestQueryParams,
+    currentAnimationModuleBundlerState,
   } = api
-  return {
-    specifiedClientGraphicsRendererProcessState: {
-      ...currentPartialGraphicsRendererProcessState,
-      animationModuleSessionVersion: currentAnimationModuleSessionVersion,
-    },
+  const specifiedGraphicsRendererProcessState =
+    currentAnimationModuleBundlerState.graphicsRendererProcessStates[
+      graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey
+    ]
+  if (
+    currentAnimationModuleBundlerState.buildStatus === 'validBuild' &&
+    !specifiedGraphicsRendererProcessState
+  ) {
+    const { getFrameDescription, ...clientAnimationModule } =
+      currentAnimationModuleBundlerState.animationModule
+    return {
+      specifiedClientGraphicsRendererProcessState: {
+        buildVersion: currentAnimationModuleBundlerState.buildVersion,
+        buildStatus: currentAnimationModuleBundlerState.buildStatus,
+        graphicsRendererProcessKey:
+          graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey,
+        animationModule: clientAnimationModule,
+        graphicsRendererProcessStatus: 'processInitializing',
+        graphicsRendererProcessStdoutLog: '',
+      },
+    }
+  } else if (
+    currentAnimationModuleBundlerState.buildStatus === 'validBuild' &&
+    specifiedGraphicsRendererProcessState
+  ) {
+    const {
+      spawnedGraphicsRendererProcess,
+      ...someSpecifiedClientGraphicsRendererProcessState
+    } = specifiedGraphicsRendererProcessState
+    const { getFrameDescription, ...clientAnimationModule } =
+      currentAnimationModuleBundlerState.animationModule
+    return {
+      specifiedClientGraphicsRendererProcessState: {
+        ...someSpecifiedClientGraphicsRendererProcessState,
+        buildVersion: currentAnimationModuleBundlerState.buildVersion,
+        buildStatus: currentAnimationModuleBundlerState.buildStatus,
+        animationModule: clientAnimationModule,
+      },
+    }
+  } else if (
+    currentAnimationModuleBundlerState.buildStatus === 'invalidBuild'
+  ) {
+    return {
+      specifiedClientGraphicsRendererProcessState: {
+        buildVersion: currentAnimationModuleBundlerState.buildVersion,
+        buildStatus: currentAnimationModuleBundlerState.buildStatus,
+        buildErrorMessage: currentAnimationModuleBundlerState.buildErrorMessage,
+      },
+    }
+  } else {
+    throw new Error('wtf? getSpecifiedClientGraphicsRendererProcessState')
   }
 }
 
@@ -364,11 +386,14 @@ function getTargetAssetMimeType(api: GetTargetAssetMimeTypeApi) {
 }
 
 interface ClientRequestsPageHandlerApi
-  extends Pick<ClientServerEventHandlerSagaApi, 'clientPageBundle'>,
+  extends Pick<
+      ClientServerEventHandlerSagaApi,
+      'clientPageBundle' | 'localStorageSessionCacheId'
+    >,
     Pick<ClientRequestsPageEvent['eventPayload'], 'serverResponse'> {}
 
 function* clientRequestsPageHandler(api: ClientRequestsPageHandlerApi) {
-  const { serverResponse, clientPageBundle } = api
+  const { serverResponse, localStorageSessionCacheId, clientPageBundle } = api
   serverResponse.statusCode = 200
   serverResponse.setHeader('Content-Type', 'text/html')
   serverResponse.send(
@@ -376,9 +401,18 @@ function* clientRequestsPageHandler(api: ClientRequestsPageHandlerApi) {
       <html lang={'en'}>
         <head>
           <meta charSet={'utf-8'} />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" />
+          <link
+            href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap"
+            rel="stylesheet"
+          />
         </head>
         <body>
           <script
+            id={'client-page-bundle-script'}
+            data-local-storage-session-cache-id={localStorageSessionCacheId}
             dangerouslySetInnerHTML={{
               __html: clientPageBundle,
             }}

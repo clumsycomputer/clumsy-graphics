@@ -1,7 +1,4 @@
 import { ChildProcess as SpawnedNodeProcess } from 'child_process'
-import { AnimationModuleSourceReadyState } from './AnimationDevelopmentState'
-import * as IO from 'io-ts'
-import { DistributiveOmit } from '../../models/common'
 
 export type GraphicsRendererProcessState =
   | GraphicsRendererProcessActiveState
@@ -9,9 +6,7 @@ export type GraphicsRendererProcessState =
   | GraphicsRendererProcessFailedState
 
 export interface GraphicsRendererProcessActiveState
-  extends GraphicsRendererProcessStateBase<'processActive'> {
-  processProgressInfo: string
-}
+  extends GraphicsRendererProcessStateBase<'processActive'> {}
 
 export interface GraphicsRendererProcessSuccessfulState
   extends GraphicsRendererProcessStateBase<'processSuccessful'> {
@@ -20,61 +15,12 @@ export interface GraphicsRendererProcessSuccessfulState
 
 export interface GraphicsRendererProcessFailedState
   extends GraphicsRendererProcessStateBase<'processFailed'> {
-  processErrorMessage: string
+  graphicsRendererProcessErrorMessage: string
 }
 
 interface GraphicsRendererProcessStateBase<ProcessStatus extends string> {
-  processStatus: ProcessStatus
-  spawnedProcess: SpawnedNodeProcess
+  graphicsRendererProcessStatus: ProcessStatus
+  graphicsRendererProcessKey: string
+  spawnedGraphicsRendererProcess: SpawnedNodeProcess
+  graphicsRendererProcessStdoutLog: string
 }
-
-export type ClientGraphicsRendererProcessState = Pick<
-  AnimationModuleSourceReadyState,
-  'animationModuleSessionVersion'
-> &
-  DistributiveOmit<GraphicsRendererProcessState, 'spawnedProcess'>
-
-export type ClientGraphicsRendererProcessActiveState = Extract<
-  ClientGraphicsRendererProcessState,
-  { processStatus: 'processActive' }
->
-
-const ClientGraphicsRendererProcessActiveStateCodec = IO.exact(
-  IO.type({
-    processStatus: IO.literal('processActive'),
-    processProgressInfo: IO.string,
-    animationModuleSessionVersion: IO.number,
-  })
-)
-
-export type ClientGraphicsRendererProcessSuccessfulState = Extract<
-  ClientGraphicsRendererProcessState,
-  { processStatus: 'processSuccessful' }
->
-
-const ClientGraphicsRendererProcessSuccessfulStateCodec = IO.exact(
-  IO.type({
-    processStatus: IO.literal('processSuccessful'),
-    graphicAssetUrl: IO.string,
-    animationModuleSessionVersion: IO.number,
-  })
-)
-
-export type ClientGraphicsRendererProcessFailedState = Extract<
-  ClientGraphicsRendererProcessState,
-  { processStatus: 'processFailed' }
->
-
-const ClientGraphicsRendererProcessFailedStateCodec = IO.exact(
-  IO.type({
-    processStatus: IO.literal('processFailed'),
-    processErrorMessage: IO.string,
-    animationModuleSessionVersion: IO.number,
-  })
-)
-
-export const ClientGraphicsRendererProcessStateCodec = IO.union([
-  ClientGraphicsRendererProcessActiveStateCodec,
-  ClientGraphicsRendererProcessSuccessfulStateCodec,
-  ClientGraphicsRendererProcessFailedStateCodec,
-])

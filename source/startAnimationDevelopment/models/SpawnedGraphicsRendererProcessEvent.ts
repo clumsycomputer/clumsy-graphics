@@ -1,16 +1,16 @@
 import { EventBase } from './common'
 
 export type SpawnedGraphicsRendererProcessEvent =
-  | SpawnedGraphicsRendererProcessMessageEvent
+  | SpawnedGraphicsRendererProcessStdoutLogUpdatedEvent
   | SpawnedGraphicsRendererProcessSuccessfulEvent
   | SpawnedGraphicsRendererProcessFailedEvent
   | SpawnedGraphicsRendererProcessTerminatedEvent
 
-export interface SpawnedGraphicsRendererProcessMessageEvent
+export interface SpawnedGraphicsRendererProcessStdoutLogUpdatedEvent
   extends EventBase<
-    'graphicsRendererProcessMessage',
+    'graphicsRendererProcessStdoutLogUpdated',
     {
-      graphicsRendererProcessMessage: string
+      updatedGraphicsRendererProcessStdoutLog: string
     }
   > {}
 

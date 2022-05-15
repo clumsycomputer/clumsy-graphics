@@ -2,25 +2,28 @@ import React from 'react'
 import { AnimationModule } from '../source/models/AnimationModule'
 
 const FooAnimationModule: AnimationModule = {
-  animationName: 'foo',
-  frameSize: 512,
+  moduleName: 'Foo',
   frameCount: 10,
+  getFrameDescription: getFooFrameDescription,
+  frameSize: {
+    width: 512,
+    height: 512,
+  },
   animationSettings: {
     frameRate: 5,
     constantRateFactor: 1,
   },
-  FrameDescriptor: FooFrame,
 }
 
 export default FooAnimationModule
 
-interface FooFrameProps {
+interface GetFooFrameDescriptionApi {
   frameCount: number
   frameIndex: number
 }
 
-function FooFrame(props: FooFrameProps) {
-  const { frameCount, frameIndex } = props
+async function getFooFrameDescription(api: GetFooFrameDescriptionApi) {
+  const { frameCount, frameIndex } = api
   const centerAngle = ((2 * Math.PI) / frameCount) * frameIndex
   return (
     <svg viewBox={`0 0 100 100`}>

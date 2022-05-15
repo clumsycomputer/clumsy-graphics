@@ -8,15 +8,15 @@ this repository provides tooling for rendering animations where frames are descr
 
 ```typescript
 import React from 'react'
-import { AnimationModule } from '../source/models/AnimationModule'
+import { AnimationModule } from '@clumsycomputer/graphics-renderer'
 
 const FooAnimationModule: AnimationModule = {
   moduleName: 'Foo',
   frameCount: 10,
   getFrameDescription: getFooFrameDescription,
   frameSize: {
-    width: 512,
-    height: 512,
+    width: 1024,
+    height: 1024,
   },
   animationSettings: {
     frameRate: 5,

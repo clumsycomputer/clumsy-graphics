@@ -10,7 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "jsx": "react",
     "noUncheckedIndexedAccess": true,
-    "noFallthroughCasesInSwitch": false,
+    "noFallthroughCasesInSwitch": false
   },
   "exclude": ["node_modules"]
 }

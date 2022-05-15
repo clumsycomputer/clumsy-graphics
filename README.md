@@ -8,28 +8,31 @@ this repository provides tooling for rendering animations where frames are descr
 
 ```typescript
 import React from 'react'
-import { AnimationModule } from '@clumsycomputer/graphics-renderer'
+import { AnimationModule } from '../source/models/AnimationModule'
 
 const FooAnimationModule: AnimationModule = {
   moduleName: 'Foo',
-  frameSize: 1024,
   frameCount: 10,
+  getFrameDescription: getFooFrameDescription,
+  frameSize: {
+    width: 512,
+    height: 512,
+  },
   animationSettings: {
     frameRate: 5,
     constantRateFactor: 1,
   },
-  getFrameDescription: FooFrame,
 }
 
 export default FooAnimationModule
 
-interface FooFrameProps {
+interface GetFooFrameDescriptionApi {
   frameCount: number
   frameIndex: number
 }
 
-function FooFrame(props: FooFrameProps) {
-  const { frameCount, frameIndex } = props
+async function getFooFrameDescription(api: GetFooFrameDescriptionApi) {
+  const { frameCount, frameIndex } = api
   const centerAngle = ((2 * Math.PI) / frameCount) * frameIndex
   return (
     <svg viewBox={`0 0 100 100`}>
@@ -50,7 +53,7 @@ function FooFrame(props: FooFrameProps) {
 #### render animation as mp4
 
 ```bash
-yarn graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --outputDirectoryPath=./example-project"
+yarn graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./example-project/example.mp4"
 ```
 
 #### convert animation to gif
@@ -121,17 +124,17 @@ ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
 
 - open browser at development service with a valid query string detailing desired asset
 
-  - schema: `localhost:<ClientServerPort>(?assetType=mp4 | ?assetType=png&frameIndex=<FrameIndex>)`
+  - schema: `localhost:<ClientServerPort>(/animation | /frame/<FrameIndex>)(/logs | /result)`
 
-  - animation example: `localhost:3000?assetType=mp4`
+  - animation example: `localhost:3000/animation/result`
 
-  - frame example: `localhost:3000?assetType=png&frameIndex=0`
+  - frame example: `localhost:3000/frame/0/result`
 
 - begin making changes on the active animation module
 
 ### renderAnimation
 
-> graphics-renderer renderAnimation --animationModulePath=\<SourceFilePath> --outputDirectoryPath=\<DirectoryPath>
+> graphics-renderer renderAnimation --animationModulePath=\<SourceFilePath> --animationMp4OutputPath=\<DirectoryPath>
 
 #### api
 

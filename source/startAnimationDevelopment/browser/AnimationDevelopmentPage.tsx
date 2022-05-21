@@ -21,6 +21,8 @@ import {
   ClientGraphicsRendererProcessSuccessfulState,
   ClientGraphicsRendererProcessValidBuildState,
 } from '../models/ClientGraphicsRendererProcessState'
+import { ArrowDropDownSharp } from '@material-ui/icons'
+import { Input, Popover } from '@material-ui/core'
 
 export interface AnimationDevelopmentResultPageProps<
   AssetRoute extends '/animation' | `/frame/${number}`
@@ -49,6 +51,7 @@ export function AnimationDevelopmentResultPage<
   const styles = useAnimationDevelopmentResultPageStyles()
   return (
     <AnimationDevelopmentPage
+      key={graphicsRendererProcessKey}
       graphicsRendererProcessKey={graphicsRendererProcessKey}
       assetRoute={assetRoute}
       viewRoute={viewRoute}
@@ -195,9 +198,9 @@ export function AnimationDevelopmentLogsPage<
   AssetRoute extends '/animation' | `/frame/${number}`
 >(props: AnimationDevelopmentLogsPageProps<AssetRoute>) {
   const { graphicsRendererProcessKey, assetRoute, viewRoute } = props
-  const theme = useTheme()
   return (
     <AnimationDevelopmentPage
+      key={graphicsRendererProcessKey}
       graphicsRendererProcessKey={graphicsRendererProcessKey}
       assetRoute={assetRoute}
       viewRoute={viewRoute}
@@ -484,6 +487,7 @@ function AnimationDevelopmentPage<
     case 'serverInitializing':
       return (
         <Page
+          assetRouteSelect={null}
           pageBody={
             <div className={styles.responseStatusDisplayContainer}>
               initializing...
@@ -494,6 +498,7 @@ function AnimationDevelopmentPage<
     case 'serverError':
       return (
         <Page
+          assetRouteSelect={null}
           pageBody={
             <div
               className={`${styles.responseStatusDisplayContainer} ${styles.responseStatusError}`}
@@ -506,6 +511,7 @@ function AnimationDevelopmentPage<
     case 'fetchError':
       return (
         <Page
+          assetRouteSelect={null}
           pageBody={
             <div
               className={`${styles.responseStatusDisplayContainer} ${styles.responseStatusError}`}
@@ -896,6 +902,9 @@ function ClientGraphicsRendererProcessPage<
   const styles = useClientGraphicsRendererProcessPageStyles()
   return (
     <Page
+      assetRouteSelect={
+        <AssetRouteSelect assetRoute={assetRoute} viewRoute={viewRoute} />
+      }
       pageBody={
         <Fragment>
           <div className={styles.pageOverviewContainer}>
@@ -965,6 +974,116 @@ const useClientGraphicsRendererProcessPageStyles = makeStyles((theme) => ({
     paddingLeft: theme.spacing(3),
   },
 }))
+
+interface AssetRouteSelectProps<
+  AssetRoute extends '/animation' | `/frame/${number}`,
+  ViewRoute extends '/logs' | '/result'
+> extends Pick<
+    ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>,
+    'assetRoute' | 'viewRoute'
+  > {}
+
+function AssetRouteSelect<
+  AssetRoute extends '/animation' | `/frame/${number}`,
+  ViewRoute extends '/logs' | '/result'
+>(props: AssetRouteSelectProps<AssetRoute, ViewRoute>) {
+  const { assetRoute, viewRoute } = props
+  const navigateToRoute = useNavigate()
+  const [selectingAssetRoute, setSelectingAssetRoute] = useState(false)
+  const targetAssetLabelRef = useRef<HTMLDivElement>(null)
+  const theme = useTheme()
+  return (
+    <div>
+      <div
+        ref={targetAssetLabelRef}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          color: theme.palette.getContrastText(theme.palette.primary.main),
+          cursor: 'pointer',
+        }}
+        onClick={() => {
+          setSelectingAssetRoute(true)
+        }}
+      >
+        {assetRoute.slice(1)}
+        <ArrowDropDownSharp />
+      </div>
+      <Popover
+        anchorEl={targetAssetLabelRef.current}
+        open={selectingAssetRoute}
+        PaperProps={{
+          square: true,
+          elevation: 3,
+          style: {},
+        }}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        onClose={() => {
+          setSelectingAssetRoute(false)
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            borderStyle: 'solid',
+            borderWidth: 2,
+            borderColor: theme.palette.primary.light,
+          }}
+        >
+          <div
+            style={{
+              padding: theme.spacing(1),
+              paddingTop: theme.spacing(0.75),
+              paddingBottom: theme.spacing(0.5),
+            }}
+          >
+            <Input
+              fullWidth={true}
+              disableUnderline={true}
+              autoFocus={true}
+              placeholder={'select target asset'}
+            />
+          </div>
+          <div
+            style={{
+              margin: '0 -9999rem',
+              height: 2,
+              backgroundColor: theme.palette.primary.light,
+            }}
+          />
+          <div style={{ flexBasis: 256, overflowY: 'scroll' }}>
+            {[
+              'animation',
+              ...new Array(512)
+                .fill(undefined)
+                .map((_, someFrameIndex) => `frame/${someFrameIndex}`),
+            ].map((someTargetAsset) => (
+              <div
+                key={someTargetAsset}
+                style={{
+                  padding: theme.spacing(1),
+                  paddingBottom: theme.spacing(0),
+                  color: theme.palette.secondary.main,
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  navigateToRoute(`/${someTargetAsset}${viewRoute}`)
+                }}
+              >
+                {someTargetAsset}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Popover>
+    </div>
+  )
+}
 
 interface OptionFieldProps extends Pick<HTMLAttributes<SVGElement>, 'onClick'> {
   optionLabel: string
@@ -1066,16 +1185,20 @@ const useFieldDisplayStyles = makeStyles((theme) => ({
 }))
 
 export interface PageProps {
+  assetRouteSelect: ReactNode
   pageBody: ReactNode
 }
 
 export function Page(props: PageProps) {
-  const { pageBody } = props
+  const { assetRouteSelect, pageBody } = props
   const styles = usePageStyles()
   return (
     <div className={styles.pageContainer}>
       <div className={styles.pageHeader}>
-        <div className={styles.pageTitle}>graphics-renderer</div>
+        <div className={styles.titleContainer}>
+          <div className={styles.pageTitle}>graphics-renderer</div>
+        </div>
+        <div className={styles.selectContainer}>{assetRouteSelect}</div>
       </div>
       {pageBody}
     </div>
@@ -1101,12 +1224,19 @@ export const usePageStyles = makeStyles((theme) => ({
   pageHeader: {
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'baseline',
     backgroundColor: theme.palette.primary.main,
     padding: theme.spacing(1.5),
   },
+  titleContainer: {
+    flexGrow: 1,
+  },
   pageTitle: {
-    fontWeight: 600,
+    fontWeight: 700,
     fontSize: 18,
     color: theme.palette.getContrastText(theme.palette.primary.main),
+  },
+  selectContainer: {
+    flexShrink: 0,
   },
 }))

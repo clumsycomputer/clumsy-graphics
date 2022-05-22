@@ -903,7 +903,11 @@ function ClientGraphicsRendererProcessPage<
   return (
     <Page
       assetRouteSelect={
-        <AssetRouteSelect assetRoute={assetRoute} viewRoute={viewRoute} />
+        <AssetRouteSelect
+          assetRoute={assetRoute}
+          viewRoute={viewRoute}
+          frameCount={20}
+        />
       }
       pageBody={
         <Fragment>
@@ -981,15 +985,33 @@ interface AssetRouteSelectProps<
 > extends Pick<
     ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>,
     'assetRoute' | 'viewRoute'
-  > {}
+  > {
+  frameCount: number
+}
 
 function AssetRouteSelect<
   AssetRoute extends '/animation' | `/frame/${number}`,
   ViewRoute extends '/logs' | '/result'
 >(props: AssetRouteSelectProps<AssetRoute, ViewRoute>) {
-  const { assetRoute, viewRoute } = props
-  const navigateToRoute = useNavigate()
+  const { assetRoute, viewRoute, frameCount } = props
+  const [assetRouteSearchQuery, setAssetRouteSearchQuery] = useState('')
   const [selectingAssetRoute, setSelectingAssetRoute] = useState(false)
+  const baseAssetRouteOptions = useMemo(
+    () => [
+      'animation',
+      ...new Array(frameCount)
+        .fill(undefined)
+        .map((_, someFrameIndex) => `frame/${someFrameIndex}`),
+    ],
+    [frameCount]
+  )
+  const filteredAssetRouteOptions = useMemo(
+    () =>
+      baseAssetRouteOptions.filter((someAssetRouteOption) =>
+        someAssetRouteOption.includes(assetRouteSearchQuery)
+      ),
+    [baseAssetRouteOptions, assetRouteSearchQuery]
+  )
   const targetAssetLabelRef = useRef<HTMLDivElement>(null)
   const theme = useTheme()
   return (
@@ -1000,8 +1022,8 @@ function AssetRouteSelect<
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
-          color: theme.palette.getContrastText(theme.palette.primary.main),
           cursor: 'pointer',
+          color: theme.palette.getContrastText(theme.palette.primary.main),
         }}
         onClick={() => {
           setSelectingAssetRoute(true)
@@ -1011,6 +1033,7 @@ function AssetRouteSelect<
         <ArrowDropDownSharp />
       </div>
       <Popover
+        transitionDuration={0}
         anchorEl={targetAssetLabelRef.current}
         open={selectingAssetRoute}
         PaperProps={{
@@ -1047,6 +1070,9 @@ function AssetRouteSelect<
               disableUnderline={true}
               autoFocus={true}
               placeholder={'select target asset'}
+              onChange={(someChangeEvent) => {
+                setAssetRouteSearchQuery(someChangeEvent.currentTarget.value)
+              }}
             />
           </div>
           <div
@@ -1056,27 +1082,28 @@ function AssetRouteSelect<
               backgroundColor: theme.palette.primary.light,
             }}
           />
-          <div style={{ flexBasis: 256, overflowY: 'scroll' }}>
-            {[
-              'animation',
-              ...new Array(512)
-                .fill(undefined)
-                .map((_, someFrameIndex) => `frame/${someFrameIndex}`),
-            ].map((someTargetAsset) => (
-              <div
+          <div
+            style={{
+              flexBasis: 256,
+              overflowY: 'scroll',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {filteredAssetRouteOptions.map((someTargetAsset) => (
+              <Link
                 key={someTargetAsset}
+                color={'secondary'}
+                href={`/${someTargetAsset}${viewRoute}`}
                 style={{
                   padding: theme.spacing(1),
                   paddingBottom: theme.spacing(0),
                   color: theme.palette.secondary.main,
-                  cursor: 'pointer',
-                }}
-                onClick={() => {
-                  navigateToRoute(`/${someTargetAsset}${viewRoute}`)
+                  fontWeight: 700,
                 }}
               >
                 {someTargetAsset}
-              </div>
+              </Link>
             ))}
           </div>
         </div>

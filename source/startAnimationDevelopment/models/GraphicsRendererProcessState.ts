@@ -1,4 +1,5 @@
 import { ChildProcess as SpawnedNodeProcess } from 'child_process'
+import { GraphicsRendererProcessKey } from './GraphicsRendererProcessKey'
 
 export type GraphicsRendererProcessState =
   | GraphicsRendererProcessActiveState
@@ -20,7 +21,7 @@ export interface GraphicsRendererProcessFailedState
 
 interface GraphicsRendererProcessStateBase<ProcessStatus extends string> {
   graphicsRendererProcessStatus: ProcessStatus
-  graphicsRendererProcessKey: string
+  graphicsRendererProcessKey: GraphicsRendererProcessKey
   spawnedGraphicsRendererProcess: SpawnedNodeProcess
   graphicsRendererProcessStdoutLog: string
 }

@@ -1,5 +1,7 @@
+import { Input, Popover } from '@material-ui/core'
 import Link, { LinkProps } from '@material-ui/core/Link'
 import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
+import { ArrowDropDownSharp } from '@material-ui/icons'
 import React, {
   Dispatch,
   Fragment,
@@ -21,14 +23,13 @@ import {
   ClientGraphicsRendererProcessSuccessfulState,
   ClientGraphicsRendererProcessValidBuildState,
 } from '../models/ClientGraphicsRendererProcessState'
-import { ArrowDropDownSharp } from '@material-ui/icons'
-import { Input, Popover } from '@material-ui/core'
+import { GraphicsRendererProcessKey } from '../models/GraphicsRendererProcessKey'
 
 export interface AnimationDevelopmentResultPageProps<
-  AssetRoute extends '/animation' | `/frame/${number}`
+  SomeAssetBaseRoute extends AssetBaseRoute
 > extends Pick<
-    AnimationDevelopmentPageProps<AssetRoute, '/result'>,
-    'graphicsRendererProcessKey' | 'assetRoute' | 'viewRoute'
+    AnimationDevelopmentPageProps<SomeAssetBaseRoute, '/result'>,
+    'graphicsRendererProcessKey' | 'assetBaseRoute' | 'viewSubRoute'
   > {
   SomeAssetDisplay: (props: SomeAssetDisplayProps) => JSX.Element
 }
@@ -40,12 +41,12 @@ export interface SomeAssetDisplayProps
   > {}
 
 export function AnimationDevelopmentResultPage<
-  AssetRoute extends '/animation' | `/frame/${number}`
->(props: AnimationDevelopmentResultPageProps<AssetRoute>) {
+  SomeAssetBaseRoute extends AssetBaseRoute
+>(props: AnimationDevelopmentResultPageProps<SomeAssetBaseRoute>) {
   const {
     graphicsRendererProcessKey,
-    assetRoute,
-    viewRoute,
+    assetBaseRoute,
+    viewSubRoute,
     SomeAssetDisplay,
   } = props
   const styles = useAnimationDevelopmentResultPageStyles()
@@ -53,8 +54,8 @@ export function AnimationDevelopmentResultPage<
     <AnimationDevelopmentPage
       key={graphicsRendererProcessKey}
       graphicsRendererProcessKey={graphicsRendererProcessKey}
-      assetRoute={assetRoute}
-      viewRoute={viewRoute}
+      assetBaseRoute={assetBaseRoute}
+      viewSubRoute={viewSubRoute}
       SomeClientGraphicsRendererProcessPage={({
         clientGraphicsRendererProcessState,
       }) => {
@@ -62,8 +63,8 @@ export function AnimationDevelopmentResultPage<
           case 'invalidBuild':
             return (
               <InvalidBuildClientGraphicsRendererProcessPage
-                assetRoute={assetRoute}
-                viewRoute={viewRoute}
+                assetBaseRoute={assetBaseRoute}
+                viewSubRoute={viewSubRoute}
                 clientGraphicsRendererProcessState={
                   clientGraphicsRendererProcessState
                 }
@@ -84,8 +85,8 @@ export function AnimationDevelopmentResultPage<
               case 'processActive':
                 return (
                   <ValidBuildClientGraphicsRendererProcessPage
-                    assetRoute={assetRoute}
-                    viewRoute={viewRoute}
+                    assetBaseRoute={assetBaseRoute}
+                    viewSubRoute={viewSubRoute}
                     clientGraphicsRendererProcessState={
                       clientGraphicsRendererProcessState
                     }
@@ -99,8 +100,8 @@ export function AnimationDevelopmentResultPage<
               case 'processSuccessful':
                 return (
                   <ValidBuildClientGraphicsRendererProcessPage
-                    assetRoute={assetRoute}
-                    viewRoute={viewRoute}
+                    assetBaseRoute={assetBaseRoute}
+                    viewSubRoute={viewSubRoute}
                     clientGraphicsRendererProcessState={
                       clientGraphicsRendererProcessState
                     }
@@ -118,8 +119,8 @@ export function AnimationDevelopmentResultPage<
               case 'processFailed':
                 return (
                   <ValidBuildClientGraphicsRendererProcessPage
-                    assetRoute={assetRoute}
-                    viewRoute={viewRoute}
+                    assetBaseRoute={assetBaseRoute}
+                    viewSubRoute={viewSubRoute}
                     clientGraphicsRendererProcessState={
                       clientGraphicsRendererProcessState
                     }
@@ -188,22 +189,22 @@ const useAnimationDevelopmentErrorDisplayStyles = makeStyles((theme) => ({
 }))
 
 export interface AnimationDevelopmentLogsPageProps<
-  AssetRoute extends '/animation' | `/frame/${number}`
+  SomeAssetBaseRoute extends AssetBaseRoute
 > extends Pick<
-    AnimationDevelopmentPageProps<AssetRoute, '/logs'>,
-    'graphicsRendererProcessKey' | 'assetRoute' | 'viewRoute'
+    AnimationDevelopmentPageProps<SomeAssetBaseRoute, '/logs'>,
+    'graphicsRendererProcessKey' | 'assetBaseRoute' | 'viewSubRoute'
   > {}
 
 export function AnimationDevelopmentLogsPage<
-  AssetRoute extends '/animation' | `/frame/${number}`
->(props: AnimationDevelopmentLogsPageProps<AssetRoute>) {
-  const { graphicsRendererProcessKey, assetRoute, viewRoute } = props
+  SomeAssetBaseRoute extends AssetBaseRoute
+>(props: AnimationDevelopmentLogsPageProps<SomeAssetBaseRoute>) {
+  const { graphicsRendererProcessKey, assetBaseRoute, viewSubRoute } = props
   return (
     <AnimationDevelopmentPage
       key={graphicsRendererProcessKey}
       graphicsRendererProcessKey={graphicsRendererProcessKey}
-      assetRoute={assetRoute}
-      viewRoute={viewRoute}
+      assetBaseRoute={assetBaseRoute}
+      viewSubRoute={viewSubRoute}
       SomeClientGraphicsRendererProcessPage={({
         clientGraphicsRendererProcessState,
       }) => {
@@ -211,8 +212,8 @@ export function AnimationDevelopmentLogsPage<
           case 'invalidBuild':
             return (
               <InvalidBuildClientGraphicsRendererProcessPage
-                assetRoute={assetRoute}
-                viewRoute={viewRoute}
+                assetBaseRoute={assetBaseRoute}
+                viewSubRoute={viewSubRoute}
                 clientGraphicsRendererProcessState={
                   clientGraphicsRendererProcessState
                 }
@@ -226,7 +227,7 @@ export function AnimationDevelopmentLogsPage<
                       clientGraphicsRendererProcessState.buildStatus ===
                       'invalidBuild' ? (
                         <ViewResultLinkButton
-                          assetRoute={assetRoute}
+                          assetBaseRoute={assetBaseRoute}
                           linkColor={'error'}
                           linkLabel={'view build error'}
                         />
@@ -239,8 +240,8 @@ export function AnimationDevelopmentLogsPage<
           case 'validBuild':
             return (
               <ValidBuildClientGraphicsRendererProcessPage
-                assetRoute={assetRoute}
-                viewRoute={viewRoute}
+                assetBaseRoute={assetBaseRoute}
+                viewSubRoute={viewSubRoute}
                 clientGraphicsRendererProcessState={
                   clientGraphicsRendererProcessState
                 }
@@ -256,14 +257,14 @@ export function AnimationDevelopmentLogsPage<
                       clientGraphicsRendererProcessState.graphicsRendererProcessStatus ===
                       'processSuccessful' ? (
                         <ViewResultLinkButton
-                          assetRoute={assetRoute}
+                          assetBaseRoute={assetBaseRoute}
                           linkColor={'secondary'}
                           linkLabel={'view rendered asset'}
                         />
                       ) : clientGraphicsRendererProcessState.graphicsRendererProcessStatus ===
                         'processFailed' ? (
                         <ViewResultLinkButton
-                          assetRoute={assetRoute}
+                          assetBaseRoute={assetBaseRoute}
                           linkColor={'error'}
                           linkLabel={'view render error'}
                         />
@@ -429,21 +430,23 @@ interface ManagedScrollState
   previousContainerScrollTop: number | null
 }
 
-interface ViewResultLinkButtonProps<
-  AssetRoute extends '/animation' | `/frame/${number}`
-> extends Pick<AnimationDevelopmentLogsPageProps<AssetRoute>, 'assetRoute'> {
+interface ViewResultLinkButtonProps<SomeAssetBaseRoute extends AssetBaseRoute>
+  extends Pick<
+    AnimationDevelopmentLogsPageProps<SomeAssetBaseRoute>,
+    'assetBaseRoute'
+  > {
   linkLabel: string
   linkColor: LinkProps['color']
 }
 
-function ViewResultLinkButton<
-  AssetRoute extends '/animation' | `/frame/${number}`
->(props: ViewResultLinkButtonProps<AssetRoute>) {
-  const { assetRoute, linkColor, linkLabel } = props
+function ViewResultLinkButton<SomeAssetBaseRoute extends AssetBaseRoute>(
+  props: ViewResultLinkButtonProps<SomeAssetBaseRoute>
+) {
+  const { assetBaseRoute, linkColor, linkLabel } = props
   return (
     <Link
       color={linkColor}
-      href={`${assetRoute}/result`}
+      href={`${assetBaseRoute}/result`}
       style={{
         fontWeight: 700,
       }}
@@ -454,12 +457,12 @@ function ViewResultLinkButton<
 }
 
 interface AnimationDevelopmentPageProps<
-  AssetRoute extends '/animation' | `/frame/${number}`,
-  ViewRoute extends '/logs' | '/result'
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
 > {
-  assetRoute: AssetRoute
-  viewRoute: ViewRoute
-  graphicsRendererProcessKey: 'animation' | `frame/${number}`
+  assetBaseRoute: SomeAssetBaseRoute
+  viewSubRoute: SomeViewSubRoute
+  graphicsRendererProcessKey: GraphicsRendererProcessKey
   SomeClientGraphicsRendererProcessPage: (
     props: SomeClientGraphicsRendererProcessPageProps
   ) => JSX.Element
@@ -472,9 +475,9 @@ interface SomeClientGraphicsRendererProcessPageProps
   > {}
 
 function AnimationDevelopmentPage<
-  AssetRoute extends '/animation' | `/frame/${number}`,
-  ViewRoute extends '/logs' | '/result'
->(props: AnimationDevelopmentPageProps<AssetRoute, ViewRoute>) {
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
+>(props: AnimationDevelopmentPageProps<SomeAssetBaseRoute, SomeViewSubRoute>) {
   const { graphicsRendererProcessKey, SomeClientGraphicsRendererProcessPage } =
     props
   const { pollClientGraphicsRendererProcessStateResponse } =
@@ -547,7 +550,7 @@ const useAnimationDevelopmentPageStyles = makeStyles((theme) => ({
 
 interface UsePollClientGraphicsRendererProcessStateResponseApi
   extends Pick<
-    AnimationDevelopmentPageProps<any, any>,
+    AnimationDevelopmentPageProps<AssetBaseRoute, ViewSubRoute>,
     'graphicsRendererProcessKey'
   > {
   staticPollRate: number
@@ -766,34 +769,37 @@ function maybeSetPollClientGraphicsRendererProcessStateResponse(
 }
 
 interface InvalidBuildClientGraphicsRendererProcessPageProps<
-  AssetRoute extends '/animation' | `/frame/${number}`,
-  ViewRoute extends '/logs' | '/result'
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
 > extends Pick<
-    ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>,
-    'assetRoute' | 'viewRoute' | 'viewRouteContent'
+    ClientGraphicsRendererProcessPageProps<
+      SomeAssetBaseRoute,
+      SomeViewSubRoute
+    >,
+    'assetBaseRoute' | 'viewSubRoute' | 'viewRouteContent'
   > {
   clientGraphicsRendererProcessState: ClientGraphicsRendererProcessInvalidBuildState
 }
 
 function InvalidBuildClientGraphicsRendererProcessPage<
-  AssetRoute extends '/animation' | `/frame/${number}`,
-  ViewRoute extends '/logs' | '/result'
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
 >(
   props: InvalidBuildClientGraphicsRendererProcessPageProps<
-    AssetRoute,
-    ViewRoute
+    SomeAssetBaseRoute,
+    SomeViewSubRoute
   >
 ) {
   const {
-    assetRoute,
-    viewRoute,
+    assetBaseRoute,
+    viewSubRoute,
     viewRouteContent,
     clientGraphicsRendererProcessState,
   } = props
   return (
     <ClientGraphicsRendererProcessPage
-      assetRoute={assetRoute}
-      viewRoute={viewRoute}
+      assetBaseRoute={assetBaseRoute}
+      viewSubRoute={viewSubRoute}
       viewRouteContent={viewRouteContent}
       buildStatusDisplayValue={'invalid'}
       moduleNameDisplayValue={'-'}
@@ -805,31 +811,37 @@ function InvalidBuildClientGraphicsRendererProcessPage<
 }
 
 interface ValidBuildClientGraphicsRendererProcessPageProps<
-  AssetRoute extends '/animation' | `/frame/${number}`,
-  ViewRoute extends '/logs' | '/result'
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
 > extends Pick<
-    ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>,
-    'assetRoute' | 'viewRoute' | 'viewRouteContent'
+    ClientGraphicsRendererProcessPageProps<
+      SomeAssetBaseRoute,
+      SomeViewSubRoute
+    >,
+    'assetBaseRoute' | 'viewSubRoute' | 'viewRouteContent'
   > {
   clientGraphicsRendererProcessState: ClientGraphicsRendererProcessValidBuildState
 }
 
 function ValidBuildClientGraphicsRendererProcessPage<
-  AssetRoute extends '/animation' | `/frame/${number}`,
-  ViewRoute extends '/logs' | '/result'
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
 >(
-  props: ValidBuildClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>
+  props: ValidBuildClientGraphicsRendererProcessPageProps<
+    SomeAssetBaseRoute,
+    SomeViewSubRoute
+  >
 ) {
   const {
-    assetRoute,
-    viewRoute,
+    assetBaseRoute,
+    viewSubRoute,
     viewRouteContent,
     clientGraphicsRendererProcessState,
   } = props
   return (
     <ClientGraphicsRendererProcessPage
-      assetRoute={assetRoute}
-      viewRoute={viewRoute}
+      assetBaseRoute={assetBaseRoute}
+      viewSubRoute={viewSubRoute}
       viewRouteContent={viewRouteContent}
       moduleNameDisplayValue={
         clientGraphicsRendererProcessState.animationModule.moduleName
@@ -850,8 +862,8 @@ function ValidBuildClientGraphicsRendererProcessPage<
 interface GetProcessStatusDisplayValueApi
   extends Pick<
     ValidBuildClientGraphicsRendererProcessPageProps<
-      any,
-      any
+      AssetBaseRoute,
+      ViewSubRoute
     >['clientGraphicsRendererProcessState'],
     'graphicsRendererProcessStatus'
   > {}
@@ -870,11 +882,11 @@ function getProcessStatusDisplayValue(api: GetProcessStatusDisplayValueApi) {
 }
 
 interface ClientGraphicsRendererProcessPageProps<
-  AssetRoute extends '/animation' | `/frame/${number}`,
-  ViewRoute extends '/logs' | '/result'
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
 > extends Pick<
-    AnimationDevelopmentPageProps<AssetRoute, ViewRoute>,
-    'assetRoute' | 'viewRoute'
+    AnimationDevelopmentPageProps<SomeAssetBaseRoute, SomeViewSubRoute>,
+    'assetBaseRoute' | 'viewSubRoute'
   > {
   buildVersionDisplayValue: string
   buildStatusDisplayValue: string
@@ -885,12 +897,17 @@ interface ClientGraphicsRendererProcessPageProps<
 }
 
 function ClientGraphicsRendererProcessPage<
-  AssetRoute extends '/animation' | `/frame/${number}`,
-  ViewRoute extends '/logs' | '/result'
->(props: ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>) {
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
+>(
+  props: ClientGraphicsRendererProcessPageProps<
+    SomeAssetBaseRoute,
+    SomeViewSubRoute
+  >
+) {
   const {
-    viewRoute,
-    assetRoute,
+    viewSubRoute,
+    assetBaseRoute,
     buildVersionDisplayValue,
     buildStatusDisplayValue,
     moduleNameDisplayValue,
@@ -904,9 +921,9 @@ function ClientGraphicsRendererProcessPage<
     <Page
       assetRouteSelect={
         <AssetRouteSelect
-          assetRoute={assetRoute}
-          viewRoute={viewRoute}
-          frameCount={20}
+          assetBaseRoute={assetBaseRoute}
+          viewSubRoute={viewSubRoute}
+          frameCount={todo}
         />
       }
       pageBody={
@@ -915,16 +932,16 @@ function ClientGraphicsRendererProcessPage<
             <div className={styles.pageNavigationContainer}>
               <OptionField
                 optionLabel={'logs'}
-                optionSelected={viewRoute === '/logs'}
+                optionSelected={viewSubRoute === '/logs'}
                 onClick={() => {
-                  navigateToRoute(`${assetRoute}/logs`)
+                  navigateToRoute(`${assetBaseRoute}/logs`)
                 }}
               />
               <OptionField
                 optionLabel={'result'}
-                optionSelected={viewRoute === '/result'}
+                optionSelected={viewSubRoute === '/result'}
                 onClick={() => {
-                  navigateToRoute(`${assetRoute}/result`)
+                  navigateToRoute(`${assetBaseRoute}/result`)
                 }}
               />
             </div>
@@ -980,56 +997,80 @@ const useClientGraphicsRendererProcessPageStyles = makeStyles((theme) => ({
 }))
 
 interface AssetRouteSelectProps<
-  AssetRoute extends '/animation' | `/frame/${number}`,
-  ViewRoute extends '/logs' | '/result'
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
 > extends Pick<
-    ClientGraphicsRendererProcessPageProps<AssetRoute, ViewRoute>,
-    'assetRoute' | 'viewRoute'
+    ClientGraphicsRendererProcessPageProps<
+      SomeAssetBaseRoute,
+      SomeViewSubRoute
+    >,
+    'assetBaseRoute' | 'viewSubRoute'
   > {
   frameCount: number
 }
 
 function AssetRouteSelect<
-  AssetRoute extends '/animation' | `/frame/${number}`,
-  ViewRoute extends '/logs' | '/result'
->(props: AssetRouteSelectProps<AssetRoute, ViewRoute>) {
-  const { assetRoute, viewRoute, frameCount } = props
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
+>(props: AssetRouteSelectProps<SomeAssetBaseRoute, SomeViewSubRoute>) {
+  const { assetBaseRoute, viewSubRoute, frameCount } = props
   const [assetRouteSearchQuery, setAssetRouteSearchQuery] = useState('')
   const [selectingAssetRoute, setSelectingAssetRoute] = useState(false)
-  const baseAssetRouteOptions = useMemo(
+  const assetRouteBaseOptions = useMemo<GraphicsRendererProcessKey[]>(
     () => [
       'animation',
       ...new Array(frameCount)
         .fill(undefined)
-        .map((_, someFrameIndex) => `frame/${someFrameIndex}`),
+        .map<GraphicsRendererProcessKey>(
+          (_, someFrameIndex) => `frame/${someFrameIndex}`
+        ),
     ],
     [frameCount]
   )
   const filteredAssetRouteOptions = useMemo(
     () =>
-      baseAssetRouteOptions.filter((someAssetRouteOption) =>
-        someAssetRouteOption.includes(assetRouteSearchQuery)
+      assetRouteBaseOptions.filter((someAssetRouteBaseOption) =>
+        someAssetRouteBaseOption.includes(assetRouteSearchQuery)
       ),
-    [baseAssetRouteOptions, assetRouteSearchQuery]
+    [assetRouteSearchQuery, assetRouteBaseOptions]
   )
+  const [focusedAssetRouteOptionIndex, setFocusedAssetRouteOptionIndex] =
+    useState(0)
+  useEffect(() => {
+    setFocusedAssetRouteOptionIndex(0)
+  }, [filteredAssetRouteOptions])
   const targetAssetLabelRef = useRef<HTMLDivElement>(null)
+  const optionsContainerRef = useRef<HTMLDivElement>(null)
+  const focusedLinkRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const optionsContainerBoundingClientRect =
+      optionsContainerRef.current?.getBoundingClientRect()
+    const focusedLinkBoundingClientRect =
+      focusedLinkRef.current?.getBoundingClientRect()
+    if (
+      optionsContainerBoundingClientRect &&
+      focusedLinkBoundingClientRect &&
+      (focusedLinkBoundingClientRect.bottom >
+        optionsContainerBoundingClientRect.bottom ||
+        focusedLinkBoundingClientRect.top <
+          optionsContainerBoundingClientRect.top)
+    ) {
+      focusedLinkRef.current!.scrollIntoView()
+    }
+  }, [focusedAssetRouteOptionIndex])
   const theme = useTheme()
+  const navigateToRoute = useNavigate()
+  const styles = useAssetRouteSelectStyles()
   return (
     <div>
       <div
         ref={targetAssetLabelRef}
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          cursor: 'pointer',
-          color: theme.palette.getContrastText(theme.palette.primary.main),
-        }}
+        className={styles.selectedAssetRouteDisplay}
         onClick={() => {
           setSelectingAssetRoute(true)
         }}
       >
-        {assetRoute.slice(1)}
+        {assetBaseRoute.slice(1)}
         <ArrowDropDownSharp />
       </div>
       <Popover
@@ -1050,21 +1091,37 @@ function AssetRouteSelect<
         }}
       >
         <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            borderStyle: 'solid',
-            borderWidth: 2,
-            borderColor: theme.palette.primary.light,
+          className={styles.dropdownContainer}
+          onKeyDown={(someKeyDownEvent) => {
+            switch (someKeyDownEvent.key) {
+              case 'ArrowDown':
+                if (
+                  focusedAssetRouteOptionIndex <
+                  filteredAssetRouteOptions.length - 1
+                ) {
+                  setFocusedAssetRouteOptionIndex(
+                    focusedAssetRouteOptionIndex + 1
+                  )
+                }
+                break
+              case 'ArrowUp':
+                if (focusedAssetRouteOptionIndex > 0) {
+                  setFocusedAssetRouteOptionIndex(
+                    focusedAssetRouteOptionIndex - 1
+                  )
+                }
+                break
+              case 'Enter':
+                navigateToRoute(
+                  `/${filteredAssetRouteOptions[
+                    focusedAssetRouteOptionIndex
+                  ]!}${viewSubRoute}`
+                )
+                break
+            }
           }}
         >
-          <div
-            style={{
-              padding: theme.spacing(1),
-              paddingTop: theme.spacing(0.75),
-              paddingBottom: theme.spacing(0.5),
-            }}
-          >
+          <div className={styles.searchInputContainer}>
             <Input
               fullWidth={true}
               disableUnderline={true}
@@ -1075,42 +1132,107 @@ function AssetRouteSelect<
               }}
             />
           </div>
-          <div
-            style={{
-              margin: '0 -9999rem',
-              height: 2,
-              backgroundColor: theme.palette.primary.light,
-            }}
-          />
-          <div
-            style={{
-              flexBasis: 256,
-              overflowY: 'scroll',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {filteredAssetRouteOptions.map((someTargetAsset) => (
-              <Link
-                key={someTargetAsset}
-                color={'secondary'}
-                href={`/${someTargetAsset}${viewRoute}`}
-                style={{
-                  padding: theme.spacing(1),
-                  paddingBottom: theme.spacing(0),
-                  color: theme.palette.secondary.main,
-                  fontWeight: 700,
-                }}
-              >
-                {someTargetAsset}
-              </Link>
-            ))}
+          <div className={styles.searchInputDivider} />
+          <div ref={optionsContainerRef} className={styles.optionsContainer}>
+            {filteredAssetRouteOptions.length > 0 ? (
+              filteredAssetRouteOptions.map(
+                (
+                  someFilteredAssetRouteOption,
+                  filteredAssetRouteOptionIndex
+                ) => (
+                  <Link
+                    ref={
+                      filteredAssetRouteOptionIndex ===
+                      focusedAssetRouteOptionIndex
+                        ? focusedLinkRef
+                        : null
+                    }
+                    tabIndex={-1}
+                    key={someFilteredAssetRouteOption}
+                    color={'secondary'}
+                    className={`${styles.optionLink} ${
+                      filteredAssetRouteOptionIndex ===
+                      focusedAssetRouteOptionIndex
+                        ? 'focused-option'
+                        : ''
+                    } ${
+                      someFilteredAssetRouteOption === assetBaseRoute.slice(1)
+                        ? 'current-option'
+                        : ''
+                    }`}
+                    href={`/${someFilteredAssetRouteOption}${viewSubRoute}`}
+                  >
+                    {someFilteredAssetRouteOption}
+                  </Link>
+                )
+              )
+            ) : (
+              <div className={styles.noOptionsDisplay}>no options match</div>
+            )}
           </div>
         </div>
       </Popover>
     </div>
   )
 }
+
+const useAssetRouteSelectStyles = makeStyles((theme) => ({
+  selectedAssetRouteDisplay: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    cursor: 'pointer',
+    color: theme.palette.getContrastText(theme.palette.primary.main),
+  },
+  dropdownContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    borderStyle: 'solid',
+    borderWidth: 2,
+    borderColor: theme.palette.primary.light,
+  },
+  searchInputContainer: {
+    padding: theme.spacing(1),
+    paddingTop: theme.spacing(0.75),
+    paddingBottom: theme.spacing(0.5),
+  },
+  searchInputDivider: {
+    margin: '0 -9999rem',
+    height: 2,
+    backgroundColor: theme.palette.primary.light,
+  },
+  optionsContainer: {
+    flexBasis: 252,
+    overflowY: 'scroll',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  optionLink: {
+    padding: theme.spacing(1),
+    paddingBottom: theme.spacing(1.25),
+    color: theme.palette.secondary.main,
+    fontWeight: 700,
+    '&.focused-option': {
+      backgroundColor: theme.palette.grey[100],
+      textDecoration: 'underline',
+    },
+    '&.current-option': {
+      fontStyle: 'italic',
+    },
+    '&:focus': {
+      outline: 'none',
+    },
+  },
+  noOptionsDisplay: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing(1),
+    fontStyle: 'italic',
+    fontWeight: theme.typography.caption.fontWeight,
+    color: theme.palette.text.hint,
+  },
+}))
 
 interface OptionFieldProps extends Pick<HTMLAttributes<SVGElement>, 'onClick'> {
   optionLabel: string
@@ -1267,3 +1389,7 @@ export const usePageStyles = makeStyles((theme) => ({
     flexShrink: 0,
   },
 }))
+
+type AssetBaseRoute = `/${GraphicsRendererProcessKey}`
+
+type ViewSubRoute = '/logs' | '/result'

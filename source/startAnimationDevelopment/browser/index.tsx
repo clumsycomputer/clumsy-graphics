@@ -1,10 +1,11 @@
 import { createTheme, ThemeProvider } from '@material-ui/core/styles'
-import React from 'react'
+import React, { useEffect } from 'react'
 import ReactDom from 'react-dom'
 import {
   BrowserRouter,
   Route,
   Routes,
+  useNavigate,
   useParams as useRouteParams,
 } from 'react-router-dom'
 import {
@@ -20,19 +21,19 @@ const appTheme = createTheme({
   },
   palette: {
     primary: {
-      main: '#827717',
-      light: '#b4a647',
-      dark: '#524c00',
+      main: '#2a6e98',
+      light: '#609cc9',
+      dark: '#00436a',
     },
     secondary: {
-      main: '#172282',
-      light: '#524ab2',
-      dark: '#000054',
+      main: '#a05d17',
+      light: '#d58a45',
+      dark: '#6d3300',
     },
     error: {
-      main: '#c62828',
-      light: '#ff5f52',
-      dark: '#8e0000',
+      main: '#e45752',
+      light: '#ff897e',
+      dark: '#ac2229',
     },
   },
 })
@@ -53,8 +54,8 @@ function AnimationDevelopmentApp() {
         element={
           <AnimationDevelopmentLogsPage
             graphicsRendererProcessKey={'animation'}
-            assetRoute={'/animation'}
-            viewRoute={'/logs'}
+            assetBaseRoute={'/animation'}
+            viewSubRoute={'/logs'}
           />
         }
       />
@@ -63,8 +64,8 @@ function AnimationDevelopmentApp() {
         element={
           <AnimationDevelopmentResultPage
             graphicsRendererProcessKey={'animation'}
-            assetRoute={'/animation'}
-            viewRoute={'/result'}
+            assetBaseRoute={'/animation'}
+            viewSubRoute={'/result'}
             SomeAssetDisplay={({ graphicAssetUrl }) => {
               return (
                 <video
@@ -92,6 +93,7 @@ function AnimationDevelopmentApp() {
         path={'/frame/:frameIndex/result'}
         element={<AnimationDevelopmentFrameResultPage />}
       />
+      <Route path={'*'} element={<RedirectToAnimationLogsPage />} />
     </Routes>
   )
 }
@@ -103,8 +105,8 @@ function AnimationDevelopmentFrameLogsPage() {
       graphicsRendererProcessKey={`frame/${
         routeParams.frameIndex as unknown as number
       }`}
-      assetRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
-      viewRoute={'/logs'}
+      assetBaseRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
+      viewSubRoute={'/logs'}
     />
   )
 }
@@ -116,8 +118,8 @@ function AnimationDevelopmentFrameResultPage() {
       graphicsRendererProcessKey={`frame/${
         routeParams.frameIndex as unknown as number
       }`}
-      assetRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
-      viewRoute={'/result'}
+      assetBaseRoute={`/frame/${routeParams.frameIndex as unknown as number}`}
+      viewSubRoute={'/result'}
       SomeAssetDisplay={({ graphicAssetUrl }) => {
         return (
           <img
@@ -132,4 +134,12 @@ function AnimationDevelopmentFrameResultPage() {
       }}
     />
   )
+}
+
+function RedirectToAnimationLogsPage() {
+  const navigateToRoute = useNavigate()
+  useEffect(() => {
+    navigateToRoute('/animation/logs')
+  }, [])
+  return null
 }

@@ -65,7 +65,8 @@ export function* graphicsRendererProcessManagerSaga(
               animationModule:
                 someGraphicsRendererProcessManagerAction.actionPayload
                   .nextAnimationModule,
-              graphicsRendererProcessStates: {},
+              graphicsRendererProcessStates:
+                {} as AnimationModuleBundlerActiveState['graphicsRendererProcessStates'],
             },
           },
         })
@@ -97,7 +98,8 @@ export function* graphicsRendererProcessManagerSaga(
               buildErrorMessage:
                 someGraphicsRendererProcessManagerAction.actionPayload
                   .nextBuildErrorMessage,
-              graphicsRendererProcessStates: {},
+              graphicsRendererProcessStates:
+                {} as AnimationModuleBundlerActiveState['graphicsRendererProcessStates'],
             },
           },
         })

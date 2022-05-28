@@ -10,6 +10,7 @@ import {
 } from './GraphicsRendererProcessState'
 import * as IO from 'io-ts'
 import { ClientAnimationModuleCodec } from '../../models/AnimationModule'
+import { GraphicsRendererProcessKeyFromString } from './GraphicsRendererProcessKey'
 
 export type ClientGraphicsRendererProcessValidBuildState =
   | ClientGraphicsRendererProcessInitializingState
@@ -25,7 +26,7 @@ const ClientGraphicsRendererProcessInitializingStateCodec = IO.exact(
     buildVersion: IO.number,
     buildStatus: IO.literal('validBuild'),
     graphicsRendererProcessStatus: IO.literal('processInitializing'),
-    graphicsRendererProcessKey: IO.string,
+    graphicsRendererProcessKey: GraphicsRendererProcessKeyFromString,
     graphicsRendererProcessStdoutLog: IO.string,
     animationModule: ClientAnimationModuleCodec,
   })
@@ -39,7 +40,7 @@ const ClientGraphicsRendererProcessActiveStateCodec = IO.exact(
     buildVersion: IO.number,
     buildStatus: IO.literal('validBuild'),
     graphicsRendererProcessStatus: IO.literal('processActive'),
-    graphicsRendererProcessKey: IO.string,
+    graphicsRendererProcessKey: GraphicsRendererProcessKeyFromString,
     graphicsRendererProcessStdoutLog: IO.string,
     animationModule: ClientAnimationModuleCodec,
   })
@@ -54,7 +55,7 @@ const ClientGraphicsRendererProcessSuccessfulStateCodec = IO.exact(
     buildVersion: IO.number,
     buildStatus: IO.literal('validBuild'),
     graphicsRendererProcessStatus: IO.literal('processSuccessful'),
-    graphicsRendererProcessKey: IO.string,
+    graphicsRendererProcessKey: GraphicsRendererProcessKeyFromString,
     graphicsRendererProcessStdoutLog: IO.string,
     animationModule: ClientAnimationModuleCodec,
     graphicAssetUrl: IO.string,
@@ -73,7 +74,7 @@ const ClientGraphicsRendererProcessFailedStateCodec = IO.exact(
     buildVersion: IO.number,
     buildStatus: IO.literal('validBuild'),
     graphicsRendererProcessStatus: IO.literal('processFailed'),
-    graphicsRendererProcessKey: IO.string,
+    graphicsRendererProcessKey: GraphicsRendererProcessKeyFromString,
     graphicsRendererProcessStdoutLog: IO.string,
     animationModule: ClientAnimationModuleCodec,
     graphicsRendererProcessErrorMessage: IO.string,

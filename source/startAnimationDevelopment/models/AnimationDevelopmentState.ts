@@ -1,4 +1,5 @@
 import { AnimationModule } from '../../models/AnimationModule'
+import { GraphicsRendererProcessKey } from './GraphicsRendererProcessKey'
 import { GraphicsRendererProcessState } from './GraphicsRendererProcessState'
 
 export interface AnimationDevelopmentState {
@@ -34,7 +35,10 @@ interface AnimationModuleBundlerActiveStateBase<BuildStatus extends string>
   extends AnimationModuleBundlerStateBase<'bundlerActive'> {
   buildStatus: BuildStatus
   buildVersion: number
-  graphicsRendererProcessStates: Record<string, GraphicsRendererProcessState>
+  graphicsRendererProcessStates: Record<
+    GraphicsRendererProcessKey,
+    GraphicsRendererProcessState
+  >
 }
 
 interface AnimationModuleBundlerStateBase<BundlerStatus extends string> {

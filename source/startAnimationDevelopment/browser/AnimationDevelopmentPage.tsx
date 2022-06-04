@@ -5,7 +5,6 @@ import { ArrowDropDownSharp } from '@material-ui/icons'
 import React, {
   Dispatch,
   Fragment,
-  HTMLAttributes,
   MutableRefObject,
   ReactNode,
   SetStateAction,
@@ -443,12 +442,14 @@ function ViewResultLinkButton<SomeAssetBaseRoute extends AssetBaseRoute>(
   props: ViewResultLinkButtonProps<SomeAssetBaseRoute>
 ) {
   const { assetBaseRoute, linkColor, linkLabel } = props
+  const navigateToRoute = useNavigate()
   return (
     <Link
+      style={{ fontWeight: 700 }}
       color={linkColor}
       href={`${assetBaseRoute}/result`}
-      style={{
-        fontWeight: 700,
+      onClick={() => {
+        navigateToRoute(`${assetBaseRoute}/result`)
       }}
     >
       {`${linkLabel} >`}
@@ -806,6 +807,13 @@ function InvalidBuildClientGraphicsRendererProcessPage<
       targetAssetDisplayValue={'-'}
       renderStatusDisplayValue={'-'}
       buildVersionDisplayValue={`${clientGraphicsRendererProcessState.buildVersion}`}
+      assetRouteSelect={
+        <AssetRouteSelect
+          assetBaseRoute={assetBaseRoute}
+          viewSubRoute={viewSubRoute}
+          frameCount={1}
+        />
+      }
     />
   )
 }
@@ -855,6 +863,15 @@ function ValidBuildClientGraphicsRendererProcessPage<
         graphicsRendererProcessStatus:
           clientGraphicsRendererProcessState.graphicsRendererProcessStatus,
       })}
+      assetRouteSelect={
+        <AssetRouteSelect
+          assetBaseRoute={assetBaseRoute}
+          viewSubRoute={viewSubRoute}
+          frameCount={
+            clientGraphicsRendererProcessState.animationModule.frameCount
+          }
+        />
+      }
     />
   )
 }
@@ -885,9 +902,10 @@ interface ClientGraphicsRendererProcessPageProps<
   SomeAssetBaseRoute extends AssetBaseRoute,
   SomeViewSubRoute extends ViewSubRoute
 > extends Pick<
-    AnimationDevelopmentPageProps<SomeAssetBaseRoute, SomeViewSubRoute>,
-    'assetBaseRoute' | 'viewSubRoute'
-  > {
+      AnimationDevelopmentPageProps<SomeAssetBaseRoute, SomeViewSubRoute>,
+      'assetBaseRoute' | 'viewSubRoute'
+    >,
+    Pick<PageProps, 'assetRouteSelect'> {
   buildVersionDisplayValue: string
   buildStatusDisplayValue: string
   moduleNameDisplayValue: string
@@ -906,6 +924,7 @@ function ClientGraphicsRendererProcessPage<
   >
 ) {
   const {
+    assetRouteSelect,
     viewSubRoute,
     assetBaseRoute,
     buildVersionDisplayValue,
@@ -915,17 +934,10 @@ function ClientGraphicsRendererProcessPage<
     renderStatusDisplayValue,
     viewRouteContent,
   } = props
-  const navigateToRoute = useNavigate()
   const styles = useClientGraphicsRendererProcessPageStyles()
   return (
     <Page
-      assetRouteSelect={
-        <AssetRouteSelect
-          assetBaseRoute={assetBaseRoute}
-          viewSubRoute={viewSubRoute}
-          frameCount={todo}
-        />
-      }
+      assetRouteSelect={assetRouteSelect}
       pageBody={
         <Fragment>
           <div className={styles.pageOverviewContainer}>
@@ -933,16 +945,12 @@ function ClientGraphicsRendererProcessPage<
               <OptionField
                 optionLabel={'logs'}
                 optionSelected={viewSubRoute === '/logs'}
-                onClick={() => {
-                  navigateToRoute(`${assetBaseRoute}/logs`)
-                }}
+                href={`${assetBaseRoute}/logs`}
               />
               <OptionField
                 optionLabel={'result'}
                 optionSelected={viewSubRoute === '/result'}
-                onClick={() => {
-                  navigateToRoute(`${assetBaseRoute}/result`)
-                }}
+                href={`${assetBaseRoute}/result`}
               />
             </div>
             <div className={styles.pageDetailsContainer}>
@@ -1015,6 +1023,7 @@ function AssetRouteSelect<
 >(props: AssetRouteSelectProps<SomeAssetBaseRoute, SomeViewSubRoute>) {
   const { assetBaseRoute, viewSubRoute, frameCount } = props
   const [assetRouteSearchQuery, setAssetRouteSearchQuery] = useState('')
+  const assetRouteSelectMountedRef = useRef(false)
   const [selectingAssetRoute, setSelectingAssetRoute] = useState(false)
   const assetRouteBaseOptions = useMemo<GraphicsRendererProcessKey[]>(
     () => [
@@ -1058,22 +1067,46 @@ function AssetRouteSelect<
       focusedLinkRef.current!.scrollIntoView()
     }
   }, [focusedAssetRouteOptionIndex])
-  const theme = useTheme()
+  useEffect(() => {
+    if (
+      assetRouteSelectMountedRef.current === true &&
+      selectingAssetRoute === false
+    ) {
+      targetAssetLabelRef.current?.focus()
+    } else {
+      assetRouteSelectMountedRef.current = true
+    }
+  }, [selectingAssetRoute])
+  useEffect(() => {
+    if (selectingAssetRoute === false) {
+      setAssetRouteSearchQuery('')
+    }
+  }, [selectingAssetRoute])
   const navigateToRoute = useNavigate()
   const styles = useAssetRouteSelectStyles()
   return (
     <div>
       <div
+        tabIndex={0}
         ref={targetAssetLabelRef}
         className={styles.selectedAssetRouteDisplay}
         onClick={() => {
           setSelectingAssetRoute(true)
+        }}
+        onKeyPress={(someKeyPressEvent) => {
+          if (someKeyPressEvent.key === 'Enter') {
+            setSelectingAssetRoute(true)
+          }
         }}
       >
         {assetBaseRoute.slice(1)}
         <ArrowDropDownSharp />
       </div>
       <Popover
+        tabIndex={-1}
+        disableAutoFocus={true}
+        disableEnforceFocus={true}
+        disableRestoreFocus={true}
         transitionDuration={0}
         anchorEl={targetAssetLabelRef.current}
         open={selectingAssetRoute}
@@ -1118,6 +1151,9 @@ function AssetRouteSelect<
                   ]!}${viewSubRoute}`
                 )
                 break
+              case 'Tab':
+                setSelectingAssetRoute(false)
+                break
             }
           }}
         >
@@ -1127,6 +1163,7 @@ function AssetRouteSelect<
               disableUnderline={true}
               autoFocus={true}
               placeholder={'select target asset'}
+              value={assetRouteSearchQuery}
               onChange={(someChangeEvent) => {
                 setAssetRouteSearchQuery(someChangeEvent.currentTarget.value)
               }}
@@ -1147,7 +1184,6 @@ function AssetRouteSelect<
                         ? focusedLinkRef
                         : null
                     }
-                    tabIndex={-1}
                     key={someFilteredAssetRouteOption}
                     color={'secondary'}
                     className={`${styles.optionLink} ${
@@ -1161,8 +1197,14 @@ function AssetRouteSelect<
                         : ''
                     }`}
                     href={`/${someFilteredAssetRouteOption}${viewSubRoute}`}
+                    onClick={() => {
+                      navigateToRoute(
+                        `/${someFilteredAssetRouteOption}${viewSubRoute}`
+                      )
+                    }}
+                    style={{ display: 'flex', flexDirection: 'row' }}
                   >
-                    {someFilteredAssetRouteOption}
+                    <div>{someFilteredAssetRouteOption}</div>
                   </Link>
                 )
               )
@@ -1183,6 +1225,11 @@ const useAssetRouteSelectStyles = makeStyles((theme) => ({
     alignItems: 'center',
     cursor: 'pointer',
     color: theme.palette.getContrastText(theme.palette.primary.main),
+    '&:focus': {
+      outlineColor: '#ede158',
+      outlineStyle: 'solid',
+      outlineWidth: theme.spacing(1 / 3),
+    },
   },
   dropdownContainer: {
     display: 'flex',
@@ -1215,12 +1262,25 @@ const useAssetRouteSelectStyles = makeStyles((theme) => ({
     '&.focused-option': {
       backgroundColor: theme.palette.grey[100],
       textDecoration: 'underline',
+      '& > div': {
+        outlineColor: '#ede158',
+        outlineStyle: 'solid',
+        outlineWidth: theme.spacing(1 / 3),
+      },
     },
     '&.current-option': {
       fontStyle: 'italic',
     },
     '&:focus': {
       outline: 'none',
+    },
+    '& > div': {
+      flexGrow: 0,
+      '&:active': {
+        outlineColor: '#ede158',
+        outlineStyle: 'solid',
+        outlineWidth: theme.spacing(1 / 3),
+      },
     },
   },
   noOptionsDisplay: {
@@ -1234,45 +1294,52 @@ const useAssetRouteSelectStyles = makeStyles((theme) => ({
   },
 }))
 
-interface OptionFieldProps extends Pick<HTMLAttributes<SVGElement>, 'onClick'> {
+interface OptionFieldProps extends Pick<Required<LinkProps>, 'href'> {
   optionLabel: string
   optionSelected: boolean
 }
 
 function OptionField(props: OptionFieldProps) {
-  const { optionLabel, optionSelected, onClick } = props
+  const { optionLabel, optionSelected, href } = props
+  const navigateToRoute = useNavigate()
   const theme = useTheme()
   const styles = useOptionFieldStyles(props)
   return (
     <div className={styles.fieldContainer}>
       <div className={styles.optionInputContainer}>
-        <svg
-          viewBox={`0 0 1 1`}
-          className={styles.optionInput}
-          onClick={onClick}
+        <Link
+          tabIndex={optionSelected ? -1 : 0}
+          href={href}
+          onClick={() => {
+            navigateToRoute(href)
+          }}
         >
-          <rect
-            fill={theme.palette.secondary.main}
-            x={0}
-            y={0}
-            width={1}
-            height={1}
-          />
-          <rect
-            fill={theme.palette.common.white}
-            x={0.05}
-            y={0.05}
-            width={0.9}
-            height={0.9}
-          />
-          <rect
-            fill={optionSelected ? theme.palette.secondary.main : 'transparent'}
-            x={0.2}
-            y={0.2}
-            width={0.6}
-            height={0.6}
-          />
-        </svg>
+          <svg viewBox={`0 0 1 1`} className={styles.optionInput}>
+            <rect
+              fill={theme.palette.secondary.main}
+              x={0}
+              y={0}
+              width={1}
+              height={1}
+            />
+            <rect
+              fill={theme.palette.common.white}
+              x={0.05}
+              y={0.05}
+              width={0.9}
+              height={0.9}
+            />
+            <rect
+              fill={
+                optionSelected ? theme.palette.secondary.main : 'transparent'
+              }
+              x={0.2}
+              y={0.2}
+              width={0.6}
+              height={0.6}
+            />
+          </svg>
+        </Link>
       </div>
       <div className={styles.optionLabel}>{optionLabel}</div>
     </div>
@@ -1358,6 +1425,13 @@ export const usePageStyles = makeStyles((theme) => ({
   '@global': {
     body: {
       fontFamily: theme.typography.fontFamily,
+    },
+    a: {
+      '&:focus': {
+        outlineColor: '#ede158',
+        outlineStyle: 'solid',
+        outlineWidth: theme.spacing(1 / 3),
+      },
     },
   },
   pageContainer: {

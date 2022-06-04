@@ -5,6 +5,7 @@ import {
   AnimationModuleBundlerRebuildSucceededEvent,
 } from './AnimationModuleBundlerEvent'
 import { ActionBase } from './common'
+import { GraphicsRendererProcessKey } from './GraphicsRendererProcessKey'
 import {
   GraphicsRendererProcessActiveState,
   GraphicsRendererProcessFailedState,
@@ -67,7 +68,7 @@ export interface SpawnGraphicsRendererProcessAction
     'spawnGraphicsRendererProcess',
     {
       buildVersion: number
-      graphicsRendererProcessKey: string
+      graphicsRendererProcessKey: GraphicsRendererProcessKey
       graphicsRendererProcessCommandString: string
       graphicAssetPathKey: string
       graphicAssetPath: string
@@ -79,7 +80,7 @@ export interface GraphicsRendererProcessActiveAction
   extends ActionBase<
     'graphicsRendererProcessActive',
     {
-      newGraphicsRendererProcessKey: string
+      newGraphicsRendererProcessKey: GraphicsRendererProcessKey
       newGraphicsRendererProcessState: GraphicsRendererProcessActiveState
     }
   > {}
@@ -117,7 +118,7 @@ interface GraphicsRendererProcessUpdatedActionBase<
     GraphicsRendererProcessActionType,
     {
       buildVersion: number
-      targetGraphicsRendererProcessKey: string
+      targetGraphicsRendererProcessKey: GraphicsRendererProcessKey
       targetGraphicsRendererProcessStateUpdates: TargetGraphicsRendererProcessStateUpdates
     } & GraphicsRendererProcessStateUpdaterActionPayload
   > {}

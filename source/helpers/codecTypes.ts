@@ -35,5 +35,5 @@ export const BooleanFromString = new IO.Type<boolean, string, unknown>(
       ? IO.failure(unknownInput, ioContext)
       : IO.success(booleanOutput)
   },
-  (numberInput) => `${numberInput}`
+  (booleanInput) => `${booleanInput}`
 )

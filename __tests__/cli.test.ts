@@ -175,7 +175,7 @@ test.describe('graphics-renderer', () => {
       await page.keyboard.press('Enter')
       await expect(page).toHaveURL('http://localhost:3000/frame/2/logs')
     })
-    test.only('handles module updates', async ({ page }) => {
+    test('handles module updates', async ({ page }) => {
       await page.goto('localhost:3000/frame/0/logs')
       FileSystem.writeFileSync(
         testAnimationModulePath,

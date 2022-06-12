@@ -8,10 +8,8 @@ import {
   useNavigate,
   useParams as useRouteParams,
 } from 'react-router-dom'
-import {
-  AnimationDevelopmentLogsPage,
-  AnimationDevelopmentResultPage,
-} from './AnimationDevelopmentPage'
+import { AnimationDevelopmentLogsPage } from './AnimationDevelopmentLogsPage'
+import { AnimationDevelopmentResultPage } from './AnimationDevelopmentResultPage'
 
 const appContainer = document.createElement('div')
 document.body.append(appContainer)

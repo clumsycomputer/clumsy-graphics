@@ -27,10 +27,10 @@
     "typescript": "4.4.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.16.3"
+    "@playwright/test": "^1.22.2"
   },
   "scripts": {
-    "test": "yarn playwright test --quiet",
+    "test": "playwright test --quiet",
     "buildDist": "rm -rf ./dist && tsc --project ./tsconfig.dist.json --outDir ./dist && cp -r ./source/startAnimationDevelopment/browser ./dist/startAnimationDevelopment/browser",
     "buildLocal": "yarn buildDist && chmod +x ./dist/main.js && yarn link",
     "startExampleDevelopment": "graphics-renderer startDevelopment --animationModulePath=./example-project/Foo.animation.tsx",

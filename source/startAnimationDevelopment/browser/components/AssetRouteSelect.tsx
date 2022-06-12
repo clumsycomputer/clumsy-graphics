@@ -30,6 +30,8 @@ export function AssetRouteSelect<
   const [assetRouteSearchQuery, setAssetRouteSearchQuery] = useState('')
   const assetRouteSelectMountedRef = useRef(false)
   const [selectingAssetRoute, setSelectingAssetRoute] = useState(false)
+  const [selectedEmptyOptionsError, setSelectedEmptyOptionsError] =
+    useState(false)
   const assetRouteBaseOptions = useMemo<GraphicsRendererProcessKey[]>(
     () => [
       'animation',
@@ -52,6 +54,7 @@ export function AssetRouteSelect<
     useState(0)
   useEffect(() => {
     setFocusedAssetRouteOptionIndex(0)
+    setSelectedEmptyOptionsError(false)
   }, [filteredAssetRouteOptions])
   const targetAssetLabelRef = useRef<HTMLDivElement>(null)
   const optionsContainerRef = useRef<HTMLDivElement>(null)
@@ -98,8 +101,8 @@ export function AssetRouteSelect<
         onClick={() => {
           setSelectingAssetRoute(true)
         }}
-        onKeyPress={(someKeyPressEvent) => {
-          if (someKeyPressEvent.key === 'Enter') {
+        onKeyDown={(someKeyDownEvent) => {
+          if (someKeyDownEvent.key === 'Enter') {
             setSelectingAssetRoute(true)
           }
         }}
@@ -150,10 +153,16 @@ export function AssetRouteSelect<
                 }
                 break
               case 'Enter':
+                someKeyDownEvent.stopPropagation()
                 const focusedAssetRouteOption =
                   filteredAssetRouteOptions[focusedAssetRouteOptionIndex]
-                if (focusedAssetRouteOption) {
-                  navigateToRoute(`/${focusedAssetRouteOption}${viewSubRoute}`)
+                const targetAssetBaseRoute = `/${focusedAssetRouteOption}`
+                if (targetAssetBaseRoute === assetBaseRoute) {
+                  setSelectingAssetRoute(false)
+                } else if (focusedAssetRouteOption !== undefined) {
+                  navigateToRoute(`${targetAssetBaseRoute}${viewSubRoute}`)
+                } else {
+                  setSelectedEmptyOptionsError(true)
                 }
                 break
               case 'Tab':
@@ -214,7 +223,16 @@ export function AssetRouteSelect<
                 )
               )
             ) : (
-              <div className={styles.noOptionsDisplay}>no options match</div>
+              <div
+                className={`${styles.noOptionsDisplay} ${
+                  selectedEmptyOptionsError ? styles.noOptionsDisplayError : ''
+                }`}
+                onClick={() => {
+                  setSelectedEmptyOptionsError(true)
+                }}
+              >
+                no options match
+              </div>
             )}
           </div>
         </div>
@@ -296,5 +314,8 @@ const useAssetRouteSelectStyles = makeStyles((theme) => ({
     fontStyle: 'italic',
     fontWeight: theme.typography.caption.fontWeight,
     color: theme.palette.text.hint,
+  },
+  noOptionsDisplayError: {
+    color: theme.palette.error.main,
   },
 }))

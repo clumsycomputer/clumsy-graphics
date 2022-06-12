@@ -98,8 +98,8 @@ export function AssetRouteSelect<
         onClick={() => {
           setSelectingAssetRoute(true)
         }}
-        onKeyPress={(someKeyPressEvent) => {
-          if (someKeyPressEvent.key === 'Enter') {
+        onKeyDown={(someKeyDownEvent) => {
+          if (someKeyDownEvent.key === 'Enter') {
             setSelectingAssetRoute(true)
           }
         }}
@@ -150,10 +150,14 @@ export function AssetRouteSelect<
                 }
                 break
               case 'Enter':
+                someKeyDownEvent.stopPropagation()
                 const focusedAssetRouteOption =
                   filteredAssetRouteOptions[focusedAssetRouteOptionIndex]
-                if (focusedAssetRouteOption) {
-                  navigateToRoute(`/${focusedAssetRouteOption}${viewSubRoute}`)
+                const targetAssetBaseRoute = `/${focusedAssetRouteOption}`
+                if (targetAssetBaseRoute === assetBaseRoute) {
+                  setSelectingAssetRoute(false)
+                } else if (focusedAssetRouteOption !== undefined) {
+                  navigateToRoute(`${targetAssetBaseRoute}${viewSubRoute}`)
                 }
                 break
               case 'Tab':

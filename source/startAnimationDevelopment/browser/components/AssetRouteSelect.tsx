@@ -150,11 +150,11 @@ export function AssetRouteSelect<
                 }
                 break
               case 'Enter':
-                navigateToRoute(
-                  `/${filteredAssetRouteOptions[
-                    focusedAssetRouteOptionIndex
-                  ]!}${viewSubRoute}`
-                )
+                const focusedAssetRouteOption =
+                  filteredAssetRouteOptions[focusedAssetRouteOptionIndex]
+                if (focusedAssetRouteOption) {
+                  navigateToRoute(`/${focusedAssetRouteOption}${viewSubRoute}`)
+                }
                 break
               case 'Tab':
                 setSelectingAssetRoute(false)

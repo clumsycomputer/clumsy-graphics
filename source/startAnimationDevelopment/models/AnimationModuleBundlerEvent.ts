@@ -1,4 +1,4 @@
-import { AnimationModule } from '../../main'
+import { AnimationModule } from '../../docker-main'
 import { EventBase } from './common'
 
 export type AnimationModuleBundlerEvent =

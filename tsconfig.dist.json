@@ -3,5 +3,5 @@
   "compilerOptions": {
     "declaration": true
   },
-  "files": ["./source/main.ts", "./source/renderAnimationModule/frameRendererWorker.tsx"]
+  "files": ["./source/native-main.ts", "./source/docker-main.ts", "./source/renderAnimationModule/frameRendererWorker.tsx"]
 }

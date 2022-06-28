@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  dist-environment:
+  graphics-renderer:
     build: 
       context: .
       dockerfile: dist.Dockerfile
@@ -9,4 +9,4 @@ services:
     ports:
       - "3000:3000"
     volumes: 
-      - ${PROJECT_SOURCE_DIRECTORY_PATH}:/project/source
+      - ${PROJECT_SOURCE_DIRECTORY_PATH}:/graphics-renderer/source

@@ -29,7 +29,7 @@ test.describe('graphics-renderer', () => {
   test.describe('renderAnimation', () => {
     test('renderAnimation outputs expected "foo.mp4"', () => {
       ChildProcess.execSync(
-        `graphics-renderer renderAnimation --animationModulePath=${testAnimationModulePath} --animationMp4OutputPath=./test-temp/foo.mp4 --numberOfFrameRendererWorkers=7`
+        `_graphics-renderer renderAnimation --animationModulePath=${testAnimationModulePath} --animationMp4OutputPath=./test-temp/foo.mp4 --numberOfFrameRendererWorkers=7`
       )
       expect(
         ChildProcess.spawnSync(
@@ -43,7 +43,7 @@ test.describe('graphics-renderer', () => {
   test.describe('renderAnimationFrame', () => {
     test('renderAnimationFrame outputs expected "foo_0.svg"', () => {
       ChildProcess.execSync(
-        `graphics-renderer renderAnimationFrame --animationModulePath=${testAnimationModulePath} --frameFileOutputPath=./test-temp/foo_0.svg --frameIndex=0`
+        `_graphics-renderer renderAnimationFrame --animationModulePath=${testAnimationModulePath} --frameFileOutputPath=./test-temp/foo_0.svg --frameIndex=0`
       )
       expect(
         FileSystem.readFileSync('./test-temp/foo_0.svg')
@@ -53,7 +53,7 @@ test.describe('graphics-renderer', () => {
     })
     test('renderAnimationFrame outputs expected "foo_0.png"', () => {
       ChildProcess.execSync(
-        `graphics-renderer renderAnimationFrame --animationModulePath=${testAnimationModulePath} --frameFileOutputPath=./test-temp/foo_0.png --frameIndex=0`
+        `_graphics-renderer renderAnimationFrame --animationModulePath=${testAnimationModulePath} --frameFileOutputPath=./test-temp/foo_0.png --frameIndex=0`
       )
       expect(
         ChildProcess.spawnSync(
@@ -67,10 +67,10 @@ test.describe('graphics-renderer', () => {
   test.describe('convertAnimationToGif', () => {
     test('convertAnimationToGif outputs expected "foo.gif"', () => {
       ChildProcess.execSync(
-        `graphics-renderer renderAnimation --animationModulePath=${testAnimationModulePath} --animationMp4OutputPath=./test-temp/foo.mp4`
+        `_graphics-renderer renderAnimation --animationModulePath=${testAnimationModulePath} --animationMp4OutputPath=./test-temp/foo.mp4`
       )
       ChildProcess.execSync(
-        'graphics-renderer convertAnimationToGif --animationMp4SourcePath=./test-temp/foo.mp4 --animationGifOutputPath=./test-temp/foo.gif --gifAspectRatioWidth=512'
+        '_graphics-renderer convertAnimationToGif --animationMp4SourcePath=./test-temp/foo.mp4 --animationGifOutputPath=./test-temp/foo.gif --gifAspectRatioWidth=512'
       )
       expect(
         ChildProcess.spawnSync(
@@ -84,7 +84,7 @@ test.describe('graphics-renderer', () => {
   test.describe('startAnimationDevelopment', () => {
     let spawnedDevelopmentProcess: ChildProcess.ChildProcess | null = null
     test.beforeAll(async () => {
-      spawnedDevelopmentProcess = ChildProcess.spawn('graphics-renderer', [
+      spawnedDevelopmentProcess = ChildProcess.spawn('_graphics-renderer', [
         'startDevelopment',
         `--animationModulePath=${testAnimationModulePath}`,
       ])

@@ -74,25 +74,9 @@ yarn graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-
 yarn add @clumsycomputer/graphics-renderer
 ```
 
-#### install dependency binaries _(macos)_
+#### setup docker
 
-##### ffmpeg
-
-```bash
-brew install ffmpeg
-```
-
-##### inkscape
-
-```bash
-brew install --cask inkscape
-```
-
-##### make inkscape binary available at 'inkscape'
-
-```bash
-ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
-```
+install docker onto your system, and then run its daemon
 
 ## commands
 

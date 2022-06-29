@@ -1,4 +1,4 @@
-FROM clumsycomputer/graphics-renderer-base
+FROM ghcr.io/clumsycomputer/graphics-renderer-base
 COPY package.json ./
 COPY yarn.lock ./
 COPY tsconfig.json ./

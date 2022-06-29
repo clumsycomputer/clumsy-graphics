@@ -76,7 +76,7 @@ yarn add @clumsycomputer/graphics-renderer
 
 #### setup docker
 
-install docker onto your system, and then run its daemon
+install and run docker _(the majority of `graphics-renderer` runs within a container to simplify dependency management)_
 
 ## commands
 

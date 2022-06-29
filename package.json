@@ -1,6 +1,6 @@
 {
   "name": "@clumsycomputer/graphics-renderer",
-  "version": "2.0.4-alpha.2",
+  "version": "2.0.4",
   "main": "dist/docker-main.js",
   "types": "dist/docker-main.d.ts",
   "license": "MIT",
@@ -27,7 +27,7 @@
     "typescript": "4.4.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.22.2"
+    "@playwright/test": "1.22.2"
   },
   "scripts": {
     "test": "playwright test --quiet",

@@ -12,6 +12,6 @@ FileSystem.writeFileSync(
 )
 const targetGraphicsRendererSubCommand = process.argv.slice(2).join(' ')
 ChildProcess.execSync(
-  `GRAPHICS_RENDERER_SUB_COMMAND="${targetGraphicsRendererSubCommand}" PROJECT_SOURCE_DIRECTORY_PATH=${process.cwd()}/source docker compose --file ${__dirname}/dist.docker-compose.yml up --build`,
+  `PROJECT_SOURCE_DIRECTORY_PATH=${process.cwd()}/source docker compose --file ${__dirname}/dist.docker-compose.yml build && GRAPHICS_RENDERER_SUB_COMMAND="${targetGraphicsRendererSubCommand}" PROJECT_SOURCE_DIRECTORY_PATH=${process.cwd()}/source docker compose --file ${__dirname}/dist.docker-compose.yml run --rm graphics-renderer`,
   { stdio: 'inherit' }
 )

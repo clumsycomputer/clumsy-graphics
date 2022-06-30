@@ -6,7 +6,5 @@ services:
       dockerfile: dist.Dockerfile
     environment:      
       - GRAPHICS_RENDERER_SUB_COMMAND=${GRAPHICS_RENDERER_SUB_COMMAND}
-    ports:
-      - "3000:3000"
     volumes: 
-      - ${PROJECT_SOURCE_DIRECTORY_PATH}:/graphics-renderer/source
+      - ${PROJECT_DIRECTORY_PATH}:/graphics-renderer

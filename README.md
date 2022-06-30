@@ -50,10 +50,16 @@ async function getFooFrameDescription(api: GetFooFrameDescriptionApi) {
 }
 ```
 
+#### develop and iterate on animation
+
+```bash
+yarn graphics-renderer startDevelopment --animationModulePath=./example-project/Foo.animation.tsx
+```
+
 #### render animation as mp4
 
 ```bash
-yarn graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./example-project/example.mp4"
+yarn graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./example-project/foo.mp4"
 ```
 
 #### convert animation to gif
@@ -76,7 +82,7 @@ yarn add @clumsycomputer/graphics-renderer
 
 #### setup docker
 
-install and run docker _(the majority of `graphics-renderer` runs within a container to simplify dependency management)_
+install and run docker _(the majority of `graphics-renderer` runs within a container to simplify)_
 
 ## commands
 

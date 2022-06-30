@@ -1,6 +1,6 @@
 {
   "name": "@clumsycomputer/graphics-renderer",
-  "version": "2.0.4-beta.18",
+  "version": "3.0.0",
   "main": "dist/docker-main.js",
   "types": "dist/docker-main.d.ts",
   "license": "MIT",

@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  graphics-renderer:
+    build: 
+      context: .
+      dockerfile: dist.Dockerfile
+    environment:      
+      - GRAPHICS_RENDERER_SUB_COMMAND=${GRAPHICS_RENDERER_SUB_COMMAND}
+    volumes: 
+      - ${PROJECT_DIRECTORY_PATH}:/graphics-renderer

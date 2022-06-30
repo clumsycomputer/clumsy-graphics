@@ -1,8 +1,8 @@
 {
   "name": "@clumsycomputer/graphics-renderer",
-  "version": "2.0.3",
-  "main": "dist/main.js",
-  "types": "dist/main.d.ts",
+  "version": "3.0.0",
+  "main": "dist/docker-main.js",
+  "types": "dist/docker-main.d.ts",
   "license": "MIT",
   "dependencies": {
     "@material-ui/core": "^4.12.4",
@@ -27,17 +27,19 @@
     "typescript": "4.4.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.22.2"
+    "@playwright/test": "1.22.2"
   },
   "scripts": {
     "test": "playwright test --quiet",
-    "buildDist": "rm -rf ./dist && tsc --project ./tsconfig.dist.json --outDir ./dist && cp -r ./source/startAnimationDevelopment/browser ./dist/startAnimationDevelopment/browser",
-    "buildLocal": "yarn buildDist && chmod +x ./dist/main.js && yarn link",
-    "startExampleDevelopment": "graphics-renderer startDevelopment --animationModulePath=./example-project/Foo.animation.tsx",
-    "renderExampleAnimation": "graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./example-project/example.mp4",
-    "convertExampleAnimationToGif": "graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-project/foo.mp4 --animationGifOutputPath=./example-project/foo.gif --gifAspectRatioWidth=512"
+    "buildDist": "rm -rf ./dist && tsc --project ./tsconfig.dist.json --outDir ./dist && cp -r ./source/startAnimationDevelopment/browser ./dist/startAnimationDevelopment/browser && cp ./dist.docker-compose.yml ./dist/dist.docker-compose.yml && cp ./dist.Dockerfile ./dist/dist.Dockerfile",
+    "buildLocal": "yarn buildDist && chmod +x ./dist/docker-main.js && chmod +x ./dist/native-main.js && yarn link",
+    "startDevelopmentEnvironment": "docker compose --file ./dev.docker-compose.yml build && docker compose --file ./dev.docker-compose.yml run --rm development-environment",
+    "startExampleDevelopment": "_graphics-renderer startDevelopment --animationModulePath=./example-project/Foo.animation.tsx",
+    "renderExampleAnimation": "_graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./example-project/example.mp4",
+    "convertExampleAnimationToGif": "_graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-project/foo.mp4 --animationGifOutputPath=./example-project/foo.gif --gifAspectRatioWidth=512"
   },
   "bin": {
-    "graphics-renderer": "./dist/main.js"
+    "_graphics-renderer": "./dist/docker-main.js",
+    "graphics-renderer": "./dist/native-main.js"
   }
 }

@@ -50,10 +50,16 @@ async function getFooFrameDescription(api: GetFooFrameDescriptionApi) {
 }
 ```
 
+#### develop and iterate on animation
+
+```bash
+yarn graphics-renderer startDevelopment --animationModulePath=./example-project/Foo.animation.tsx
+```
+
 #### render animation as mp4
 
 ```bash
-yarn graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./example-project/example.mp4"
+yarn graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./example-project/foo.mp4"
 ```
 
 #### convert animation to gif
@@ -74,25 +80,9 @@ yarn graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-
 yarn add @clumsycomputer/graphics-renderer
 ```
 
-#### install dependency binaries _(macos)_
+#### setup docker
 
-##### ffmpeg
-
-```bash
-brew install ffmpeg
-```
-
-##### inkscape
-
-```bash
-brew install --cask inkscape
-```
-
-##### make inkscape binary available at 'inkscape'
-
-```bash
-ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape inkscape
-```
+install and run docker _(the majority of `graphics-renderer` runs within a container to simplify)_
 
 ## commands
 

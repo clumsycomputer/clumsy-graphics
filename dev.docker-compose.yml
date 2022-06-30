@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  development-environment:
+    build: 
+      context: .
+      dockerfile: dev.Dockerfile
+    volumes: 
+      - ./source:/graphics-renderer/source
+      - ./__tests__:/graphics-renderer/__tests__
+      - ./example-project:/graphics-renderer/example-project

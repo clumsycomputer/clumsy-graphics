@@ -27,9 +27,6 @@ color_space=unknown
 color_primaries=unknown
 color_transfer=unknown
 chroma_location=left
-[SIDE_DATA]
-side_data_type=H.26[45] User Data Unregistered SEI message
-[/SIDE_DATA]
 [/FRAME]
 [FRAME]
 media_type=video

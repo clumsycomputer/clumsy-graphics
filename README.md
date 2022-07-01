@@ -4,7 +4,11 @@ this repository provides tooling for rendering animations where frames are descr
 
 ## example
 
-#### ./example-project/Foo.animation.tsx
+#### tl;dr
+
+![Hello Rainbow Animation Gif](/assets/HelloRainbow.gif)
+
+#### ./example-project/HelloRainbow.animation.tsx
 
 ```typescript
 import React from 'react'

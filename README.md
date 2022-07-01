@@ -8,43 +8,74 @@ this repository provides tooling for rendering animations where frames are descr
 
 ```typescript
 import React from 'react'
-import { AnimationModule } from '@clumsycomputer/graphics-renderer'
+import { AnimationModule } from '../source/models/AnimationModule'
+import getColormap from 'colormap'
 
-const FooAnimationModule: AnimationModule = {
-  moduleName: 'Foo',
-  frameCount: 10,
-  getFrameDescription: getFooFrameDescription,
+const HelloRainbowAnimationModule: AnimationModule = {
+  moduleName: 'Hello Rainbow',
+  frameCount: 48,
+  getFrameDescription: getHelloRainbowFrameDescription,
   frameSize: {
     width: 1024,
     height: 1024,
   },
   animationSettings: {
-    frameRate: 5,
+    frameRate: 12,
     constantRateFactor: 1,
   },
 }
 
-export default FooAnimationModule
+export default HelloRainbowAnimationModule
 
-interface GetFooFrameDescriptionApi {
+interface GetHelloRainbowFrameDescriptionApi {
   frameCount: number
   frameIndex: number
 }
 
-async function getFooFrameDescription(api: GetFooFrameDescriptionApi) {
+async function getHelloRainbowFrameDescription(
+  api: GetHelloRainbowFrameDescriptionApi
+) {
   const { frameCount, frameIndex } = api
-  const centerAngle = ((2 * Math.PI) / frameCount) * frameIndex
+  const rainbowColormap = getColormap({
+    colormap: 'rainbow-soft',
+    nshades: frameCount,
+    format: 'hex',
+    alpha: 1,
+  })
+  const mainFrameColor = rainbowColormap[frameIndex % frameCount]
   return (
     <svg viewBox={`0 0 100 100`}>
-      <rect x={0} y={0} width={100} height={100} fill={'black'} />
-      <circle
-        cx={15 * Math.cos(centerAngle) + 50}
-        cy={15 * Math.sin(centerAngle) + 50}
-        r={5}
-        fill={`rgb(${
-          255 * Math.abs(Math.sin(2 * Math.PI * (frameIndex / frameCount)))
-        },128,64)`}
+      <rect
+        x={0}
+        y={0}
+        width={100}
+        height={100}
+        fill={'black'}
+        stroke={mainFrameColor}
+        strokeWidth={2}
       />
+      <text
+        x={5}
+        y={9}
+        style={{
+          fontFamily: 'monospace',
+          fontSize: 5,
+          fill: mainFrameColor,
+        }}
+      >
+        Hello Rainbow
+      </text>
+      {new Array(frameCount).fill(null).map((_, circleIndex) => {
+        const circleStamp = circleIndex / frameCount
+        return (
+          <circle
+            cx={50}
+            cy={50}
+            r={30 - 30 * Math.sin(circleStamp * (Math.PI / 2))}
+            fill={rainbowColormap[(circleIndex + frameIndex) % frameCount]}
+          />
+        )
+      })}
     </svg>
   )
 }
@@ -53,24 +84,24 @@ async function getFooFrameDescription(api: GetFooFrameDescriptionApi) {
 #### develop and iterate on animation
 
 ```bash
-yarn graphics-renderer startDevelopment --animationModulePath=./example-project/Foo.animation.tsx
+yarn graphics-renderer startDevelopment --animationModulePath=./example-project/HelloRainbow.animation.tsx
 ```
 
 #### render animation as mp4
 
 ```bash
-yarn graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./example-project/foo.mp4"
+yarn graphics-renderer renderAnimation --animationModulePath=./example-project/HelloRainbow.animation.tsx --animationMp4OutputPath=./example-project/HelloRainbow.mp4"
 ```
 
 #### convert animation to gif
 
 ```bash
-yarn graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-project/foo.mp4 --animationGifOutputPath=./example-project/foo.gif --gifAspectRatioWidth=512
+yarn graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-project/HelloRainbow.mp4 --animationGifOutputPath=./example-project/HelloRainbow.gif --gifAspectRatioWidth=512
 ```
 
-#### ./example-project/foo.gif
+#### ./example-project/HelloRainbow.gif
 
-![Foo Animation Gif](/assets/foo.gif)
+![Hello Rainbow Animation Gif](/assets/HelloRainbow.gif)
 
 ## installation
 
@@ -82,7 +113,7 @@ yarn add @clumsycomputer/graphics-renderer
 
 #### setup docker
 
-install and run docker _(the majority of `graphics-renderer` runs within a container to simplify)_
+install and run [docker engine](https://docs.docker.com/engine/install/) _(the majority of `graphics-renderer` runs within a container to simplify dependency management)_
 
 ## commands
 
@@ -112,13 +143,7 @@ install and run docker _(the majority of `graphics-renderer` runs within a conta
 
 - run _startDevelopment_ command
 
-- open browser at development service with a valid query string detailing desired asset
-
-  - schema: `localhost:<ClientServerPort>(/animation | /frame/<FrameIndex>)(/logs | /result)`
-
-  - animation example: `localhost:3000/animation/result`
-
-  - frame example: `localhost:3000/frame/0/result`
+- open browser at `localhost:3000`
 
 - begin making changes on the active animation module
 

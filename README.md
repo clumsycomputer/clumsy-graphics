@@ -12,7 +12,7 @@ import { AnimationModule } from '../source/models/AnimationModule'
 import getColormap from 'colormap'
 
 const HelloRainbowAnimationModule: AnimationModule = {
-  moduleName: 'Hello Rainbow',
+  moduleName: 'Hello-Rainbow',
   frameCount: 48,
   getFrameDescription: getHelloRainbowFrameDescription,
   frameSize: {

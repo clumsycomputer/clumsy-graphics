@@ -4,14 +4,14 @@ import getColormap from 'colormap'
 
 const HelloRainbowAnimationModule: AnimationModule = {
   moduleName: 'Hello-Rainbow',
-  frameCount: 48,
+  frameCount: 24,
   getFrameDescription: getHelloRainbowFrameDescription,
   frameSize: {
     width: 1024,
     height: 1024,
   },
   animationSettings: {
-    frameRate: 12,
+    frameRate: 5,
     constantRateFactor: 1,
   },
 }

@@ -6,7 +6,7 @@ this repository provides tooling for rendering animations where frames are descr
 
 #### tl;dr
 
-![Hello Rainbow Animation Gif](/assets/HelloRainbow.gif)
+![TL;DR Hello Rainbow Animation Gif](/assets/HelloRainbow.tl;dr.gif)
 
 #### ./example-project/HelloRainbow.animation.tsx
 

@@ -1,6 +1,6 @@
 {
   "name": "@clumsycomputer/graphics-renderer",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "main": "dist/docker-main.js",
   "types": "dist/docker-main.d.ts",
   "license": "MIT",
@@ -27,16 +27,18 @@
     "typescript": "4.4.3"
   },
   "devDependencies": {
-    "@playwright/test": "1.22.2"
+    "@playwright/test": "1.22.2",
+    "@types/colormap": "^2.3.1",
+    "colormap": "^2.3.2"
   },
   "scripts": {
     "test": "playwright test --quiet",
     "buildDist": "rm -rf ./dist && tsc --project ./tsconfig.dist.json --outDir ./dist && cp -r ./source/startAnimationDevelopment/browser ./dist/startAnimationDevelopment/browser && cp ./dist.docker-compose.yml ./dist/dist.docker-compose.yml && cp ./dist.Dockerfile ./dist/dist.Dockerfile",
     "buildLocal": "yarn buildDist && chmod +x ./dist/docker-main.js && chmod +x ./dist/native-main.js && yarn link",
-    "startDevelopmentEnvironment": "docker compose --file ./dev.docker-compose.yml build && docker compose --file ./dev.docker-compose.yml run --rm development-environment",
-    "startExampleDevelopment": "_graphics-renderer startDevelopment --animationModulePath=./example-project/Foo.animation.tsx",
-    "renderExampleAnimation": "_graphics-renderer renderAnimation --animationModulePath=./example-project/Foo.animation.tsx --animationMp4OutputPath=./example-project/example.mp4",
-    "convertExampleAnimationToGif": "_graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-project/foo.mp4 --animationGifOutputPath=./example-project/foo.gif --gifAspectRatioWidth=512"
+    "startDevelopmentEnvironment": "docker compose --file ./dev.docker-compose.yml build && docker compose --file ./dev.docker-compose.yml run -p 3000:3000 --rm development-environment",
+    "startExampleDevelopment": "_graphics-renderer startDevelopment --animationModulePath=./example-project/HelloRainbow.animation.tsx",
+    "renderExampleAnimation": "_graphics-renderer renderAnimation --animationModulePath=./example-project/HelloRainbow.animation.tsx --animationMp4OutputPath=./example-project/HelloRainbow.mp4",
+    "convertExampleAnimationToGif": "_graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-project/HelloRainbow.mp4 --animationGifOutputPath=./example-project/HelloRainbow.gif --gifAspectRatioWidth=512"
   },
   "bin": {
     "_graphics-renderer": "./dist/docker-main.js",

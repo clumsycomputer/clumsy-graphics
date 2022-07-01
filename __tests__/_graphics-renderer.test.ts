@@ -2,7 +2,7 @@ import ChildProcess from 'child_process'
 import FileSystem from 'fs'
 import { test, expect } from '@playwright/test'
 
-test.describe('graphics-renderer', () => {
+test.describe('_graphics-renderer', () => {
   const testProjectDirectoryPath = './__tests__/test-project'
   const testAnimationModulePath = `${testProjectDirectoryPath}/Foo.animation.tsx`
   test.beforeAll(() => {

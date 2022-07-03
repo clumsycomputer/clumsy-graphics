@@ -112,7 +112,7 @@ yarn graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-
 #### add package to project
 
 ```bash
-yarn add @clumsycomputer/graphics-renderer
+yarn add graphics-renderer
 ```
 
 #### setup docker

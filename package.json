@@ -1,6 +1,6 @@
 {
-  "name": "@clumsycomputer/graphics-renderer",
-  "version": "3.0.3",
+  "name": "graphics-renderer",
+  "version": "1.0.0",
   "main": "dist/docker-main.js",
   "types": "dist/docker-main.d.ts",
   "license": "MIT",
@@ -47,5 +47,8 @@
   "bin": {
     "_graphics-renderer": "./dist/docker-main.js",
     "graphics-renderer": "./dist/native-main.js"
-  }
+  },
+  "keywords": [
+    "animation", "svg", "react", "ffmpeg", "inkscape", "tool"
+  ]
 }

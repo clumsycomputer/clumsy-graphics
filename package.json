@@ -1,9 +1,13 @@
 {
   "name": "@clumsycomputer/graphics-renderer",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "main": "dist/docker-main.js",
   "types": "dist/docker-main.d.ts",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clumsycomputer/graphics-renderer"
+  },
   "dependencies": {
     "@material-ui/core": "^4.12.4",
     "@material-ui/icons": "^4.11.3",

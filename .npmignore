@@ -1,5 +1,6 @@
 source
 example-project
+scripts
 node_modules
 .prettierc
 __tests__
@@ -11,3 +12,6 @@ package*
 assets
 developmentAssets
 test-results
+*.Dockerfile
+*.docker-compose.yml
+!dist/dist*

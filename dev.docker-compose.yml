@@ -5,6 +5,7 @@ services:
       context: .
       dockerfile: dev.Dockerfile
     volumes: 
+      - ./scripts:/graphics-renderer/scripts
       - ./source:/graphics-renderer/source
       - ./__tests__:/graphics-renderer/__tests__
       - ./example-project:/graphics-renderer/example-project

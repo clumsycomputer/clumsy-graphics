@@ -20,6 +20,7 @@ export interface UsePollClientGraphicsRendererProcessStateResponseApi
     AnimationDevelopmentPageProps<AssetBaseRoute, ViewSubRoute>,
     'graphicsRendererProcessKey'
   > {
+  localStorageKey: string
   staticPollRate: number
 }
 
@@ -38,6 +39,7 @@ export interface PollClientGraphicsRendererProcessStateServerInitializingRespons
 export interface PollClientGraphicsRendererProcessStateSuccessResponse
   extends PollClientGraphicsRendererProcessStateBase<'fetchSuccessful', 200> {
   clientGraphicsRendererProcessState: ClientGraphicsRendererProcessState
+  previousClientGraphicsRendererProcessState: ClientGraphicsRendererProcessState | null
 }
 
 export interface PollClientGraphicsRendererProcessStateClientErrorResponse
@@ -61,7 +63,7 @@ export function usePollClientGraphicsRendererProcessStateResponse(
 ): {
   pollClientGraphicsRendererProcessStateResponse: PollClientGraphicsRendererProcessStateResponse
 } {
-  const { graphicsRendererProcessKey, staticPollRate } = api
+  const { localStorageKey, graphicsRendererProcessKey, staticPollRate } = api
   const localStorageSessionCacheId = useMemo(
     () =>
       document
@@ -74,6 +76,7 @@ export function usePollClientGraphicsRendererProcessStateResponse(
     setPollClientGraphicsRendererProcessStateResponse,
   ] = useState<PollClientGraphicsRendererProcessStateResponse>(
     getInitialPollClientGraphicsRendererProcessStateResponse({
+      localStorageKey,
       graphicsRendererProcessKey,
       localStorageSessionCacheId,
     })
@@ -100,6 +103,7 @@ export function usePollClientGraphicsRendererProcessStateResponse(
                 targetCodec: ClientGraphicsRendererProcessStateCodec,
               })
             maybeSetPollClientGraphicsRendererProcessStateResponse({
+              localStorageKey,
               graphicsRendererProcessKey,
               localStorageSessionCacheId,
               setPollClientGraphicsRendererProcessStateResponse,
@@ -107,6 +111,12 @@ export function usePollClientGraphicsRendererProcessStateResponse(
               maybeNextPollClientGraphicsRendererProcessStateResponse: {
                 clientGraphicsRendererProcessState:
                   maybeNextClientGraphicsRendererProcessState,
+                previousClientGraphicsRendererProcessState:
+                  pollClientGraphicsRendererProcessStateResponseRef.current
+                    .responseStatus === 'fetchSuccessful'
+                    ? pollClientGraphicsRendererProcessStateResponseRef.current
+                        .clientGraphicsRendererProcessState
+                    : null,
                 responseStatus: 'fetchSuccessful',
                 responseStatusCode: 200,
               },
@@ -116,6 +126,7 @@ export function usePollClientGraphicsRendererProcessStateResponse(
             const responseErrorMessage =
               await fetchClientGraphicsRendererProcessStateResponse.text()
             maybeSetPollClientGraphicsRendererProcessStateResponse({
+              localStorageKey,
               graphicsRendererProcessKey,
               localStorageSessionCacheId,
               setPollClientGraphicsRendererProcessStateResponse,
@@ -129,6 +140,7 @@ export function usePollClientGraphicsRendererProcessStateResponse(
             break
           case 500:
             maybeSetPollClientGraphicsRendererProcessStateResponse({
+              localStorageKey,
               graphicsRendererProcessKey,
               localStorageSessionCacheId,
               setPollClientGraphicsRendererProcessStateResponse,
@@ -155,28 +167,35 @@ export function usePollClientGraphicsRendererProcessStateResponse(
 interface GetInitialPollClientGraphicsRendererProcessStateResponseApi
   extends Pick<
     UsePollClientGraphicsRendererProcessStateResponseApi,
-    'graphicsRendererProcessKey'
+    'localStorageKey' | 'graphicsRendererProcessKey'
   > {
   localStorageSessionCacheId: string
+  localStorageKey: string
 }
 
 function getInitialPollClientGraphicsRendererProcessStateResponse(
   api: GetInitialPollClientGraphicsRendererProcessStateResponseApi
 ): PollClientGraphicsRendererProcessStateResponse {
-  const { graphicsRendererProcessKey, localStorageSessionCacheId } = api
-  const maybeCachedFetchGraphicsRendererProcessStateDataString =
-    localStorage.getItem(graphicsRendererProcessKey)
-  const maybeCachedFetchGraphicsRendererProcessStateData =
-    maybeCachedFetchGraphicsRendererProcessStateDataString
-      ? (JSON.parse(
-          maybeCachedFetchGraphicsRendererProcessStateDataString
-        ) as unknown as CachedPollClientGraphicsRendererProcessStateResponseData | null)
-      : null
+  const {
+    localStorageKey,
+    graphicsRendererProcessKey,
+    localStorageSessionCacheId,
+  } = api
+  const cachedPollClientGraphicsRendererProcessStateResponseData =
+    getCachedPollClientGraphicsRendererProcessStateResponseData({
+      localStorageKey,
+    })
+  const cachedPollClientGraphicsRendererProcessStateResponse =
+    cachedPollClientGraphicsRendererProcessStateResponseData
+      ?.pollClientGraphicsRendererProcessStateResponseMap[
+      graphicsRendererProcessKey
+    ]
   if (
     localStorageSessionCacheId ===
-    maybeCachedFetchGraphicsRendererProcessStateData?.localStorageSessionCacheId
+      cachedPollClientGraphicsRendererProcessStateResponseData?.localStorageSessionCacheId &&
+    cachedPollClientGraphicsRendererProcessStateResponse
   ) {
-    return maybeCachedFetchGraphicsRendererProcessStateData.pollClientGraphicsRendererProcessStateResponse
+    return cachedPollClientGraphicsRendererProcessStateResponse
   } else {
     return {
       responseStatus: 'serverInitializing',
@@ -185,15 +204,10 @@ function getInitialPollClientGraphicsRendererProcessStateResponse(
   }
 }
 
-interface CachedPollClientGraphicsRendererProcessStateResponseData {
-  localStorageSessionCacheId: string
-  pollClientGraphicsRendererProcessStateResponse: PollClientGraphicsRendererProcessStateResponse
-}
-
 interface MaybeSetPollClientGraphicsRendererProcessStateResponseApi
   extends Pick<
     UsePollClientGraphicsRendererProcessStateResponseApi,
-    'graphicsRendererProcessKey'
+    'localStorageKey' | 'graphicsRendererProcessKey'
   > {
   localStorageSessionCacheId: string
   maybeNextPollClientGraphicsRendererProcessStateResponse: PollClientGraphicsRendererProcessStateResponse
@@ -210,27 +224,100 @@ function maybeSetPollClientGraphicsRendererProcessStateResponse(
     pollClientGraphicsRendererProcessStateResponseRef,
     localStorageSessionCacheId,
     maybeNextPollClientGraphicsRendererProcessStateResponse,
-    graphicsRendererProcessKey,
     setPollClientGraphicsRendererProcessStateResponse,
+    localStorageKey,
+    graphicsRendererProcessKey,
   } = api
   // todo calc shouldUpdateDiff
   if (true) {
     pollClientGraphicsRendererProcessStateResponseRef.current =
       maybeNextPollClientGraphicsRendererProcessStateResponse
-    const nextCachedPollClientGraphicsRendererProcessStateResponseData: CachedPollClientGraphicsRendererProcessStateResponseData =
-      {
-        localStorageSessionCacheId,
-        pollClientGraphicsRendererProcessStateResponse:
-          maybeNextPollClientGraphicsRendererProcessStateResponse,
-      }
-    localStorage.setItem(
-      graphicsRendererProcessKey,
-      JSON.stringify(
-        nextCachedPollClientGraphicsRendererProcessStateResponseData
-      )
-    )
     setPollClientGraphicsRendererProcessStateResponse(
       maybeNextPollClientGraphicsRendererProcessStateResponse
     )
+    const cachedPollClientGraphicsRendererProcessStateResponseData =
+      getCachedPollClientGraphicsRendererProcessStateResponseData({
+        localStorageKey,
+      })
+    if (
+      maybeNextPollClientGraphicsRendererProcessStateResponse.responseStatus ===
+        'fetchSuccessful' &&
+      maybeNextPollClientGraphicsRendererProcessStateResponse
+        .clientGraphicsRendererProcessState.buildVersion ===
+        cachedPollClientGraphicsRendererProcessStateResponseData?.buildVersion
+    ) {
+      const nextCachedPollClientGraphicsRendererProcessStateResponseData: CachedPollClientGraphicsRendererProcessStateResponseData =
+        {
+          localStorageSessionCacheId,
+          buildVersion:
+            cachedPollClientGraphicsRendererProcessStateResponseData.buildVersion,
+          pollClientGraphicsRendererProcessStateResponseMap: {
+            ...cachedPollClientGraphicsRendererProcessStateResponseData.pollClientGraphicsRendererProcessStateResponseMap,
+            [graphicsRendererProcessKey]:
+              maybeNextPollClientGraphicsRendererProcessStateResponse,
+          },
+        }
+      localStorage.setItem(
+        localStorageKey,
+        JSON.stringify(
+          nextCachedPollClientGraphicsRendererProcessStateResponseData
+        )
+      )
+    } else if (
+      maybeNextPollClientGraphicsRendererProcessStateResponse.responseStatus ===
+        'fetchSuccessful' &&
+      maybeNextPollClientGraphicsRendererProcessStateResponse
+        .clientGraphicsRendererProcessState.buildVersion !==
+        cachedPollClientGraphicsRendererProcessStateResponseData?.buildVersion
+    ) {
+      const nextCachedPollClientGraphicsRendererProcessStateResponseData: CachedPollClientGraphicsRendererProcessStateResponseData =
+        {
+          localStorageSessionCacheId,
+          buildVersion:
+            maybeNextPollClientGraphicsRendererProcessStateResponse
+              .clientGraphicsRendererProcessState.buildVersion,
+          pollClientGraphicsRendererProcessStateResponseMap: {
+            [graphicsRendererProcessKey]:
+              maybeNextPollClientGraphicsRendererProcessStateResponse,
+          },
+        }
+      localStorage.setItem(
+        localStorageKey,
+        JSON.stringify(
+          nextCachedPollClientGraphicsRendererProcessStateResponseData
+        )
+      )
+    }
+  }
+}
+
+interface GetCachedPollClientGraphicsRendererProcessStateResponseDataApi
+  extends Pick<
+    UsePollClientGraphicsRendererProcessStateResponseApi,
+    'localStorageKey'
+  > {}
+
+function getCachedPollClientGraphicsRendererProcessStateResponseData(
+  api: GetCachedPollClientGraphicsRendererProcessStateResponseDataApi
+) {
+  const { localStorageKey } = api
+  const maybeCachedPollClientGraphicsRendererProcessStateResponseDataString =
+    localStorage.getItem(localStorageKey)
+  const cachedPollClientGraphicsRendererProcessStateResponseData =
+    maybeCachedPollClientGraphicsRendererProcessStateResponseDataString
+      ? (JSON.parse(
+          maybeCachedPollClientGraphicsRendererProcessStateResponseDataString
+        ) as unknown as CachedPollClientGraphicsRendererProcessStateResponseData | null)
+      : null
+  return cachedPollClientGraphicsRendererProcessStateResponseData
+}
+
+interface CachedPollClientGraphicsRendererProcessStateResponseData {
+  localStorageSessionCacheId: string
+  buildVersion: ClientGraphicsRendererProcessState['buildVersion']
+  pollClientGraphicsRendererProcessStateResponseMap: {
+    [
+      graphicsRendererProcessKey: string
+    ]: PollClientGraphicsRendererProcessStateResponse
   }
 }

@@ -35,6 +35,7 @@ export function AnimationDevelopmentPage<
   const { pollClientGraphicsRendererProcessStateResponse } =
     usePollClientGraphicsRendererProcessStateResponse({
       graphicsRendererProcessKey,
+      localStorageKey: 'poll-client-graphics-renderer-state-response',
       staticPollRate: 500,
     })
   const styles = useAnimationDevelopmentPageStyles()

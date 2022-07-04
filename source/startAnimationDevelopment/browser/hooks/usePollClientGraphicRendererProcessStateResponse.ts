@@ -246,9 +246,8 @@ function maybeSetPollClientGraphicsRendererProcessStateResponse(
         .clientGraphicsRendererProcessState.buildVersion ===
         cachedPollClientGraphicsRendererProcessStateResponseData?.buildVersion
     ) {
-      localStorage.setItem(
-        localStorageKey,
-        JSON.stringify({
+      const nextCachedPollClientGraphicsRendererProcessStateResponseData: CachedPollClientGraphicsRendererProcessStateResponseData =
+        {
           localStorageSessionCacheId,
           buildVersion:
             cachedPollClientGraphicsRendererProcessStateResponseData.buildVersion,
@@ -257,7 +256,12 @@ function maybeSetPollClientGraphicsRendererProcessStateResponse(
             [graphicsRendererProcessKey]:
               maybeNextPollClientGraphicsRendererProcessStateResponse,
           },
-        })
+        }
+      localStorage.setItem(
+        localStorageKey,
+        JSON.stringify(
+          nextCachedPollClientGraphicsRendererProcessStateResponseData
+        )
       )
     } else if (
       maybeNextPollClientGraphicsRendererProcessStateResponse.responseStatus ===
@@ -266,9 +270,8 @@ function maybeSetPollClientGraphicsRendererProcessStateResponse(
         .clientGraphicsRendererProcessState.buildVersion !==
         cachedPollClientGraphicsRendererProcessStateResponseData?.buildVersion
     ) {
-      localStorage.setItem(
-        localStorageKey,
-        JSON.stringify({
+      const nextCachedPollClientGraphicsRendererProcessStateResponseData: CachedPollClientGraphicsRendererProcessStateResponseData =
+        {
           localStorageSessionCacheId,
           buildVersion:
             maybeNextPollClientGraphicsRendererProcessStateResponse
@@ -277,7 +280,12 @@ function maybeSetPollClientGraphicsRendererProcessStateResponse(
             [graphicsRendererProcessKey]:
               maybeNextPollClientGraphicsRendererProcessStateResponse,
           },
-        })
+        }
+      localStorage.setItem(
+        localStorageKey,
+        JSON.stringify(
+          nextCachedPollClientGraphicsRendererProcessStateResponseData
+        )
       )
     }
   }

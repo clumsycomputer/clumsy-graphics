@@ -1,12 +1,12 @@
 import { makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { GraphicsRendererProcessKey } from '../../models/GraphicsRendererProcessKey'
-import { Page } from './Page'
 import {
   PollClientGraphicsRendererProcessStateSuccessResponse,
   usePollClientGraphicsRendererProcessStateResponse,
 } from '../hooks/usePollClientGraphicRendererProcessStateResponse'
 import { AssetBaseRoute, ViewSubRoute } from '../models'
+import { Page } from './Page'
 
 export interface AnimationDevelopmentPageProps<
   SomeAssetBaseRoute extends AssetBaseRoute,
@@ -23,7 +23,8 @@ export interface AnimationDevelopmentPageProps<
 interface SomeClientGraphicsRendererProcessPageProps
   extends Pick<
     PollClientGraphicsRendererProcessStateSuccessResponse,
-    'clientGraphicsRendererProcessState'
+    | 'clientGraphicsRendererProcessState'
+    | 'previousClientGraphicsRendererProcessState'
   > {}
 
 export function AnimationDevelopmentPage<
@@ -80,12 +81,17 @@ export function AnimationDevelopmentPage<
         />
       )
     case 'fetchSuccessful':
-      const { clientGraphicsRendererProcessState } =
-        pollClientGraphicsRendererProcessStateResponse
+      const {
+        clientGraphicsRendererProcessState,
+        previousClientGraphicsRendererProcessState,
+      } = pollClientGraphicsRendererProcessStateResponse
       return (
         <SomeClientGraphicsRendererProcessPage
           clientGraphicsRendererProcessState={
             clientGraphicsRendererProcessState
+          }
+          previousClientGraphicsRendererProcessState={
+            previousClientGraphicsRendererProcessState
           }
         />
       )

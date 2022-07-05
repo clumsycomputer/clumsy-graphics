@@ -1,5 +1,6 @@
 import makeStyles from '@material-ui/core/styles/makeStyles'
-import React from 'react'
+import React, { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ClientGraphicsRendererProcessSuccessfulState } from '../models/ClientGraphicsRendererProcessState'
 import {
   AnimationDevelopmentPage,
@@ -34,6 +35,7 @@ export function AnimationDevelopmentResultPage<
     SomeAssetDisplay,
   } = props
   const styles = useAnimationDevelopmentResultPageStyles()
+  const navigateToRoute = useNavigate()
   return (
     <AnimationDevelopmentPage
       key={graphicsRendererProcessKey}
@@ -42,7 +44,19 @@ export function AnimationDevelopmentResultPage<
       viewSubRoute={viewSubRoute}
       SomeClientGraphicsRendererProcessPage={({
         clientGraphicsRendererProcessState,
+        previousClientGraphicsRendererProcessState,
       }) => {
+        useEffect(() => {
+          if (
+            clientGraphicsRendererProcessState.buildVersion !==
+            previousClientGraphicsRendererProcessState?.buildVersion
+          ) {
+            navigateToRoute(`${assetBaseRoute}/logs`)
+          }
+        }, [
+          clientGraphicsRendererProcessState,
+          previousClientGraphicsRendererProcessState,
+        ])
         switch (clientGraphicsRendererProcessState.buildStatus) {
           case 'invalidBuild':
             return (

@@ -1,11 +1,21 @@
 import { useEffect, useRef } from 'react'
-import { AnimationDevelopmentLogsDisplayProps } from '../AnimationDevelopmentLogsPage'
+import { AnimationDevelopmentPageProps } from '../components/AnimationDevelopmentPage'
 
 export interface UseManagedScrollContainerRefApi
   extends Pick<
-    AnimationDevelopmentLogsDisplayProps,
-    'buildVersion' | 'graphicsRendererProcessStdoutLog' | 'resultLink'
-  > {
+      AnimationDevelopmentPageProps<any, '/logs'>,
+      'graphicsRendererProcessKey'
+    >,
+    Pick<
+      Parameters<
+        AnimationDevelopmentPageProps<
+          any,
+          '/logs'
+        >['SomeClientGraphicsRendererProcessPage']
+      >[0],
+      'clientGraphicsRendererProcessState'
+      // | 'previousClientGraphicsRendererProcessState'
+    > {
   localStorageKey: string
 }
 
@@ -13,14 +23,15 @@ export function useManagedScrollContainerRef(
   api: UseManagedScrollContainerRefApi
 ) {
   const {
-    buildVersion,
+    graphicsRendererProcessKey,
+    clientGraphicsRendererProcessState,
+    // previousClientGraphicsRendererProcessState,
     localStorageKey,
-    graphicsRendererProcessStdoutLog,
-    resultLink,
   } = api
   const managedScrollContainerRef = useRef<HTMLDivElement>(null)
   const managedScrollStateRef = useRef<ManagedScrollState>({
-    buildVersion,
+    graphicsRendererProcessKey,
+    buildVersion: clientGraphicsRendererProcessState.buildVersion,
     automatedScrollEnabled: true,
     previousContainerScrollTop: null,
   })
@@ -71,13 +82,25 @@ export function useManagedScrollContainerRef(
             cachedManagedScrollStateJson
           ) as unknown as ManagedScrollState) || null
         : null
-      if (buildVersion === cachedManagedScrollState?.buildVersion) {
+      if (
+        clientGraphicsRendererProcessState.buildVersion ===
+          cachedManagedScrollState?.buildVersion &&
+        graphicsRendererProcessKey ===
+          cachedManagedScrollState.graphicsRendererProcessKey
+      ) {
         currentManagedScrollContainer.scroll({
           top: cachedManagedScrollState.previousContainerScrollTop || 0,
         })
         managedScrollStateRef.current = cachedManagedScrollState
       }
-      return () => {
+    }
+    localStorage.setItem(
+      localStorageKey,
+      JSON.stringify(managedScrollStateRef.current)
+    )
+    return () => {
+      const currentManagedScrollContainer = managedScrollContainerRef.current
+      if (currentManagedScrollContainer) {
         currentManagedScrollContainer.removeEventListener(
           'scroll',
           scrollEventHandlerRef.current
@@ -87,8 +110,14 @@ export function useManagedScrollContainerRef(
   }, [])
   useEffect(() => {
     const currentManagedScrollState = managedScrollStateRef.current
-    if (buildVersion !== currentManagedScrollState.buildVersion) {
-      currentManagedScrollState.buildVersion = buildVersion
+    if (
+      clientGraphicsRendererProcessState.buildVersion !==
+        currentManagedScrollState.buildVersion ||
+      graphicsRendererProcessKey !==
+        currentManagedScrollState.graphicsRendererProcessKey
+    ) {
+      currentManagedScrollState.buildVersion =
+        clientGraphicsRendererProcessState.buildVersion
       currentManagedScrollState.automatedScrollEnabled = true
       currentManagedScrollState.previousContainerScrollTop = null
     }
@@ -101,12 +130,20 @@ export function useManagedScrollContainerRef(
         top: currentManagedScrollContainer.scrollHeight,
       })
     }
-  }, [buildVersion, graphicsRendererProcessStdoutLog, resultLink])
-  return { managedScrollContainerRef }
+  }, [clientGraphicsRendererProcessState])
+  return {
+    managedScrollContainerRef,
+    automatedScrollEnabled:
+      managedScrollStateRef.current.automatedScrollEnabled,
+  }
 }
 
 interface ManagedScrollState
-  extends Pick<UseManagedScrollContainerRefApi, 'buildVersion'> {
+  extends Pick<UseManagedScrollContainerRefApi, 'graphicsRendererProcessKey'>,
+    Pick<
+      UseManagedScrollContainerRefApi['clientGraphicsRendererProcessState'],
+      'buildVersion'
+    > {
   automatedScrollEnabled: boolean
   previousContainerScrollTop: number | null
 }

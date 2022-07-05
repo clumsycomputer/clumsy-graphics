@@ -1,6 +1,7 @@
 import makeStyles from '@material-ui/core/styles/makeStyles'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ClientGraphicsRendererProcessValidBuildState } from '../models/ClientGraphicsRendererProcessState'
 import {
   AnimationDevelopmentPage,
@@ -31,7 +32,39 @@ export function AnimationDevelopmentLogsPage<
       viewSubRoute={viewSubRoute}
       SomeClientGraphicsRendererProcessPage={({
         clientGraphicsRendererProcessState,
+        previousClientGraphicsRendererProcessState,
       }) => {
+        const { managedScrollContainerRef, automatedScrollEnabled } =
+          useManagedScrollContainerRef({
+            graphicsRendererProcessKey,
+            clientGraphicsRendererProcessState,
+            localStorageKey: 'animation-development-logs-display',
+          })
+        const navigateToRoute = useNavigate()
+        useEffect(() => {
+          if (
+            automatedScrollEnabled &&
+            ((clientGraphicsRendererProcessState.buildStatus ===
+              'invalidBuild' &&
+              clientGraphicsRendererProcessState.buildVersion !==
+                previousClientGraphicsRendererProcessState?.buildVersion) ||
+              (clientGraphicsRendererProcessState.buildStatus ===
+                'validBuild' &&
+                previousClientGraphicsRendererProcessState?.buildStatus ===
+                  'validBuild' &&
+                (clientGraphicsRendererProcessState.graphicsRendererProcessStatus ===
+                  'processSuccessful' ||
+                  clientGraphicsRendererProcessState.graphicsRendererProcessStatus ===
+                    'processFailed') &&
+                clientGraphicsRendererProcessState.graphicsRendererProcessStatus !==
+                  previousClientGraphicsRendererProcessState?.graphicsRendererProcessStatus))
+          ) {
+            navigateToRoute(`${assetBaseRoute}/result`)
+          }
+        }, [
+          clientGraphicsRendererProcessState,
+          previousClientGraphicsRendererProcessState,
+        ])
         switch (clientGraphicsRendererProcessState.buildStatus) {
           case 'invalidBuild':
             return (
@@ -43,9 +76,7 @@ export function AnimationDevelopmentLogsPage<
                 }
                 viewRouteContent={
                   <AnimationDevelopmentLogsDisplay
-                    buildVersion={
-                      clientGraphicsRendererProcessState.buildVersion
-                    }
+                    managedScrollContainerRef={managedScrollContainerRef}
                     graphicsRendererProcessStdoutLog={''}
                     resultLink={
                       clientGraphicsRendererProcessState.buildStatus ===
@@ -71,9 +102,7 @@ export function AnimationDevelopmentLogsPage<
                 }
                 viewRouteContent={
                   <AnimationDevelopmentLogsDisplay
-                    buildVersion={
-                      clientGraphicsRendererProcessState.buildVersion
-                    }
+                    managedScrollContainerRef={managedScrollContainerRef}
                     graphicsRendererProcessStdoutLog={
                       clientGraphicsRendererProcessState.graphicsRendererProcessStdoutLog
                     }
@@ -106,22 +135,24 @@ export function AnimationDevelopmentLogsPage<
 
 export interface AnimationDevelopmentLogsDisplayProps
   extends Pick<
-    ClientGraphicsRendererProcessValidBuildState,
-    'buildVersion' | 'graphicsRendererProcessStdoutLog'
-  > {
+      ClientGraphicsRendererProcessValidBuildState,
+      'graphicsRendererProcessStdoutLog'
+    >,
+    Pick<
+      ReturnType<typeof useManagedScrollContainerRef>,
+      'managedScrollContainerRef'
+    > {
   resultLink: ReactNode
 }
 
 function AnimationDevelopmentLogsDisplay(
   props: AnimationDevelopmentLogsDisplayProps
 ) {
-  const { buildVersion, graphicsRendererProcessStdoutLog, resultLink } = props
-  const { managedScrollContainerRef } = useManagedScrollContainerRef({
-    buildVersion,
+  const {
+    managedScrollContainerRef,
     graphicsRendererProcessStdoutLog,
     resultLink,
-    localStorageKey: 'animation-development-logs-display',
-  })
+  } = props
   const styles = useAnimationDevelopmentLogsDisplayStyles()
   return (
     <div

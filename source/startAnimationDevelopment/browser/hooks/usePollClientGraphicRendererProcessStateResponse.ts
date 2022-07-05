@@ -183,6 +183,7 @@ function getInitialPollClientGraphicsRendererProcessStateResponse(
   } = api
   const cachedPollClientGraphicsRendererProcessStateResponseData =
     getCachedPollClientGraphicsRendererProcessStateResponseData({
+      localStorageSessionCacheId,
       localStorageKey,
     })
   const cachedPollClientGraphicsRendererProcessStateResponse =
@@ -190,11 +191,7 @@ function getInitialPollClientGraphicsRendererProcessStateResponse(
       ?.pollClientGraphicsRendererProcessStateResponseMap[
       graphicsRendererProcessKey
     ]
-  if (
-    localStorageSessionCacheId ===
-      cachedPollClientGraphicsRendererProcessStateResponseData?.localStorageSessionCacheId &&
-    cachedPollClientGraphicsRendererProcessStateResponse
-  ) {
+  if (cachedPollClientGraphicsRendererProcessStateResponse) {
     return cachedPollClientGraphicsRendererProcessStateResponse
   } else {
     return {
@@ -237,6 +234,7 @@ function maybeSetPollClientGraphicsRendererProcessStateResponse(
     )
     const cachedPollClientGraphicsRendererProcessStateResponseData =
       getCachedPollClientGraphicsRendererProcessStateResponseData({
+        localStorageSessionCacheId,
         localStorageKey,
       })
     if (
@@ -295,12 +293,14 @@ interface GetCachedPollClientGraphicsRendererProcessStateResponseDataApi
   extends Pick<
     UsePollClientGraphicsRendererProcessStateResponseApi,
     'localStorageKey'
-  > {}
+  > {
+  localStorageSessionCacheId: string
+}
 
 function getCachedPollClientGraphicsRendererProcessStateResponseData(
   api: GetCachedPollClientGraphicsRendererProcessStateResponseDataApi
 ) {
-  const { localStorageKey } = api
+  const { localStorageKey, localStorageSessionCacheId } = api
   const maybeCachedPollClientGraphicsRendererProcessStateResponseDataString =
     localStorage.getItem(localStorageKey)
   const cachedPollClientGraphicsRendererProcessStateResponseData =
@@ -309,7 +309,10 @@ function getCachedPollClientGraphicsRendererProcessStateResponseData(
           maybeCachedPollClientGraphicsRendererProcessStateResponseDataString
         ) as unknown as CachedPollClientGraphicsRendererProcessStateResponseData | null)
       : null
-  return cachedPollClientGraphicsRendererProcessStateResponseData
+  return localStorageSessionCacheId ===
+    cachedPollClientGraphicsRendererProcessStateResponseData?.localStorageSessionCacheId
+    ? cachedPollClientGraphicsRendererProcessStateResponseData
+    : null
 }
 
 interface CachedPollClientGraphicsRendererProcessStateResponseData {

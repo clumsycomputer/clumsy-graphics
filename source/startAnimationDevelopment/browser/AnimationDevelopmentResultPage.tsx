@@ -45,6 +45,7 @@ export function AnimationDevelopmentResultPage<
       SomeClientGraphicsRendererProcessPage={({
         clientGraphicsRendererProcessState,
         previousClientGraphicsRendererProcessState,
+        cachedPollClientGraphicsRendererProcessStateResponseData,
       }) => {
         useEffect(() => {
           if (
@@ -65,6 +66,9 @@ export function AnimationDevelopmentResultPage<
                 viewSubRoute={viewSubRoute}
                 clientGraphicsRendererProcessState={
                   clientGraphicsRendererProcessState
+                }
+                cachedPollClientGraphicsRendererProcessStateResponseData={
+                  cachedPollClientGraphicsRendererProcessStateResponseData
                 }
                 viewRouteContent={
                   <AnimationDevelopmentErrorDisplay
@@ -88,6 +92,9 @@ export function AnimationDevelopmentResultPage<
                     clientGraphicsRendererProcessState={
                       clientGraphicsRendererProcessState
                     }
+                    cachedPollClientGraphicsRendererProcessStateResponseData={
+                      cachedPollClientGraphicsRendererProcessStateResponseData
+                    }
                     viewRouteContent={
                       <div className={styles.inProgressContainer}>
                         in progress...
@@ -102,6 +109,9 @@ export function AnimationDevelopmentResultPage<
                     viewSubRoute={viewSubRoute}
                     clientGraphicsRendererProcessState={
                       clientGraphicsRendererProcessState
+                    }
+                    cachedPollClientGraphicsRendererProcessStateResponseData={
+                      cachedPollClientGraphicsRendererProcessStateResponseData
                     }
                     viewRouteContent={
                       <div className={styles.assetContainer}>
@@ -121,6 +131,9 @@ export function AnimationDevelopmentResultPage<
                     viewSubRoute={viewSubRoute}
                     clientGraphicsRendererProcessState={
                       clientGraphicsRendererProcessState
+                    }
+                    cachedPollClientGraphicsRendererProcessStateResponseData={
+                      cachedPollClientGraphicsRendererProcessStateResponseData
                     }
                     viewRouteContent={
                       <AnimationDevelopmentErrorDisplay

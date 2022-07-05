@@ -10,20 +10,29 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GraphicsRendererProcessKey } from '../../models/GraphicsRendererProcessKey'
-import { getCachedPollClientGraphicsRendererProcessStateResponseData } from '../hooks/usePollClientGraphicRendererProcessStateResponse'
 import { AssetBaseRoute, ViewSubRoute } from '../models'
+import { AnimationDevelopmentPageProps } from './AnimationDevelopmentPage'
 import { ClientGraphicsRendererProcessPageProps } from './ClientGraphicsRendererProcessPage'
 
 export interface AssetRouteSelectProps<
   SomeAssetBaseRoute extends AssetBaseRoute,
   SomeViewSubRoute extends ViewSubRoute
 > extends Pick<
-    ClientGraphicsRendererProcessPageProps<
-      SomeAssetBaseRoute,
-      SomeViewSubRoute
+      ClientGraphicsRendererProcessPageProps<
+        SomeAssetBaseRoute,
+        SomeViewSubRoute
+      >,
+      'assetBaseRoute' | 'viewSubRoute'
     >,
-    'assetBaseRoute' | 'viewSubRoute'
-  > {
+    Pick<
+      Parameters<
+        AnimationDevelopmentPageProps<
+          SomeAssetBaseRoute,
+          SomeViewSubRoute
+        >['SomeClientGraphicsRendererProcessPage']
+      >[0],
+      'cachedPollClientGraphicsRendererProcessStateResponseData'
+    > {
   frameCount: number
 }
 
@@ -31,7 +40,12 @@ export function AssetRouteSelect<
   SomeAssetBaseRoute extends AssetBaseRoute,
   SomeViewSubRoute extends ViewSubRoute
 >(props: AssetRouteSelectProps<SomeAssetBaseRoute, SomeViewSubRoute>) {
-  const { assetBaseRoute, viewSubRoute, frameCount } = props
+  const {
+    assetBaseRoute,
+    viewSubRoute,
+    frameCount,
+    cachedPollClientGraphicsRendererProcessStateResponseData,
+  } = props
   const [assetRouteSearchQuery, setAssetRouteSearchQuery] = useState('')
   const assetRouteSelectMountedRef = useRef(false)
   const [selectingAssetRoute, setSelectingAssetRoute] = useState(false)
@@ -95,20 +109,6 @@ export function AssetRouteSelect<
       setAssetRouteSearchQuery('')
     }
   }, [selectingAssetRoute])
-
-  const cachedPollClientGraphicsRendererProcessStateResponseMap =
-    useMemo(() => {
-      const maybeCachedPollClientGraphicsRendererProcessStateResponseMap =
-        getCachedPollClientGraphicsRendererProcessStateResponseData({
-          localStorageSessionCacheId: document
-            .getElementById('client-page-bundle-script')
-            ?.getAttribute('data-local-storage-session-cache-id')!,
-          localStorageKey: 'poll-client-graphics-renderer-state-response',
-        })?.pollClientGraphicsRendererProcessStateResponseMap
-      return maybeCachedPollClientGraphicsRendererProcessStateResponseMap
-        ? maybeCachedPollClientGraphicsRendererProcessStateResponseMap
-        : {}
-    }, [])
   const navigateToRoute = useNavigate()
   const styles = useAssetRouteSelectStyles()
   return (
@@ -211,9 +211,10 @@ export function AssetRouteSelect<
                   filteredAssetRouteOptionIndex
                 ) => {
                   const cachedTargetPollClientGraphicsRendererProcessStateResponse =
-                    cachedPollClientGraphicsRendererProcessStateResponseMap[
+                    cachedPollClientGraphicsRendererProcessStateResponseData
+                      ?.pollClientGraphicsRendererProcessStateResponseMap[
                       someFilteredAssetRouteOption
-                    ]
+                    ] || null
                   const cachedTargetGraphicsRendererProcessStatus =
                     cachedTargetPollClientGraphicsRendererProcessStateResponse?.responseStatus ===
                       'fetchSuccessful' &&

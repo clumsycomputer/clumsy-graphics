@@ -33,6 +33,7 @@ export function AnimationDevelopmentLogsPage<
       SomeClientGraphicsRendererProcessPage={({
         clientGraphicsRendererProcessState,
         previousClientGraphicsRendererProcessState,
+        cachedPollClientGraphicsRendererProcessStateResponseData,
       }) => {
         const { managedScrollContainerRef, automatedScrollEnabled } =
           useManagedScrollContainerRef({
@@ -74,6 +75,9 @@ export function AnimationDevelopmentLogsPage<
                 clientGraphicsRendererProcessState={
                   clientGraphicsRendererProcessState
                 }
+                cachedPollClientGraphicsRendererProcessStateResponseData={
+                  cachedPollClientGraphicsRendererProcessStateResponseData
+                }
                 viewRouteContent={
                   <AnimationDevelopmentLogsDisplay
                     managedScrollContainerRef={managedScrollContainerRef}
@@ -99,6 +103,9 @@ export function AnimationDevelopmentLogsPage<
                 viewSubRoute={viewSubRoute}
                 clientGraphicsRendererProcessState={
                   clientGraphicsRendererProcessState
+                }
+                cachedPollClientGraphicsRendererProcessStateResponseData={
+                  cachedPollClientGraphicsRendererProcessStateResponseData
                 }
                 viewRouteContent={
                   <AnimationDevelopmentLogsDisplay

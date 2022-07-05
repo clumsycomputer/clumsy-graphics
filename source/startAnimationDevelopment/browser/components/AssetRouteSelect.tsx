@@ -2,10 +2,15 @@ import Input from '@material-ui/core/Input'
 import Link from '@material-ui/core/Link'
 import Popover from '@material-ui/core/Popover'
 import { makeStyles } from '@material-ui/core/styles'
-import { ArrowDropDownSharp } from '@material-ui/icons'
+import {
+  ArrowDropDownSharp,
+  CheckSharp,
+  PriorityHighSharp,
+} from '@material-ui/icons'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GraphicsRendererProcessKey } from '../../models/GraphicsRendererProcessKey'
+import { getCachedPollClientGraphicsRendererProcessStateResponseData } from '../hooks/usePollClientGraphicRendererProcessStateResponse'
 import { AssetBaseRoute, ViewSubRoute } from '../models'
 import { ClientGraphicsRendererProcessPageProps } from './ClientGraphicsRendererProcessPage'
 
@@ -90,6 +95,20 @@ export function AssetRouteSelect<
       setAssetRouteSearchQuery('')
     }
   }, [selectingAssetRoute])
+
+  const cachedPollClientGraphicsRendererProcessStateResponseMap =
+    useMemo(() => {
+      const maybeCachedPollClientGraphicsRendererProcessStateResponseMap =
+        getCachedPollClientGraphicsRendererProcessStateResponseData({
+          localStorageSessionCacheId: document
+            .getElementById('client-page-bundle-script')
+            ?.getAttribute('data-local-storage-session-cache-id')!,
+          localStorageKey: 'poll-client-graphics-renderer-state-response',
+        })?.pollClientGraphicsRendererProcessStateResponseMap
+      return maybeCachedPollClientGraphicsRendererProcessStateResponseMap
+        ? maybeCachedPollClientGraphicsRendererProcessStateResponseMap
+        : {}
+    }, [])
   const navigateToRoute = useNavigate()
   const styles = useAssetRouteSelectStyles()
   return (
@@ -190,37 +209,84 @@ export function AssetRouteSelect<
                 (
                   someFilteredAssetRouteOption,
                   filteredAssetRouteOptionIndex
-                ) => (
-                  <Link
-                    ref={
-                      filteredAssetRouteOptionIndex ===
-                      focusedAssetRouteOptionIndex
-                        ? focusedLinkRef
-                        : null
-                    }
-                    key={someFilteredAssetRouteOption}
-                    color={'secondary'}
-                    className={`${styles.optionLink} ${
-                      filteredAssetRouteOptionIndex ===
-                      focusedAssetRouteOptionIndex
-                        ? 'focused-option'
-                        : ''
-                    } ${
-                      someFilteredAssetRouteOption === assetBaseRoute.slice(1)
-                        ? 'current-option'
-                        : ''
-                    }`}
-                    href={`/${someFilteredAssetRouteOption}${viewSubRoute}`}
-                    onClick={() => {
-                      navigateToRoute(
-                        `/${someFilteredAssetRouteOption}${viewSubRoute}`
-                      )
-                    }}
-                    style={{ display: 'flex', flexDirection: 'row' }}
-                  >
-                    <div>{someFilteredAssetRouteOption}</div>
-                  </Link>
-                )
+                ) => {
+                  const cachedTargetPollClientGraphicsRendererProcessStateResponse =
+                    cachedPollClientGraphicsRendererProcessStateResponseMap[
+                      someFilteredAssetRouteOption
+                    ]
+                  const cachedTargetGraphicsRendererProcessStatus =
+                    cachedTargetPollClientGraphicsRendererProcessStateResponse?.responseStatus ===
+                      'fetchSuccessful' &&
+                    cachedTargetPollClientGraphicsRendererProcessStateResponse
+                      .clientGraphicsRendererProcessState.buildStatus ===
+                      'validBuild' &&
+                    cachedTargetPollClientGraphicsRendererProcessStateResponse
+                      .clientGraphicsRendererProcessState
+                      .graphicsRendererProcessStatus
+                  const targetGraphicsRendererProcessCompleted =
+                    cachedTargetGraphicsRendererProcessStatus ===
+                      'processSuccessful' ||
+                    cachedTargetGraphicsRendererProcessStatus ===
+                      'processFailed'
+                  return (
+                    <Link
+                      ref={
+                        filteredAssetRouteOptionIndex ===
+                        focusedAssetRouteOptionIndex
+                          ? focusedLinkRef
+                          : null
+                      }
+                      key={someFilteredAssetRouteOption}
+                      color={'secondary'}
+                      className={`${styles.optionLink} ${
+                        filteredAssetRouteOptionIndex ===
+                        focusedAssetRouteOptionIndex
+                          ? 'focused-option'
+                          : ''
+                      } ${
+                        someFilteredAssetRouteOption === assetBaseRoute.slice(1)
+                          ? 'current-option'
+                          : ''
+                      }`}
+                      href={`/${someFilteredAssetRouteOption}${
+                        targetGraphicsRendererProcessCompleted
+                          ? '/result'
+                          : '/logs'
+                      }`}
+                      onClick={() => {
+                        navigateToRoute(
+                          `/${someFilteredAssetRouteOption}${
+                            targetGraphicsRendererProcessCompleted
+                              ? '/result'
+                              : '/logs'
+                          }`
+                        )
+                      }}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div>{someFilteredAssetRouteOption}</div>
+                      {cachedTargetGraphicsRendererProcessStatus ===
+                      'processSuccessful' ? (
+                        <CheckSharp
+                          color={'primary'}
+                          fontSize={'small'}
+                          style={{ marginLeft: 8 }}
+                        />
+                      ) : cachedTargetGraphicsRendererProcessStatus ===
+                        'processFailed' ? (
+                        <PriorityHighSharp
+                          color={'error'}
+                          fontSize={'small'}
+                          style={{ marginLeft: 8 }}
+                        />
+                      ) : null}
+                    </Link>
+                  )
+                }
               )
             ) : (
               <div

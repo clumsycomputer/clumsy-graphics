@@ -289,7 +289,7 @@ function maybeSetPollClientGraphicsRendererProcessStateResponse(
   }
 }
 
-interface GetCachedPollClientGraphicsRendererProcessStateResponseDataApi
+export interface GetCachedPollClientGraphicsRendererProcessStateResponseDataApi
   extends Pick<
     UsePollClientGraphicsRendererProcessStateResponseApi,
     'localStorageKey'
@@ -297,7 +297,7 @@ interface GetCachedPollClientGraphicsRendererProcessStateResponseDataApi
   localStorageSessionCacheId: string
 }
 
-function getCachedPollClientGraphicsRendererProcessStateResponseData(
+export function getCachedPollClientGraphicsRendererProcessStateResponseData(
   api: GetCachedPollClientGraphicsRendererProcessStateResponseDataApi
 ) {
   const { localStorageKey, localStorageSessionCacheId } = api
@@ -315,7 +315,7 @@ function getCachedPollClientGraphicsRendererProcessStateResponseData(
     : null
 }
 
-interface CachedPollClientGraphicsRendererProcessStateResponseData {
+export interface CachedPollClientGraphicsRendererProcessStateResponseData {
   localStorageSessionCacheId: string
   buildVersion: ClientGraphicsRendererProcessState['buildVersion']
   pollClientGraphicsRendererProcessStateResponseMap: {

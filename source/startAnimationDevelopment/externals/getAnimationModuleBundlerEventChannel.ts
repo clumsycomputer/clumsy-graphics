@@ -50,6 +50,7 @@ export function getAnimationModuleBundlerEventChannel(
                   },
                 })
               } catch (nextBundleError) {
+                nextBuildSessionVersion = nextBuildSessionVersion + 1
                 emitAnimationModuleSourceEvent({
                   eventType: 'animationModuleBundler_rebuildFailed',
                   eventPayload: {

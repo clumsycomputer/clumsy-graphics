@@ -1,6 +1,7 @@
 import React from 'react'
 import { ClientGraphicsRendererProcessInvalidBuildState } from '../../models/ClientGraphicsRendererProcessState'
 import { AssetBaseRoute, ViewSubRoute } from '../models'
+import { AnimationDevelopmentPageProps } from './AnimationDevelopmentPage'
 import { AssetRouteSelect } from './AssetRouteSelect'
 import {
   ClientGraphicsRendererProcessPage,
@@ -11,14 +12,23 @@ export interface InvalidBuildClientGraphicsRendererProcessPageProps<
   SomeAssetBaseRoute extends AssetBaseRoute,
   SomeViewSubRoute extends ViewSubRoute
 > extends Pick<
-    ClientGraphicsRendererProcessPageProps<
-      SomeAssetBaseRoute,
-      SomeViewSubRoute
+      ClientGraphicsRendererProcessPageProps<
+        SomeAssetBaseRoute,
+        SomeViewSubRoute
+      >,
+      'assetBaseRoute' | 'viewSubRoute' | 'viewRouteContent'
     >,
-    'assetBaseRoute' | 'viewSubRoute' | 'viewRouteContent'
-  > {
-  clientGraphicsRendererProcessState: ClientGraphicsRendererProcessInvalidBuildState
-}
+    Pick<
+      Parameters<
+        AnimationDevelopmentPageProps<
+          SomeAssetBaseRoute,
+          SomeViewSubRoute,
+          ClientGraphicsRendererProcessInvalidBuildState
+        >['SomeClientGraphicsRendererProcessPage']
+      >[0],
+      | 'clientGraphicsRendererProcessState'
+      | 'cachedPollClientGraphicsRendererProcessStateResponseData'
+    > {}
 
 export function InvalidBuildClientGraphicsRendererProcessPage<
   SomeAssetBaseRoute extends AssetBaseRoute,
@@ -34,6 +44,7 @@ export function InvalidBuildClientGraphicsRendererProcessPage<
     viewSubRoute,
     viewRouteContent,
     clientGraphicsRendererProcessState,
+    cachedPollClientGraphicsRendererProcessStateResponseData,
   } = props
   return (
     <ClientGraphicsRendererProcessPage
@@ -48,7 +59,9 @@ export function InvalidBuildClientGraphicsRendererProcessPage<
       assetRouteSelect={
         <AssetRouteSelect
           assetBaseRoute={assetBaseRoute}
-          viewSubRoute={viewSubRoute}
+          cachedPollClientGraphicsRendererProcessStateResponseData={
+            cachedPollClientGraphicsRendererProcessStateResponseData
+          }
           frameCount={1}
         />
       }

@@ -1,6 +1,7 @@
 import React from 'react'
 import { ClientGraphicsRendererProcessValidBuildState } from '../../models/ClientGraphicsRendererProcessState'
 import { AssetBaseRoute, ViewSubRoute } from '../models'
+import { AnimationDevelopmentPageProps } from './AnimationDevelopmentPage'
 import { AssetRouteSelect } from './AssetRouteSelect'
 import {
   ClientGraphicsRendererProcessPage,
@@ -11,14 +12,23 @@ export interface ValidBuildClientGraphicsRendererProcessPageProps<
   SomeAssetBaseRoute extends AssetBaseRoute,
   SomeViewSubRoute extends ViewSubRoute
 > extends Pick<
-    ClientGraphicsRendererProcessPageProps<
-      SomeAssetBaseRoute,
-      SomeViewSubRoute
+      ClientGraphicsRendererProcessPageProps<
+        SomeAssetBaseRoute,
+        SomeViewSubRoute
+      >,
+      'assetBaseRoute' | 'viewSubRoute' | 'viewRouteContent'
     >,
-    'assetBaseRoute' | 'viewSubRoute' | 'viewRouteContent'
-  > {
-  clientGraphicsRendererProcessState: ClientGraphicsRendererProcessValidBuildState
-}
+    Pick<
+      Parameters<
+        AnimationDevelopmentPageProps<
+          SomeAssetBaseRoute,
+          SomeViewSubRoute,
+          ClientGraphicsRendererProcessValidBuildState
+        >['SomeClientGraphicsRendererProcessPage']
+      >[0],
+      | 'clientGraphicsRendererProcessState'
+      | 'cachedPollClientGraphicsRendererProcessStateResponseData'
+    > {}
 
 export function ValidBuildClientGraphicsRendererProcessPage<
   SomeAssetBaseRoute extends AssetBaseRoute,
@@ -34,6 +44,7 @@ export function ValidBuildClientGraphicsRendererProcessPage<
     viewSubRoute,
     viewRouteContent,
     clientGraphicsRendererProcessState,
+    cachedPollClientGraphicsRendererProcessStateResponseData,
   } = props
   return (
     <ClientGraphicsRendererProcessPage
@@ -55,7 +66,9 @@ export function ValidBuildClientGraphicsRendererProcessPage<
       assetRouteSelect={
         <AssetRouteSelect
           assetBaseRoute={assetBaseRoute}
-          viewSubRoute={viewSubRoute}
+          cachedPollClientGraphicsRendererProcessStateResponseData={
+            cachedPollClientGraphicsRendererProcessStateResponseData
+          }
           frameCount={
             clientGraphicsRendererProcessState.animationModule.frameCount
           }

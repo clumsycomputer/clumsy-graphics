@@ -1,26 +1,37 @@
 import { useEffect, useRef } from 'react'
-import { AnimationDevelopmentLogsDisplayProps } from '../AnimationDevelopmentLogsPage'
+import { AnimationDevelopmentPageProps } from '../components/AnimationDevelopmentPage'
+import { AssetBaseRoute } from '../models'
 
-export interface UseManagedScrollContainerRefApi
-  extends Pick<
-    AnimationDevelopmentLogsDisplayProps,
-    'buildVersion' | 'graphicsRendererProcessStdoutLog' | 'resultLink'
-  > {
+export interface UseManagedScrollContainerRefApi<
+  SomeAssetBaseRoute extends AssetBaseRoute
+> extends Pick<
+      AnimationDevelopmentPageProps<SomeAssetBaseRoute, '/logs'>,
+      'graphicsRendererProcessKey'
+    >,
+    Pick<
+      Parameters<
+        AnimationDevelopmentPageProps<
+          SomeAssetBaseRoute,
+          '/logs'
+        >['SomeClientGraphicsRendererProcessPage']
+      >[0],
+      'clientGraphicsRendererProcessState'
+    > {
   localStorageKey: string
 }
 
-export function useManagedScrollContainerRef(
-  api: UseManagedScrollContainerRefApi
-) {
+export function useManagedScrollContainerRef<
+  SomeAssetBaseRoute extends AssetBaseRoute
+>(api: UseManagedScrollContainerRefApi<SomeAssetBaseRoute>) {
   const {
-    buildVersion,
+    graphicsRendererProcessKey,
+    clientGraphicsRendererProcessState,
     localStorageKey,
-    graphicsRendererProcessStdoutLog,
-    resultLink,
   } = api
   const managedScrollContainerRef = useRef<HTMLDivElement>(null)
-  const managedScrollStateRef = useRef<ManagedScrollState>({
-    buildVersion,
+  const managedScrollStateRef = useRef<ManagedScrollState<SomeAssetBaseRoute>>({
+    graphicsRendererProcessKey,
+    buildVersion: clientGraphicsRendererProcessState.buildVersion,
     automatedScrollEnabled: true,
     previousContainerScrollTop: null,
   })
@@ -69,15 +80,27 @@ export function useManagedScrollContainerRef(
       const cachedManagedScrollState = cachedManagedScrollStateJson
         ? (JSON.parse(
             cachedManagedScrollStateJson
-          ) as unknown as ManagedScrollState) || null
+          ) as unknown as ManagedScrollState<SomeAssetBaseRoute>) || null
         : null
-      if (buildVersion === cachedManagedScrollState?.buildVersion) {
+      if (
+        clientGraphicsRendererProcessState.buildVersion ===
+          cachedManagedScrollState?.buildVersion &&
+        graphicsRendererProcessKey ===
+          cachedManagedScrollState.graphicsRendererProcessKey
+      ) {
         currentManagedScrollContainer.scroll({
           top: cachedManagedScrollState.previousContainerScrollTop || 0,
         })
         managedScrollStateRef.current = cachedManagedScrollState
       }
-      return () => {
+    }
+    localStorage.setItem(
+      localStorageKey,
+      JSON.stringify(managedScrollStateRef.current)
+    )
+    return () => {
+      const currentManagedScrollContainer = managedScrollContainerRef.current
+      if (currentManagedScrollContainer) {
         currentManagedScrollContainer.removeEventListener(
           'scroll',
           scrollEventHandlerRef.current
@@ -87,8 +110,14 @@ export function useManagedScrollContainerRef(
   }, [])
   useEffect(() => {
     const currentManagedScrollState = managedScrollStateRef.current
-    if (buildVersion !== currentManagedScrollState.buildVersion) {
-      currentManagedScrollState.buildVersion = buildVersion
+    if (
+      clientGraphicsRendererProcessState.buildVersion !==
+        currentManagedScrollState.buildVersion ||
+      graphicsRendererProcessKey !==
+        currentManagedScrollState.graphicsRendererProcessKey
+    ) {
+      currentManagedScrollState.buildVersion =
+        clientGraphicsRendererProcessState.buildVersion
       currentManagedScrollState.automatedScrollEnabled = true
       currentManagedScrollState.previousContainerScrollTop = null
     }
@@ -101,12 +130,23 @@ export function useManagedScrollContainerRef(
         top: currentManagedScrollContainer.scrollHeight,
       })
     }
-  }, [buildVersion, graphicsRendererProcessStdoutLog, resultLink])
-  return { managedScrollContainerRef }
+  }, [clientGraphicsRendererProcessState])
+  return {
+    managedScrollContainerRef,
+    automatedScrollEnabled:
+      managedScrollStateRef.current.automatedScrollEnabled,
+  }
 }
 
-interface ManagedScrollState
-  extends Pick<UseManagedScrollContainerRefApi, 'buildVersion'> {
+interface ManagedScrollState<SomeAssetBaseRoute extends AssetBaseRoute>
+  extends Pick<
+      UseManagedScrollContainerRefApi<SomeAssetBaseRoute>,
+      'graphicsRendererProcessKey'
+    >,
+    Pick<
+      UseManagedScrollContainerRefApi<SomeAssetBaseRoute>['clientGraphicsRendererProcessState'],
+      'buildVersion'
+    > {
   automatedScrollEnabled: boolean
   previousContainerScrollTop: number | null
 }

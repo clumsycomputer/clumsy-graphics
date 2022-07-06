@@ -2,23 +2,37 @@ import Input from '@material-ui/core/Input'
 import Link from '@material-ui/core/Link'
 import Popover from '@material-ui/core/Popover'
 import { makeStyles } from '@material-ui/core/styles'
-import { ArrowDropDownSharp } from '@material-ui/icons'
+import {
+  ArrowDropDownSharp,
+  CheckSharp,
+  PriorityHighSharp,
+} from '@material-ui/icons'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GraphicsRendererProcessKey } from '../../models/GraphicsRendererProcessKey'
 import { AssetBaseRoute, ViewSubRoute } from '../models'
+import { AnimationDevelopmentPageProps } from './AnimationDevelopmentPage'
 import { ClientGraphicsRendererProcessPageProps } from './ClientGraphicsRendererProcessPage'
 
 export interface AssetRouteSelectProps<
   SomeAssetBaseRoute extends AssetBaseRoute,
   SomeViewSubRoute extends ViewSubRoute
 > extends Pick<
-    ClientGraphicsRendererProcessPageProps<
-      SomeAssetBaseRoute,
-      SomeViewSubRoute
+      ClientGraphicsRendererProcessPageProps<
+        SomeAssetBaseRoute,
+        SomeViewSubRoute
+      >,
+      'assetBaseRoute'
     >,
-    'assetBaseRoute' | 'viewSubRoute'
-  > {
+    Pick<
+      Parameters<
+        AnimationDevelopmentPageProps<
+          SomeAssetBaseRoute,
+          SomeViewSubRoute
+        >['SomeClientGraphicsRendererProcessPage']
+      >[0],
+      'cachedPollClientGraphicsRendererProcessStateResponseData'
+    > {
   frameCount: number
 }
 
@@ -26,7 +40,11 @@ export function AssetRouteSelect<
   SomeAssetBaseRoute extends AssetBaseRoute,
   SomeViewSubRoute extends ViewSubRoute
 >(props: AssetRouteSelectProps<SomeAssetBaseRoute, SomeViewSubRoute>) {
-  const { assetBaseRoute, viewSubRoute, frameCount } = props
+  const {
+    assetBaseRoute,
+    frameCount,
+    cachedPollClientGraphicsRendererProcessStateResponseData,
+  } = props
   const [assetRouteSearchQuery, setAssetRouteSearchQuery] = useState('')
   const assetRouteSelectMountedRef = useRef(false)
   const [selectingAssetRoute, setSelectingAssetRoute] = useState(false)
@@ -156,11 +174,19 @@ export function AssetRouteSelect<
                 someKeyDownEvent.stopPropagation()
                 const focusedAssetRouteOption =
                   filteredAssetRouteOptions[focusedAssetRouteOptionIndex]
-                const targetAssetBaseRoute = `/${focusedAssetRouteOption}`
-                if (targetAssetBaseRoute === assetBaseRoute) {
-                  setSelectingAssetRoute(false)
-                } else if (focusedAssetRouteOption !== undefined) {
-                  navigateToRoute(`${targetAssetBaseRoute}${viewSubRoute}`)
+                if (focusedAssetRouteOption !== undefined) {
+                  const { targetGraphicsRendererProcessCompleted } =
+                    getTargetGraphicsRendererProcessData({
+                      cachedPollClientGraphicsRendererProcessStateResponseData,
+                      someFilteredAssetRouteOption: focusedAssetRouteOption,
+                    })
+                  navigateToRoute(
+                    `/${focusedAssetRouteOption}${
+                      targetGraphicsRendererProcessCompleted
+                        ? '/result'
+                        : '/logs'
+                    }`
+                  )
                 } else {
                   setSelectedEmptyOptionsError(true)
                 }
@@ -190,37 +216,77 @@ export function AssetRouteSelect<
                 (
                   someFilteredAssetRouteOption,
                   filteredAssetRouteOptionIndex
-                ) => (
-                  <Link
-                    ref={
-                      filteredAssetRouteOptionIndex ===
-                      focusedAssetRouteOptionIndex
-                        ? focusedLinkRef
-                        : null
-                    }
-                    key={someFilteredAssetRouteOption}
-                    color={'secondary'}
-                    className={`${styles.optionLink} ${
-                      filteredAssetRouteOptionIndex ===
-                      focusedAssetRouteOptionIndex
-                        ? 'focused-option'
-                        : ''
-                    } ${
-                      someFilteredAssetRouteOption === assetBaseRoute.slice(1)
-                        ? 'current-option'
-                        : ''
-                    }`}
-                    href={`/${someFilteredAssetRouteOption}${viewSubRoute}`}
-                    onClick={() => {
-                      navigateToRoute(
-                        `/${someFilteredAssetRouteOption}${viewSubRoute}`
-                      )
-                    }}
-                    style={{ display: 'flex', flexDirection: 'row' }}
-                  >
-                    <div>{someFilteredAssetRouteOption}</div>
-                  </Link>
-                )
+                ) => {
+                  const {
+                    targetGraphicsRendererProcessCompleted,
+                    cachedTargetGraphicsRendererProcessStatus,
+                  } = getTargetGraphicsRendererProcessData({
+                    cachedPollClientGraphicsRendererProcessStateResponseData,
+                    someFilteredAssetRouteOption,
+                  })
+                  return (
+                    <Link
+                      ref={
+                        filteredAssetRouteOptionIndex ===
+                        focusedAssetRouteOptionIndex
+                          ? focusedLinkRef
+                          : null
+                      }
+                      key={someFilteredAssetRouteOption}
+                      color={'secondary'}
+                      className={`${styles.optionLink} ${
+                        filteredAssetRouteOptionIndex ===
+                        focusedAssetRouteOptionIndex
+                          ? 'focused-option'
+                          : ''
+                      } ${
+                        someFilteredAssetRouteOption === assetBaseRoute.slice(1)
+                          ? 'current-option'
+                          : ''
+                      }`}
+                      href={`/${someFilteredAssetRouteOption}${
+                        targetGraphicsRendererProcessCompleted
+                          ? '/result'
+                          : '/logs'
+                      }`}
+                      onClick={() => {
+                        navigateToRoute(
+                          `/${someFilteredAssetRouteOption}${
+                            targetGraphicsRendererProcessCompleted
+                              ? '/result'
+                              : '/logs'
+                          }`
+                        )
+                      }}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div>{someFilteredAssetRouteOption}</div>
+                      {cachedTargetGraphicsRendererProcessStatus ===
+                      'processSuccessful' ? (
+                        <CheckSharp
+                          className={
+                            styles.cachedTargetGraphicsRendererProcessStatusIcon
+                          }
+                          color={'primary'}
+                          fontSize={'small'}
+                        />
+                      ) : cachedTargetGraphicsRendererProcessStatus ===
+                        'processFailed' ? (
+                        <PriorityHighSharp
+                          className={
+                            styles.cachedTargetGraphicsRendererProcessStatusIcon
+                          }
+                          color={'error'}
+                          fontSize={'small'}
+                        />
+                      ) : null}
+                    </Link>
+                  )
+                }
               )
             ) : (
               <div
@@ -318,4 +384,51 @@ const useAssetRouteSelectStyles = makeStyles((theme) => ({
   noOptionsDisplayError: {
     color: theme.palette.error.main,
   },
+  cachedTargetGraphicsRendererProcessStatusIcon: {
+    marginLeft: theme.spacing(1),
+  },
 }))
+
+interface GetTargetGraphicsRendererProcessDataApi<
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
+> extends Pick<
+    AssetRouteSelectProps<SomeAssetBaseRoute, SomeViewSubRoute>,
+    'cachedPollClientGraphicsRendererProcessStateResponseData'
+  > {
+  someFilteredAssetRouteOption: GraphicsRendererProcessKey
+}
+
+function getTargetGraphicsRendererProcessData<
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
+>(
+  api: GetTargetGraphicsRendererProcessDataApi<
+    SomeAssetBaseRoute,
+    SomeViewSubRoute
+  >
+) {
+  const {
+    cachedPollClientGraphicsRendererProcessStateResponseData,
+    someFilteredAssetRouteOption,
+  } = api
+  const cachedTargetPollClientGraphicsRendererProcessStateResponse =
+    cachedPollClientGraphicsRendererProcessStateResponseData
+      ?.pollClientGraphicsRendererProcessStateResponseMap[
+      someFilteredAssetRouteOption
+    ] || null
+  const cachedTargetGraphicsRendererProcessStatus =
+    cachedTargetPollClientGraphicsRendererProcessStateResponse?.responseStatus ===
+      'fetchSuccessful' &&
+    cachedTargetPollClientGraphicsRendererProcessStateResponse
+      .clientGraphicsRendererProcessState.buildStatus === 'validBuild' &&
+    cachedTargetPollClientGraphicsRendererProcessStateResponse
+      .clientGraphicsRendererProcessState.graphicsRendererProcessStatus
+  const targetGraphicsRendererProcessCompleted =
+    cachedTargetGraphicsRendererProcessStatus === 'processSuccessful' ||
+    cachedTargetGraphicsRendererProcessStatus === 'processFailed'
+  return {
+    cachedTargetGraphicsRendererProcessStatus,
+    targetGraphicsRendererProcessCompleted,
+  }
+}

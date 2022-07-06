@@ -22,7 +22,7 @@ export interface AssetRouteSelectProps<
         SomeAssetBaseRoute,
         SomeViewSubRoute
       >,
-      'assetBaseRoute' | 'viewSubRoute'
+      'assetBaseRoute'
     >,
     Pick<
       Parameters<
@@ -42,7 +42,6 @@ export function AssetRouteSelect<
 >(props: AssetRouteSelectProps<SomeAssetBaseRoute, SomeViewSubRoute>) {
   const {
     assetBaseRoute,
-    viewSubRoute,
     frameCount,
     cachedPollClientGraphicsRendererProcessStateResponseData,
   } = props
@@ -179,7 +178,18 @@ export function AssetRouteSelect<
                 if (targetAssetBaseRoute === assetBaseRoute) {
                   setSelectingAssetRoute(false)
                 } else if (focusedAssetRouteOption !== undefined) {
-                  navigateToRoute(`${targetAssetBaseRoute}${viewSubRoute}`)
+                  const { targetGraphicsRendererProcessCompleted } =
+                    getTargetGraphicsRendererProcessData({
+                      cachedPollClientGraphicsRendererProcessStateResponseData,
+                      someFilteredAssetRouteOption: focusedAssetRouteOption,
+                    })
+                  navigateToRoute(
+                    `/${focusedAssetRouteOption}${
+                      targetGraphicsRendererProcessCompleted
+                        ? '/result'
+                        : '/logs'
+                    }`
+                  )
                 } else {
                   setSelectedEmptyOptionsError(true)
                 }
@@ -210,25 +220,13 @@ export function AssetRouteSelect<
                   someFilteredAssetRouteOption,
                   filteredAssetRouteOptionIndex
                 ) => {
-                  const cachedTargetPollClientGraphicsRendererProcessStateResponse =
-                    cachedPollClientGraphicsRendererProcessStateResponseData
-                      ?.pollClientGraphicsRendererProcessStateResponseMap[
-                      someFilteredAssetRouteOption
-                    ] || null
-                  const cachedTargetGraphicsRendererProcessStatus =
-                    cachedTargetPollClientGraphicsRendererProcessStateResponse?.responseStatus ===
-                      'fetchSuccessful' &&
-                    cachedTargetPollClientGraphicsRendererProcessStateResponse
-                      .clientGraphicsRendererProcessState.buildStatus ===
-                      'validBuild' &&
-                    cachedTargetPollClientGraphicsRendererProcessStateResponse
-                      .clientGraphicsRendererProcessState
-                      .graphicsRendererProcessStatus
-                  const targetGraphicsRendererProcessCompleted =
-                    cachedTargetGraphicsRendererProcessStatus ===
-                      'processSuccessful' ||
-                    cachedTargetGraphicsRendererProcessStatus ===
-                      'processFailed'
+                  const {
+                    targetGraphicsRendererProcessCompleted,
+                    cachedTargetGraphicsRendererProcessStatus,
+                  } = getTargetGraphicsRendererProcessData({
+                    cachedPollClientGraphicsRendererProcessStateResponseData,
+                    someFilteredAssetRouteOption,
+                  })
                   return (
                     <Link
                       ref={
@@ -386,3 +384,47 @@ const useAssetRouteSelectStyles = makeStyles((theme) => ({
     color: theme.palette.error.main,
   },
 }))
+
+interface GetTargetGraphicsRendererProcessDataApi<
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
+> extends Pick<
+    AssetRouteSelectProps<SomeAssetBaseRoute, SomeViewSubRoute>,
+    'cachedPollClientGraphicsRendererProcessStateResponseData'
+  > {
+  someFilteredAssetRouteOption: GraphicsRendererProcessKey
+}
+
+function getTargetGraphicsRendererProcessData<
+  SomeAssetBaseRoute extends AssetBaseRoute,
+  SomeViewSubRoute extends ViewSubRoute
+>(
+  api: GetTargetGraphicsRendererProcessDataApi<
+    SomeAssetBaseRoute,
+    SomeViewSubRoute
+  >
+) {
+  const {
+    cachedPollClientGraphicsRendererProcessStateResponseData,
+    someFilteredAssetRouteOption,
+  } = api
+  const cachedTargetPollClientGraphicsRendererProcessStateResponse =
+    cachedPollClientGraphicsRendererProcessStateResponseData
+      ?.pollClientGraphicsRendererProcessStateResponseMap[
+      someFilteredAssetRouteOption
+    ] || null
+  const cachedTargetGraphicsRendererProcessStatus =
+    cachedTargetPollClientGraphicsRendererProcessStateResponse?.responseStatus ===
+      'fetchSuccessful' &&
+    cachedTargetPollClientGraphicsRendererProcessStateResponse
+      .clientGraphicsRendererProcessState.buildStatus === 'validBuild' &&
+    cachedTargetPollClientGraphicsRendererProcessStateResponse
+      .clientGraphicsRendererProcessState.graphicsRendererProcessStatus
+  const targetGraphicsRendererProcessCompleted =
+    cachedTargetGraphicsRendererProcessStatus === 'processSuccessful' ||
+    cachedTargetGraphicsRendererProcessStatus === 'processFailed'
+  return {
+    cachedTargetGraphicsRendererProcessStatus,
+    targetGraphicsRendererProcessCompleted,
+  }
+}

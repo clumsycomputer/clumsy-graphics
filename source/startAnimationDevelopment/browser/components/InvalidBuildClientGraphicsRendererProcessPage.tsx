@@ -59,7 +59,6 @@ export function InvalidBuildClientGraphicsRendererProcessPage<
       assetRouteSelect={
         <AssetRouteSelect
           assetBaseRoute={assetBaseRoute}
-          viewSubRoute={viewSubRoute}
           cachedPollClientGraphicsRendererProcessStateResponseData={
             cachedPollClientGraphicsRendererProcessStateResponseData
           }

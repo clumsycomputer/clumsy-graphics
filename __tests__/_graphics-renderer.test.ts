@@ -97,111 +97,111 @@ test.describe('_graphics-renderer', () => {
     test.afterAll(() => {
       spawnedDevelopmentProcess!.kill('SIGINT')
     })
-    test('redirects to "/animation/logs" from "/"', async ({ page }) => {
-      await page.goto('localhost:3000')
-      await page
-        .locator('text="animation" >> nth=0')
-        .waitFor({ state: 'visible' })
-      await expect(page).toHaveURL('http://localhost:3000/animation/logs')
-    })
-    test('displays animation process logs', async ({ page }) => {
-      await page.goto('localhost:3000/animation/logs')
-      expect(
-        await page
-          .locator('text="view rendered asset >"')
-          .waitFor({ state: 'visible' })
-      )
-    })
-    test('renders animation asset', async ({ page }) => {
-      await page.goto('localhost:3000/animation/result')
-      const animationAssetResponse = await page.waitForResponse(
-        '**/asset/0.mp4'
-      )
-      expect(await animationAssetResponse.headerValues('Content-Type')).toEqual(
-        ['video/mp4']
-      )
-    })
-    test('displays frame process logs', async ({ page }) => {
-      await page.goto('localhost:3000/frame/0/logs')
-      expect(
-        await page
-          .locator('text="view rendered asset >"')
-          .waitFor({ state: 'visible' })
-      )
-    })
-    test('renders frame asset', async ({ page }) => {
-      await page.goto('localhost:3000/frame/0/result')
-      const animationAssetResponse = await page.waitForResponse(
-        '**/asset/0_0.png'
-      )
-      expect(await animationAssetResponse.headerValues('Content-Type')).toEqual(
-        ['image/png']
-      )
-    })
-    test('supports keyboard interaction', async ({ page }) => {
-      await page.goto('localhost:3000/animation/logs')
-      await page
-        .locator('text="view rendered asset >"')
-        .waitFor({ state: 'visible' })
-      await page
-        .locator('body > div > div > div >> nth=2')
-        .evaluate((someElement: any) => {
-          someElement.setAttribute('style', 'color: white;')
-        })
-      await page.keyboard.press('Tab')
-      await expect(page).toHaveScreenshot('focusedAssetRouteSelect.png')
-      await page.keyboard.press('Tab')
-      await expect(page).toHaveScreenshot('focusedResultOption.png')
-      await page
-        .locator('text="view rendered asset >"')
-        .waitFor({ state: 'visible' })
-      await page.keyboard.press('Tab')
-      await expect(page).toHaveScreenshot('focusedViewResultLink.png')
-      await page.keyboard.press('Enter')
-      await expect(page).toHaveURL('http://localhost:3000/animation/result')
-      await page
-        .locator('text="animation" >> nth=0')
-        .waitFor({ state: 'visible' })
-      await page.keyboard.press('Tab')
-      await page.keyboard.press('Enter')
-      await page.keyboard.type('2')
-      await page.keyboard.press('Enter')
-      await expect(page).toHaveURL('http://localhost:3000/frame/2/result')
-      await page
-        .locator('text="frame/2" >> nth=0')
-        .waitFor({ state: 'visible' })
-      await page.keyboard.press('Tab')
-      await page.keyboard.press('Tab')
-      await page.keyboard.press('Enter')
-      await expect(page).toHaveURL('http://localhost:3000/frame/2/logs')
-    })
-    test('handles module updates', async ({ page }) => {
-      await page.goto('localhost:3000/frame/0/logs')
-      FileSystem.writeFileSync(
-        testAnimationModulePath,
-        FileSystem.readFileSync(
-          `${testProjectDirectoryPath}/Foo.error.animation.tsx`,
-          { encoding: 'utf-8' }
-        )
-      )
-      await page.locator('text="view render error >"').click()
-      await page
-        .locator('text="frame/0" >> nth=0')
-        .waitFor({ state: 'visible' })
-      await expect(page).toHaveScreenshot('errorResultPage.png')
-      FileSystem.writeFileSync(
-        testAnimationModulePath,
-        FileSystem.readFileSync(
-          `${testProjectDirectoryPath}/Foo.update.animation.tsx`,
-          { encoding: 'utf-8' }
-        )
-      )
-      const animationAssetResponse = await page.waitForResponse(
-        '**/asset/2_0.png'
-      )
-      expect(await animationAssetResponse.headerValues('Content-Type')).toEqual(
-        ['image/png']
-      )
-    })
+    // test('redirects to "/animation/logs" from "/"', async ({ page }) => {
+    //   await page.goto('localhost:3000')
+    //   await page
+    //     .locator('text="animation" >> nth=0')
+    //     .waitFor({ state: 'visible' })
+    //   await expect(page).toHaveURL('http://localhost:3000/animation/logs')
+    // })
+    // test('displays animation process logs', async ({ page }) => {
+    //   await page.goto('localhost:3000/animation/logs')
+    //   expect(
+    //     await page
+    //       .locator('text="view rendered asset >"')
+    //       .waitFor({ state: 'visible' })
+    //   )
+    // })
+    // test('renders animation asset', async ({ page }) => {
+    //   await page.goto('localhost:3000/animation/result')
+    //   const animationAssetResponse = await page.waitForResponse(
+    //     '**/asset/0.mp4'
+    //   )
+    //   expect(await animationAssetResponse.headerValues('Content-Type')).toEqual(
+    //     ['video/mp4']
+    //   )
+    // })
+    // test.only('displays frame process logs', async ({ page }) => {
+    //   await page.goto('localhost:3000/frame/0/logs')
+    //   expect(
+    //     await page
+    //       .locator('text="view rendered asset >"')
+    //       .waitFor({ state: 'visible' })
+    //   )
+    // })
+    // test('renders frame asset', async ({ page }) => {
+    //   await page.goto('localhost:3000/frame/0/result')
+    //   const animationAssetResponse = await page.waitForResponse(
+    //     '**/asset/0_0.png'
+    //   )
+    //   expect(await animationAssetResponse.headerValues('Content-Type')).toEqual(
+    //     ['image/png']
+    //   )
+    // })
+    // test('supports keyboard interaction', async ({ page }) => {
+    //   await page.goto('localhost:3000/animation/logs')
+    //   await page
+    //     .locator('text="view rendered asset >"')
+    //     .waitFor({ state: 'visible' })
+    //   await page
+    //     .locator('body > div > div > div >> nth=2')
+    //     .evaluate((someElement: any) => {
+    //       someElement.setAttribute('style', 'color: white;')
+    //     })
+    //   await page.keyboard.press('Tab')
+    //   await expect(page).toHaveScreenshot('focusedAssetRouteSelect.png')
+    //   await page.keyboard.press('Tab')
+    //   await expect(page).toHaveScreenshot('focusedResultOption.png')
+    //   await page
+    //     .locator('text="view rendered asset >"')
+    //     .waitFor({ state: 'visible' })
+    //   await page.keyboard.press('Tab')
+    //   await expect(page).toHaveScreenshot('focusedViewResultLink.png')
+    //   await page.keyboard.press('Enter')
+    //   await expect(page).toHaveURL('http://localhost:3000/animation/result')
+    //   await page
+    //     .locator('text="animation" >> nth=0')
+    //     .waitFor({ state: 'visible' })
+    //   await page.keyboard.press('Tab')
+    //   await page.keyboard.press('Enter')
+    //   await page.keyboard.type('2')
+    //   await page.keyboard.press('Enter')
+    //   await expect(page).toHaveURL('http://localhost:3000/frame/2/result')
+    //   await page
+    //     .locator('text="frame/2" >> nth=0')
+    //     .waitFor({ state: 'visible' })
+    //   await page.keyboard.press('Tab')
+    //   await page.keyboard.press('Tab')
+    //   await page.keyboard.press('Enter')
+    //   await expect(page).toHaveURL('http://localhost:3000/frame/2/logs')
+    // })
+    // test('handles module updates', async ({ page }) => {
+    //   await page.goto('localhost:3000/frame/0/logs')
+    //   FileSystem.writeFileSync(
+    //     testAnimationModulePath,
+    //     FileSystem.readFileSync(
+    //       `${testProjectDirectoryPath}/Foo.error.animation.tsx`,
+    //       { encoding: 'utf-8' }
+    //     )
+    //   )
+    //   await page.locator('text="view render error >"').click()
+    //   await page
+    //     .locator('text="frame/0" >> nth=0')
+    //     .waitFor({ state: 'visible' })
+    //   await expect(page).toHaveScreenshot('errorResultPage.png')
+    //   FileSystem.writeFileSync(
+    //     testAnimationModulePath,
+    //     FileSystem.readFileSync(
+    //       `${testProjectDirectoryPath}/Foo.update.animation.tsx`,
+    //       { encoding: 'utf-8' }
+    //     )
+    //   )
+    //   const animationAssetResponse = await page.waitForResponse(
+    //     '**/asset/2_0.png'
+    //   )
+    //   expect(await animationAssetResponse.headerValues('Content-Type')).toEqual(
+    //     ['image/png']
+    //   )
+    // })
   })
 })

@@ -1,35 +1,35 @@
 import { useEffect, useRef } from 'react'
 import { AnimationDevelopmentPageProps } from '../components/AnimationDevelopmentPage'
+import { AssetBaseRoute } from '../models'
 
-export interface UseManagedScrollContainerRefApi
-  extends Pick<
-      AnimationDevelopmentPageProps<any, '/logs'>,
+export interface UseManagedScrollContainerRefApi<
+  SomeAssetBaseRoute extends AssetBaseRoute
+> extends Pick<
+      AnimationDevelopmentPageProps<SomeAssetBaseRoute, '/logs'>,
       'graphicsRendererProcessKey'
     >,
     Pick<
       Parameters<
         AnimationDevelopmentPageProps<
-          any,
+          SomeAssetBaseRoute,
           '/logs'
         >['SomeClientGraphicsRendererProcessPage']
       >[0],
       'clientGraphicsRendererProcessState'
-      // | 'previousClientGraphicsRendererProcessState'
     > {
   localStorageKey: string
 }
 
-export function useManagedScrollContainerRef(
-  api: UseManagedScrollContainerRefApi
-) {
+export function useManagedScrollContainerRef<
+  SomeAssetBaseRoute extends AssetBaseRoute
+>(api: UseManagedScrollContainerRefApi<SomeAssetBaseRoute>) {
   const {
     graphicsRendererProcessKey,
     clientGraphicsRendererProcessState,
-    // previousClientGraphicsRendererProcessState,
     localStorageKey,
   } = api
   const managedScrollContainerRef = useRef<HTMLDivElement>(null)
-  const managedScrollStateRef = useRef<ManagedScrollState>({
+  const managedScrollStateRef = useRef<ManagedScrollState<SomeAssetBaseRoute>>({
     graphicsRendererProcessKey,
     buildVersion: clientGraphicsRendererProcessState.buildVersion,
     automatedScrollEnabled: true,
@@ -80,7 +80,7 @@ export function useManagedScrollContainerRef(
       const cachedManagedScrollState = cachedManagedScrollStateJson
         ? (JSON.parse(
             cachedManagedScrollStateJson
-          ) as unknown as ManagedScrollState) || null
+          ) as unknown as ManagedScrollState<SomeAssetBaseRoute>) || null
         : null
       if (
         clientGraphicsRendererProcessState.buildVersion ===
@@ -138,10 +138,13 @@ export function useManagedScrollContainerRef(
   }
 }
 
-interface ManagedScrollState
-  extends Pick<UseManagedScrollContainerRefApi, 'graphicsRendererProcessKey'>,
+interface ManagedScrollState<SomeAssetBaseRoute extends AssetBaseRoute>
+  extends Pick<
+      UseManagedScrollContainerRefApi<SomeAssetBaseRoute>,
+      'graphicsRendererProcessKey'
+    >,
     Pick<
-      UseManagedScrollContainerRefApi['clientGraphicsRendererProcessState'],
+      UseManagedScrollContainerRefApi<SomeAssetBaseRoute>['clientGraphicsRendererProcessState'],
       'buildVersion'
     > {
   automatedScrollEnabled: boolean

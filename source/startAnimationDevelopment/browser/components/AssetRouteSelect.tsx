@@ -271,16 +271,20 @@ export function AssetRouteSelect<
                       {cachedTargetGraphicsRendererProcessStatus ===
                       'processSuccessful' ? (
                         <CheckSharp
+                          className={
+                            styles.cachedTargetGraphicsRendererProcessStatusIcon
+                          }
                           color={'primary'}
                           fontSize={'small'}
-                          style={{ marginLeft: 8 }}
                         />
                       ) : cachedTargetGraphicsRendererProcessStatus ===
                         'processFailed' ? (
                         <PriorityHighSharp
+                          className={
+                            styles.cachedTargetGraphicsRendererProcessStatusIcon
+                          }
                           color={'error'}
                           fontSize={'small'}
-                          style={{ marginLeft: 8 }}
                         />
                       ) : null}
                     </Link>
@@ -382,6 +386,9 @@ const useAssetRouteSelectStyles = makeStyles((theme) => ({
   },
   noOptionsDisplayError: {
     color: theme.palette.error.main,
+  },
+  cachedTargetGraphicsRendererProcessStatusIcon: {
+    marginLeft: theme.spacing(1),
   },
 }))
 

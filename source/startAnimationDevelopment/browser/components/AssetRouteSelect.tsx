@@ -174,10 +174,7 @@ export function AssetRouteSelect<
                 someKeyDownEvent.stopPropagation()
                 const focusedAssetRouteOption =
                   filteredAssetRouteOptions[focusedAssetRouteOptionIndex]
-                const targetAssetBaseRoute = `/${focusedAssetRouteOption}`
-                if (targetAssetBaseRoute === assetBaseRoute) {
-                  setSelectingAssetRoute(false)
-                } else if (focusedAssetRouteOption !== undefined) {
+                if (focusedAssetRouteOption !== undefined) {
                   const { targetGraphicsRendererProcessCompleted } =
                     getTargetGraphicsRendererProcessData({
                       cachedPollClientGraphicsRendererProcessStateResponseData,

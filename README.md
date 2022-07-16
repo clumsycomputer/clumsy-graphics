@@ -6,25 +6,25 @@ this repository provides tooling for rendering animations where frames are descr
 
 #### tl;dr
 
-![TL;DR Hello Rainbow Animation Gif](/assets/HelloRainbow.tl;dr.gif)
+![TL;DR Hello Rainbow Animation Gif](/assets/HelloRainbow.gif)
 
 #### ./example-project/HelloRainbow.animation.tsx
 
 ```typescript
 import React from 'react'
-import { AnimationModule } from '../source/models/AnimationModule'
+import { AnimationModule } from 'graphics-renderer'
 import getColormap from 'colormap'
 
 const HelloRainbowAnimationModule: AnimationModule = {
   moduleName: 'Hello-Rainbow',
-  frameCount: 48,
+  frameCount: 24,
   getFrameDescription: getHelloRainbowFrameDescription,
   frameSize: {
     width: 1024,
     height: 1024,
   },
   animationSettings: {
-    frameRate: 12,
+    frameRate: 9,
     constantRateFactor: 1,
   },
 }
@@ -64,19 +64,24 @@ async function getHelloRainbowFrameDescription(
         style={{
           fontFamily: 'monospace',
           fontSize: 5,
+          fontWeight: 600,
           fill: mainFrameColor,
         }}
       >
         Hello Rainbow
       </text>
-      {new Array(frameCount).fill(null).map((_, circleIndex) => {
-        const circleStamp = circleIndex / frameCount
+      {new Array(frameCount).fill(null).map((_, squareIndex) => {
+        const squareStamp = squareIndex / frameCount
+        const squareRadius = 30 - 30 * squareStamp
+        const squareLength = 2 * squareRadius
         return (
-          <circle
-            cx={50}
-            cy={50}
-            r={30 - 30 * Math.sin(circleStamp * (Math.PI / 2))}
-            fill={rainbowColormap[(circleIndex + frameIndex) % frameCount]}
+          <rect
+            x={50 - squareRadius}
+            y={50 - squareRadius}
+            width={squareLength}
+            height={squareLength}
+            stroke={rainbowColormap[(squareIndex + frameIndex) % frameCount]}
+            strokeWidth={0.5}
           />
         )
       })}
@@ -91,17 +96,7 @@ async function getHelloRainbowFrameDescription(
 yarn graphics-renderer startDevelopment --animationModulePath=./example-project/HelloRainbow.animation.tsx
 ```
 
-#### render animation as mp4
-
-```bash
-yarn graphics-renderer renderAnimation --animationModulePath=./example-project/HelloRainbow.animation.tsx --animationMp4OutputPath=./example-project/HelloRainbow.mp4"
-```
-
-#### convert animation to gif
-
-```bash
-yarn graphics-renderer convertAnimationToGif --animationMp4SourcePath=./example-project/HelloRainbow.mp4 --animationGifOutputPath=./example-project/HelloRainbow.gif --gifAspectRatioWidth=512
-```
+open browser at `localhost:3000`
 
 #### ./example-project/HelloRainbow.gif
 

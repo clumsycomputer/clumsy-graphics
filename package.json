@@ -1,8 +1,8 @@
 {
   "name": "clumsy-graphics",
-  "version": "1.0.3",
-  "main": "dist/docker-main.js",
-  "types": "dist/docker-main.d.ts",
+  "version": "1.0.0",
+  "main": "package/docker-main.js",
+  "types": "package/docker-main.d.ts",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -37,18 +37,23 @@
   },
   "scripts": {
     "runTest": "node ./scripts/runTest.js",
-    "buildDist": "node ./scripts/buildDist.js",
-    "buildLocal": "node ./scripts/buildLocal.js",
+    "buildPackage": "node ./scripts/buildPackage.js",
+    "buildPackageAndLink": "node ./scripts/buildPackageAndLink.js",
     "startDevelopmentEnvironment": "node ./scripts/startDevelopmentEnvironment.js",
     "startExampleDevelopment": "node ./scripts/startExampleDevelopment.js",
     "renderExampleAnimation": "node ./scripts/renderExampleAnimation.js",
     "convertExampleAnimationToGif": "node ./scripts/convertExampleAnimationToGif.js"
   },
   "bin": {
-    "_clumsy-graphics": "./dist/docker-main.js",
-    "clumsy-graphics": "./dist/native-main.js"
+    "_clumsy-graphics": "./package/docker-main.js",
+    "clumsy-graphics": "./package/native-main.js"
   },
   "keywords": [
-    "animation", "svg", "react", "ffmpeg", "inkscape", "tool"
+    "animation",
+    "svg",
+    "react",
+    "ffmpeg",
+    "inkscape",
+    "tool"
   ]
 }

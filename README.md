@@ -114,13 +114,9 @@ yarn add clumsy-graphics
 
 install and run [docker engine](https://docs.docker.com/engine/install/) _(the majority of `clumsy-graphics` runs within a container to simplify dependency management)_
 
-## commands
+## api
 
-### startDevelopment
-
-> clumsy-graphics startDevelopment --animationModulePath=\<SourceFilePath>
-
-#### api
+> clumsy-graphics --animationModulePath=\<SourceFilePath>
 
 - **`animationModulePath`:** path to animation module export file
 
@@ -130,76 +126,10 @@ install and run [docker engine](https://docs.docker.com/engine/install/) _(the m
 
   - defaultValue = _3000_
 
-- **`generatedAssetsDirectoryPath`:** path to directory where requested assets will live
-
-  - defaultValue = _Path.resolve(\_\_dirname, './developmentAssets')_
-
-- **`numberOfFrameRendererWorkers`:** the number of workers to allocate for rendering frames
-
-  - defaultValue = _numberOfCpuCores - 2_
-
 #### how-to
 
-- run _startDevelopment_ command
+- run _clumsy-graphics_ command
 
 - open browser at `localhost:3000`
 
 - begin making changes on the active animation module
-
-### renderAnimation
-
-> clumsy-graphics renderAnimation --animationModulePath=\<SourceFilePath> --animationMp4OutputPath=\<DirectoryPath>
-
-#### api
-
-- **`animationModulePath`:** path to animation module export file
-
-  - required
-
-- **`animationMp4OutputPath`:** path to write _.mp4_ file
-
-  - required
-
-- **`numberOfFrameRendererWorkers`:** the number of workers to allocate for rendering frames
-
-  - defaultValue = _numberOfCpuCores - 1_
-
-### renderAnimationFrame
-
-> clumsy-graphics renderAnimationFrame --animationModulePath=\<SourceFilePath> --frameFileOutputPath=\<FrameFilePath> --frameIndex=\<NaturalNumber>
-
-#### api
-
-- **`animationModulePath`:** path to animation module export file
-
-  - required
-
-- **`frameFileOutputPath`:** path to write frame file
-
-  - required
-
-  - file type can be _**svg**_ or _**png**_
-
-- **`frameIndex`:** the index of the frame to render
-
-  - required
-
-### convertAnimationToGif
-
-> clumsy-graphics convertAnimationToGif --animationMp4SourcePath=\<AnimationFilePath> --animationGifOutputPath=\<GifFilePath>
-
-#### api
-
-- **`animationMp4SourcePath`:** path of _.mp4_ file
-
-  - required
-
-- **`animationGifOutputPath`:** path to write _.gif_ file
-
-  - required
-
-- **`gifAspectRatioWidth`:** width of _.gif_ file in pixels
-
-  - defaultValue = _widthOfSourceMp4_
-
-  - aspect ratio will be preserved

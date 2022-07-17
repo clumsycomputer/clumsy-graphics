@@ -1,12 +1,12 @@
 {
-  "name": "graphics-renderer",
+  "name": "clumsy-graphics",
   "version": "1.0.3",
   "main": "dist/docker-main.js",
   "types": "dist/docker-main.d.ts",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/clumsycomputer/graphics-renderer"
+    "url": "https://github.com/clumsycomputer/clumsy-graphics"
   },
   "dependencies": {
     "@material-ui/core": "^4.12.4",
@@ -45,8 +45,8 @@
     "convertExampleAnimationToGif": "node ./scripts/convertExampleAnimationToGif.js"
   },
   "bin": {
-    "_graphics-renderer": "./dist/docker-main.js",
-    "graphics-renderer": "./dist/native-main.js"
+    "_clumsy-graphics": "./dist/docker-main.js",
+    "clumsy-graphics": "./dist/native-main.js"
   },
   "keywords": [
     "animation", "svg", "react", "ffmpeg", "inkscape", "tool"

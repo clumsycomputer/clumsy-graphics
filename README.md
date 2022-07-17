@@ -1,6 +1,6 @@
-# graphics-renderer
+# clumsy-graphics
 
-this repository provides tooling for rendering animations where frames are described using svg elements à la react 🙃
+a tool for rapidly developing animations where frames are described using svg elements à la react 🙃
 
 ## example
 
@@ -12,7 +12,7 @@ this repository provides tooling for rendering animations where frames are descr
 
 ```typescript
 import React from 'react'
-import { AnimationModule } from 'graphics-renderer'
+import { AnimationModule } from 'clumsy-graphics'
 import getColormap from 'colormap'
 
 const HelloRainbowAnimationModule: AnimationModule = {
@@ -93,7 +93,7 @@ async function getHelloRainbowFrameDescription(
 #### develop and iterate on animation
 
 ```bash
-yarn graphics-renderer startDevelopment --animationModulePath=./example-project/HelloRainbow.animation.tsx
+yarn clumsy-graphics startDevelopment --animationModulePath=./example-project/HelloRainbow.animation.tsx
 ```
 
 open browser at `localhost:3000`
@@ -107,18 +107,18 @@ open browser at `localhost:3000`
 #### add package to project
 
 ```bash
-yarn add graphics-renderer
+yarn add clumsy-graphics
 ```
 
 #### setup docker
 
-install and run [docker engine](https://docs.docker.com/engine/install/) _(the majority of `graphics-renderer` runs within a container to simplify dependency management)_
+install and run [docker engine](https://docs.docker.com/engine/install/) _(the majority of `clumsy-graphics` runs within a container to simplify dependency management)_
 
 ## commands
 
 ### startDevelopment
 
-> graphics-renderer startDevelopment --animationModulePath=\<SourceFilePath>
+> clumsy-graphics startDevelopment --animationModulePath=\<SourceFilePath>
 
 #### api
 
@@ -148,7 +148,7 @@ install and run [docker engine](https://docs.docker.com/engine/install/) _(the m
 
 ### renderAnimation
 
-> graphics-renderer renderAnimation --animationModulePath=\<SourceFilePath> --animationMp4OutputPath=\<DirectoryPath>
+> clumsy-graphics renderAnimation --animationModulePath=\<SourceFilePath> --animationMp4OutputPath=\<DirectoryPath>
 
 #### api
 
@@ -166,7 +166,7 @@ install and run [docker engine](https://docs.docker.com/engine/install/) _(the m
 
 ### renderAnimationFrame
 
-> graphics-renderer renderAnimationFrame --animationModulePath=\<SourceFilePath> --frameFileOutputPath=\<FrameFilePath> --frameIndex=\<NaturalNumber>
+> clumsy-graphics renderAnimationFrame --animationModulePath=\<SourceFilePath> --frameFileOutputPath=\<FrameFilePath> --frameIndex=\<NaturalNumber>
 
 #### api
 
@@ -186,7 +186,7 @@ install and run [docker engine](https://docs.docker.com/engine/install/) _(the m
 
 ### convertAnimationToGif
 
-> graphics-renderer convertAnimationToGif --animationMp4SourcePath=\<AnimationFilePath> --animationGifOutputPath=\<GifFilePath>
+> clumsy-graphics convertAnimationToGif --animationMp4SourcePath=\<AnimationFilePath> --animationGifOutputPath=\<GifFilePath>
 
 #### api
 

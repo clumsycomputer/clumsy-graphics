@@ -1,10 +1,10 @@
 version: "3.9"
 services:
-  graphics-renderer:
+  clumsy-graphics:
     build: 
       context: .
-      dockerfile: dist.Dockerfile
+      dockerfile: clumsy-graphics-dist.Dockerfile
     environment:      
       - GRAPHICS_RENDERER_SUB_COMMAND=${GRAPHICS_RENDERER_SUB_COMMAND}
     volumes: 
-      - ${PROJECT_DIRECTORY_PATH}:/graphics-renderer
+      - ${PROJECT_DIRECTORY_PATH}:/clumsy-graphics

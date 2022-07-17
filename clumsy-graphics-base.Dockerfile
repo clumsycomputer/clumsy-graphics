@@ -1,5 +1,5 @@
 FROM debian
-WORKDIR /graphics-renderer
+WORKDIR /clumsy-graphics
 RUN apt-get update
 RUN apt-get --yes install ffmpeg
 RUN apt-get --yes install inkscape

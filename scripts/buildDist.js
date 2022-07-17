@@ -10,9 +10,12 @@ ChildProcess.execSync(
   { stdio: 'inherit' }
 )
 ChildProcess.execSync(
-  'cp ./dist.docker-compose.yml ./dist/dist.docker-compose.yml',
+  'cp ./clumsy-graphics-dist.docker-compose.yml ./dist/clumsy-graphics-dist.docker-compose.yml',
   { stdio: 'inherit' }
 )
-ChildProcess.execSync('cp ./dist.Dockerfile ./dist/dist.Dockerfile', {
-  stdio: 'inherit',
-})
+ChildProcess.execSync(
+  'cp ./clumsy-graphics-dist.Dockerfile ./dist/clumsy-graphics-dist.Dockerfile',
+  {
+    stdio: 'inherit',
+  }
+)

@@ -227,7 +227,7 @@ function getPartialSpawnGraphicsRendererProcessActionPayload(
       graphicAssetPathKey: animationAssetFilename,
       graphicAssetPath: animationMp4OutputPath,
       graphicAssetUrlResult: `/asset/${animationAssetFilename}`,
-      graphicsRendererProcessCommandString: `_graphics-renderer renderAnimation --animationModulePath=${animationModuleAbsolutePath} --animationMp4OutputPath=${animationMp4OutputPath} --numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
+      graphicsRendererProcessCommandString: `_clumsy-graphics renderAnimation --animationModulePath=${animationModuleAbsolutePath} --animationMp4OutputPath=${animationMp4OutputPath} --numberOfFrameRendererWorkers=${numberOfFrameRendererWorkers}`,
     }
   } else if (
     graphicsRendererProcessStateRequestQueryParams.graphicsRendererProcessKey.startsWith(
@@ -248,7 +248,7 @@ function getPartialSpawnGraphicsRendererProcessActionPayload(
     return {
       graphicAssetPathKey: frameAssetFilename,
       graphicAssetPath: frameFileOutputPath,
-      graphicsRendererProcessCommandString: `_graphics-renderer renderAnimationFrame --animationModulePath=${animationModuleAbsolutePath} --frameIndex=${frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
+      graphicsRendererProcessCommandString: `_clumsy-graphics renderAnimationFrame --animationModulePath=${animationModuleAbsolutePath} --frameIndex=${frameIndex} --frameFileOutputPath=${frameFileOutputPath}`,
       graphicAssetUrlResult: `/asset/${frameAssetFilename}`,
     }
   } else {

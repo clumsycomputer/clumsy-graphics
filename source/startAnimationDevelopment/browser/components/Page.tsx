@@ -13,7 +13,7 @@ export function Page(props: PageProps) {
     <div className={styles.pageContainer}>
       <div className={styles.pageHeader}>
         <div className={styles.titleContainer}>
-          <div className={styles.pageTitle}>graphics-renderer</div>
+          <div className={styles.pageTitle}>clumsy-graphics</div>
         </div>
         <div className={styles.selectContainer}>{assetRouteSelect}</div>
       </div>

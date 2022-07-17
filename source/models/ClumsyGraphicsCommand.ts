@@ -5,13 +5,13 @@ import { RenderAnimationModuleApi } from '../renderAnimationModule/renderAnimati
 import { StartAnimationDevelopmentApi } from '../startAnimationDevelopment/startAnimationDevelopment'
 import { Optional } from './common'
 
-export type GraphicsRendererCommand =
+export type ClumsyGraphicsCommand =
   | StartDevelopmentCommand
   | RenderAnimationCommand
   | RenderAnimationFrameCommand
   | ConvertAnimationToGifCommand
 
-interface StartDevelopmentCommand
+export interface StartDevelopmentCommand
   extends CliCommandBase<
     'startDevelopment',
     Optional<
@@ -22,7 +22,7 @@ interface StartDevelopmentCommand
     >
   > {}
 
-const StartDevelopmentCommandCodec = IO.exact(
+export const StartDevelopmentCommandCodec = IO.exact(
   IO.type({
     commandName: IO.literal('startDevelopment'),
     commandApi: IO.exact(
@@ -121,9 +121,31 @@ interface CliCommandBase<
   commandApi: CommandOptions
 }
 
-export const GraphicsRendererCommandCodec = IO.union([
+export const ClumsyGraphicsCommandCodec = IO.union([
   StartDevelopmentCommandCodec,
   RenderAnimationCommandCodec,
   RenderAnimationFrameCommandCodec,
   ConvertAnimationToGifCommandCodec,
 ])
+
+export interface ParseCommandLineArgsApi {
+  processArgv: Array<string>
+}
+
+export function parseCommandLineArgs(api: ParseCommandLineArgsApi): unknown {
+  const { processArgv } = api
+  return {
+    commandName: processArgv[2],
+    commandApi: processArgv
+      .slice(3)
+      .reduce<Record<string, string>>((result, someProcessArg) => {
+        const optionMatch = someProcessArg.match(/^--([a-zA-Z0-9]+)=(.+)$/)
+        if (optionMatch) {
+          const optionKey: string = optionMatch[1]!
+          const optionValue: string = optionMatch[2]!
+          result[optionKey] = optionValue
+        }
+        return result
+      }, {}),
+  }
+}

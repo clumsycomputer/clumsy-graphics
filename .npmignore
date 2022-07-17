@@ -5,8 +5,8 @@ node_modules
 .prettierc
 __tests__
 tsconfig.json
-tsconfig.dist.json
-!dist/startAnimationDevelopment/browser/tsconfig.json
+tsconfig.package.json
+!package/startAnimationDevelopment/browser/tsconfig.json
 *.tgz
 package*
 assets
@@ -14,4 +14,5 @@ developmentAssets
 test-results
 *.Dockerfile
 *.docker-compose.yml
-!dist/dist*
+!package/package*
+!package/clumsy-graphics-package*

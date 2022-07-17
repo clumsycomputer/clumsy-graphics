@@ -1,12 +1,12 @@
 {
-  "name": "graphics-renderer",
-  "version": "1.0.3",
-  "main": "dist/docker-main.js",
-  "types": "dist/docker-main.d.ts",
+  "name": "clumsy-graphics",
+  "version": "1.0.0",
+  "main": "package/docker-main.js",
+  "types": "package/docker-main.d.ts",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/clumsycomputer/graphics-renderer"
+    "url": "https://github.com/clumsycomputer/clumsy-graphics"
   },
   "dependencies": {
     "@material-ui/core": "^4.12.4",
@@ -37,18 +37,23 @@
   },
   "scripts": {
     "runTest": "node ./scripts/runTest.js",
-    "buildDist": "node ./scripts/buildDist.js",
-    "buildLocal": "node ./scripts/buildLocal.js",
+    "buildPackage": "node ./scripts/buildPackage.js",
+    "buildPackageAndLink": "node ./scripts/buildPackageAndLink.js",
     "startDevelopmentEnvironment": "node ./scripts/startDevelopmentEnvironment.js",
     "startExampleDevelopment": "node ./scripts/startExampleDevelopment.js",
     "renderExampleAnimation": "node ./scripts/renderExampleAnimation.js",
     "convertExampleAnimationToGif": "node ./scripts/convertExampleAnimationToGif.js"
   },
   "bin": {
-    "_graphics-renderer": "./dist/docker-main.js",
-    "graphics-renderer": "./dist/native-main.js"
+    "_clumsy-graphics": "./package/docker-main.js",
+    "clumsy-graphics": "./package/native-main.js"
   },
   "keywords": [
-    "animation", "svg", "react", "ffmpeg", "inkscape", "tool"
+    "animation",
+    "svg",
+    "react",
+    "ffmpeg",
+    "inkscape",
+    "tool"
   ]
 }

@@ -1,7 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "declaration": true
-  },
-  "files": ["./source/native-main.ts", "./source/docker-main.ts", "./source/renderAnimationModule/frameRendererWorker.tsx"]
-}

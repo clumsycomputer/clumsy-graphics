@@ -1,0 +1,10 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "COMPILE_DEBUGGABLE_PROGRAM_TASK",
+            "type": "shell",
+            "command": "bash ./scripts/compileProgram.sh -g"
+        }
+    ]
+}

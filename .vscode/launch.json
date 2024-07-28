@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb-dap",
+            "request": "launch",
+            "name": "Debug: clumsy-graphics",
+            "program": "${workspaceRoot}/out/clumsy-graphics",
+            "args": [],
+            "env": [],
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "COMPILE_DEBUGGABLE_PROGRAM_TASK",
+            "internalConsoleOptions": "openOnSessionStart",
+            "disableASLR": false,
+            "initCommands": ["settings set target.disable-aslr false"],
+        }
+    ]
+}

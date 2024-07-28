@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/devcontainers/base:ubuntu
 USER vscode
 WORKDIR /home/vscode
 RUN sudo apt update
-RUN sudo apt install -y clang clang-tools clangd lldb lld
+RUN sudo apt install -y clang clang-tools clangd lldb lld cmake
 ENV INFER_VERSION=1.1.0
 ENV PATH=/infer/bin:${PATH}
 RUN sudo curl --remote-name --location "https://github.com/facebook/infer/releases/download/v$INFER_VERSION/infer-linux64-v$INFER_VERSION.tar.xz" \
